@@ -73,3 +73,7 @@ type aExprLambda struct {
 	Args []string
 	Body iExpr
 }
+
+func aSym(name string) *aExprSym               { return &aExprSym{Name: name} }
+func aNum(lit int) *aExprNum                   { return &aExprNum{Lit: lit} }
+func aCall(callee iExpr, arg iExpr) *aExprCall { return &aExprCall{Callee: callee, Arg: arg} }
