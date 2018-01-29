@@ -1,7 +1,7 @@
 package corelang
 
 var (
-	preludeDefs = map[string]*aDef{
+	PreludeDefs = map[string]*aDef{
 		// id x = x
 		"id": {Name: "id", Args: []string{"x"},
 			Body: aSym("x")},

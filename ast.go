@@ -1,8 +1,5 @@
 package corelang
 
-type iAstish interface {
-}
-
 type aProgram struct {
 	Defs []*aDef
 }
@@ -16,6 +13,10 @@ type aDef struct {
 type iExpr interface {
 	isAtomic() bool
 }
+
+func aSym(name string) iExpr              { return &aExprSym{Name: name} }
+func aNum(lit int) iExpr                  { return &aExprNum{Lit: lit} }
+func aCall(callee iExpr, arg iExpr) iExpr { return &aExprCall{Callee: callee, Arg: arg} }
 
 type aExpr struct {
 }
@@ -73,7 +74,3 @@ type aExprLambda struct {
 	Args []string
 	Body iExpr
 }
-
-func aSym(name string) *aExprSym               { return &aExprSym{Name: name} }
-func aNum(lit int) *aExprNum                   { return &aExprNum{Lit: lit} }
-func aCall(callee iExpr, arg iExpr) *aExprCall { return &aExprCall{Callee: callee, Arg: arg} }

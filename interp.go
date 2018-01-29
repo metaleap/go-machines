@@ -1,7 +1,7 @@
 package corelang
 
-type iInterpreter interface {
-	prog(*aProgram, ...interface{}) (interface{}, error)
-	def(*aDef, ...interface{}) (interface{}, error)
-	expr(iExpr) (interface{}, error)
+type IInterpreter interface {
+	Prog(*aProgram, ...interface{}) (interface{}, error)
+	Def(*aDef, ...interface{}) (interface{}, error)
+	Expr(iExpr) (interface{}, error)
 }
