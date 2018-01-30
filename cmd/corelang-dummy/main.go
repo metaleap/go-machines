@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/go-leap/dev/lex"
 	"github.com/metaleap/go-corelang"
 )
 
@@ -14,4 +15,10 @@ func main() {
 			println(result.(string))
 		}
 	}
+
+	_, errs := udevlex.Lex("dummy.foo", "foo 'x' 123 \"str1\" /*and*/ `str2` *+ - 'd' <:> `\n` // noice")
+	for _, e := range errs {
+		println(e.Error())
+	}
+
 }
