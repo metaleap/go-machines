@@ -4,6 +4,9 @@ type aProgram struct {
 	Defs []*aDef
 }
 
+type iSyn struct {
+}
+
 type aDef struct {
 	Name string
 	Args []string

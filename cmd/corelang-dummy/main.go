@@ -16,7 +16,7 @@ func main() {
 		}
 	}
 
-	_, errs := udevlex.Lex("dummy.foo", "foo 'x' 123 \"str1\" /*and*/ `str2` *+ - 'd' <:> `\n` // noice")
+	_, errs := udevlex.Lex("dummy.foo", "foo 'x' \t\t\t    123 \t and \r\n \"str1\" /*and*/ `str2` *+ - 'd' <:> `\n` // noice")
 	for _, e := range errs {
 		println(e.Error())
 	}
