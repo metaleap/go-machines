@@ -42,8 +42,8 @@ func (me *aExprNum) isAtomic() bool { return true }
 
 type aExprCtor struct {
 	aExpr
-	Tag   uint8
-	Arity uint8
+	Tag   int
+	Arity int
 }
 
 type aExprCall struct {
@@ -54,11 +54,10 @@ type aExprCall struct {
 
 type aExprLet struct {
 	aExpr
-	Rec bool
-	Let map[string]iExpr
-	In  iExpr
+	Rec  bool
+	Defs []*aDef
+	Body iExpr
 }
-
 type aExprCase struct {
 	aExpr
 	Scrut iExpr
