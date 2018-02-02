@@ -1,7 +1,11 @@
 package corelang
 
+import (
+	. "github.com/metaleap/go-corelang/syn"
+)
+
 type IInterpreter interface {
-	Prog(*aProgram, ...interface{}) (interface{}, error)
-	Def(*aDef, ...interface{}) (interface{}, error)
-	Expr(iExpr) (interface{}, error)
+	Mod(*Module, ...interface{}) (interface{}, error)
+	Def(*Def, ...interface{}) (interface{}, error)
+	Expr(IExpr) (interface{}, error)
 }

@@ -1,29 +1,33 @@
 package corelang
 
+import (
+	. "github.com/metaleap/go-corelang/syn"
+)
+
 var (
-	PreludeDefs = map[string]*aDef{
+	PreludeDefs = map[string]*Def{
 		// id x = x
 		"id": {Name: "id", Args: []string{"x"},
-			Body: aSym("x")},
+			Body: Id("x")},
 
 		// k0 x y = x
 		"k0": {Name: "k0", Args: []string{"x", "y"},
-			Body: aSym("x")},
+			Body: Id("x")},
 
 		// k1 x y = y
 		"k1": {Name: "k1", Args: []string{"x", "y"},
-			Body: aSym("y")},
+			Body: Id("y")},
 
 		// subst f g x = f x (g x)
 		"subst": {Name: "subst", Args: []string{"f", "g", "x"},
-			Body: aCall(aCall(aSym("f"), aSym("x")), aCall(aSym("g"), aSym("x")))},
+			Body: Ap(Ap(Id("f"), Id("x")), Ap(Id("g"), Id("x")))},
 
 		// comp f g x = f (g x)
 		"comp": {Name: "comp", Args: []string{"f", "g", "x"},
-			Body: aCall(aSym("f"), aCall(aSym("g"), aSym("x")))},
+			Body: Ap(Id("f"), Ap(Id("g"), Id("x")))},
 
 		// comp2 f = comp f f
 		"comp2": {Name: "comp2", Args: []string{"f"},
-			Body: aCall(aCall(aSym("comp"), aSym("f")), aSym("f"))},
+			Body: Ap(Ap(Id("comp"), Id("f")), Id("f"))},
 	}
 )

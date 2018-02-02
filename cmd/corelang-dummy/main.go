@@ -6,8 +6,8 @@ import (
 
 func main() {
 	var interp corelang.IInterpreter = &corelang.InterpPrettyPrint{}
-	for name, def := range corelang.PreludeDefs {
-		println("\n\n" + name + ":\n")
+	for _, def := range corelang.PreludeDefs {
+		println("\n\n")
 		if result, err := interp.Def(def); err != nil {
 			panic(err)
 		} else {
