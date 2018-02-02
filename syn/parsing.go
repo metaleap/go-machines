@@ -42,10 +42,8 @@ func parseLit(token udevlex.IToken) IExpr {
 	switch t := token.(type) {
 	case *udevlex.TokenFloat:
 		return Lf(t.Token)
-	case *udevlex.TokenInt:
-		return Li(t.Token)
 	case *udevlex.TokenUint:
-		return Lu(t.Token)
+		return Lu(t.Token, t.Base)
 	case *udevlex.TokenRune:
 		return Lr(t.Token)
 	case *udevlex.TokenStr:
