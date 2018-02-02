@@ -64,14 +64,16 @@ func (me *InterpPrettyPrint) expr(w *bytes.Buffer, expression IExpr, couldBePare
 		w.WriteRune(' ')
 		me.expr(w, expr.Arg, true)
 	case *ExprLetIn:
-		w.WriteString("let ")
-		for i, letdef := range expr.Defs {
+		w.WriteString("let\n")
+		me.curIndent++
+		w.WriteString(strings.Repeat("  ", me.curIndent))
+		for _, letdef := range expr.Defs {
 			me.def(w, letdef)
-			if i < (len(expr.Defs) - 1) {
-				w.WriteString("; ")
-			}
+			w.WriteRune('\n')
+			w.WriteString(strings.Repeat("  ", me.curIndent))
 		}
-		w.WriteString(" in ")
+		me.curIndent--
+		w.WriteString("in ")
 		me.expr(w, expr.Body, false)
 	case *ExprCtor:
 		w.WriteString("Pack{")
@@ -82,16 +84,18 @@ func (me *InterpPrettyPrint) expr(w *bytes.Buffer, expression IExpr, couldBePare
 	case *ExprCaseOf:
 		w.WriteString("case ")
 		me.expr(w, expr.Scrut, false)
-		w.WriteString(" of ")
-		for i, alt := range expr.Alts {
+		w.WriteString(" of\n")
+		me.curIndent++
+		w.WriteString(strings.Repeat("  ", me.curIndent))
+		for _, alt := range expr.Alts {
 			w.WriteString(strconv.Itoa(alt.Tag))
-			w.WriteString(" -> ")
+			w.WriteString(" ->\n")
+			me.curIndent++
+			w.WriteString(strings.Repeat("  ", me.curIndent))
 			me.expr(w, alt.Body, false)
-
-			if i < (len(expr.Alts) - 1) {
-				w.WriteString("; ")
-			}
+			me.curIndent--
 		}
+		me.curIndent--
 	default:
 		panic(fmt.Errorf("unknown expression type %T — %#v", expr, expr))
 	}
