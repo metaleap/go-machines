@@ -51,6 +51,14 @@ func (me *InterpPrettyPrint) expr(w *bytes.Buffer, expression IExpr, couldBePare
 		w.WriteString(expr.Val)
 	case *ExprLitFloat:
 		w.WriteString(strconv.FormatFloat(expr.Val, 'g', -1, 64))
+	case *ExprLitInt:
+		w.WriteString(strconv.FormatInt(expr.Val, 10))
+	case *ExprLitUInt:
+		w.WriteString(strconv.FormatUint(expr.Val, 10))
+	case *ExprLitText:
+		w.WriteString(strconv.Quote(expr.Val))
+	case *ExprLitRune:
+		w.WriteString(strconv.QuoteRune(expr.Val))
 	case *ExprLambda:
 		w.WriteString("\\")
 		for _, lamarg := range expr.Args {

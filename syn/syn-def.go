@@ -72,7 +72,7 @@ func parseDef(parent ISyn, tokens []udevlex.IToken) (*SynDef, *Error) {
 		return nil, err
 	}
 	if len(tail) > 0 {
-		return nil, errPos(udevlex.Pos(tail, parent, ""), "TODO", 0)
+		println("TODO..")
 	}
 	def.Body = expr
 	return def, nil

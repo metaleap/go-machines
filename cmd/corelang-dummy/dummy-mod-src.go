@@ -5,7 +5,7 @@ var srcMod = `
 hello =
   k0 "Hello" "(discarded)"
 
-foo = "bar"
+foo = ` + "`" + `bar` + "`" + `
 
 world =
   k1 "(ditched)" "World"
