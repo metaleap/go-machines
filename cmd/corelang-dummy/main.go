@@ -6,19 +6,19 @@ import (
 	"strings"
 
 	"github.com/go-leap/dev/lex"
-	"github.com/metaleap/go-corelang"
-	"github.com/metaleap/go-corelang/syn"
+	core "github.com/metaleap/go-corelang"
+	coresyn "github.com/metaleap/go-corelang/syn"
 )
 
 func writeLn(s string) { _, _ = os.Stdout.WriteString(s + "\n") }
 
 func main() {
-	mod := &clsyn.SynMod{Defs: corelang.PreludeDefs}
-	if e := lexAndParse(srcMod, mod); e != nil {
+	mod := &coresyn.SynMod{Defs: core.PreludeDefs}
+	if e := lexAndParse("", srcMod, mod); e != nil {
 		panic(e)
 	}
 
-	repl, pprint := bufio.NewScanner(os.Stdin), &corelang.InterpPrettyPrint{}
+	repl, pprint := bufio.NewScanner(os.Stdin), &core.InterpPrettyPrint{}
 	writeLn("Ready.")
 	for repl.Scan() {
 		if errscan := repl.Err(); errscan != nil {
@@ -42,13 +42,16 @@ func main() {
 	}
 }
 
-func lexAndParse(src string, mod *clsyn.SynMod) error {
-	lexed, errs_lex := udevlex.Lex("dummy-mod-src.go", "src")
+func lexAndParse(filePath string, src string, mod *coresyn.SynMod) error {
+	if filePath == "" {
+		filePath = "dummy-mod-src.go"
+	}
+	lexed, errs_lex := udevlex.Lex(filePath, src)
 	for _, e := range errs_lex {
 		return e
 	}
 
-	defs, errs_parse := clsyn.ParseDefs(lexed)
+	defs, errs_parse := coresyn.ParseDefs(filePath, coresyn.LexedTokensToTopLevelChunks(lexed))
 	for _, e := range errs_parse {
 		return e
 	}
