@@ -11,12 +11,12 @@ type ISyn interface {
 
 type IExpr interface {
 	ISyn
-	isAtomic() bool
+	IsAtomic() bool
 }
 
 type syn struct {
 	pos    udevlex.TokenMeta
-	root   *Module
+	root   *SynMod
 	parent ISyn
 }
 
@@ -30,8 +30,8 @@ func (*expr) isExpr() bool { return true }
 
 type exprAtomic struct{ expr }
 
-func (*exprAtomic) isAtomic() bool { return true }
+func (*exprAtomic) IsAtomic() bool { return true }
 
 type exprComp struct{ expr }
 
-func (*exprComp) isAtomic() bool { return false }
+func (*exprComp) IsAtomic() bool { return false }

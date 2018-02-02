@@ -1,6 +1,6 @@
 package clsyn
 
-type Module struct {
+type SynMod struct {
 	syn
-	Defs []*Def
+	Defs map[string]*SynDef
 }

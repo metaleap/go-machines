@@ -1,6 +1,6 @@
 package clsyn
 
-type Def struct {
+type SynDef struct {
 	syn
 	Name string
 	Args []string

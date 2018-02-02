@@ -1,9 +1,9 @@
 package clsyn
 
-func Ap(callee IExpr, arg IExpr) *ExprCall         { return &ExprCall{Callee: callee, Arg: arg} }
-func Ab(args []string, body IExpr) *ExprLambda     { return &ExprLambda{Args: args, Body: body} }
-func Ct(tag int, arity int) *ExprCtor              { return &ExprCtor{Tag: tag, Arity: arity} }
-func Co(scrut IExpr, alts ...*CaseAlt) *ExprCaseOf { return &ExprCaseOf{Scrut: scrut, Alts: alts} }
+func Ap(callee IExpr, arg IExpr) *ExprCall            { return &ExprCall{Callee: callee, Arg: arg} }
+func Ab(args []string, body IExpr) *ExprLambda        { return &ExprLambda{Args: args, Body: body} }
+func Ct(tag int, arity int) *ExprCtor                 { return &ExprCtor{Tag: tag, Arity: arity} }
+func Co(scrut IExpr, alts ...*SynCaseAlt) *ExprCaseOf { return &ExprCaseOf{Scrut: scrut, Alts: alts} }
 
 type ExprCtor struct {
 	exprComp
@@ -26,12 +26,11 @@ type ExprLambda struct {
 type ExprLetIn struct {
 	exprComp
 	Rec  bool
-	Defs []*Def
+	Defs []*SynDef
 	Body IExpr
 }
-
 type ExprCaseOf struct {
 	exprComp
 	Scrut IExpr
-	Alts  []*CaseAlt
+	Alts  []*SynCaseAlt
 }

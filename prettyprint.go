@@ -13,7 +13,7 @@ type InterpPrettyPrint struct {
 	curIndent int
 }
 
-func (me *InterpPrettyPrint) Mod(mod *Module, args ...interface{}) (interface{}, error) {
+func (me *InterpPrettyPrint) Mod(mod *SynMod, args ...interface{}) (interface{}, error) {
 	var buf bytes.Buffer
 	for _, def := range mod.Defs {
 		me.curIndent = 0
@@ -23,7 +23,7 @@ func (me *InterpPrettyPrint) Mod(mod *Module, args ...interface{}) (interface{},
 	return buf.String(), nil
 }
 
-func (me *InterpPrettyPrint) def(w *bytes.Buffer, def *Def, _ ...interface{}) {
+func (me *InterpPrettyPrint) def(w *bytes.Buffer, def *SynDef, _ ...interface{}) {
 	w.WriteString(def.Name)
 	for _, defarg := range def.Args {
 		w.WriteRune(' ')
@@ -32,37 +32,37 @@ func (me *InterpPrettyPrint) def(w *bytes.Buffer, def *Def, _ ...interface{}) {
 	w.WriteString(" =\n")
 	me.curIndent++
 	w.WriteString(strings.Repeat("  ", me.curIndent))
-	me.expr(w, def.Body)
+	me.expr(w, def.Body, false)
 	me.curIndent--
 }
 
-func (me *InterpPrettyPrint) Def(def *Def, args ...interface{}) (interface{}, error) {
+func (me *InterpPrettyPrint) Def(def *SynDef, args ...interface{}) (interface{}, error) {
 	var buf bytes.Buffer
 	me.def(&buf, def, args...)
 	return buf.String(), nil
 }
 
-func (me *InterpPrettyPrint) expr(w *bytes.Buffer, expression IExpr) {
+func (me *InterpPrettyPrint) expr(w *bytes.Buffer, expression IExpr, couldBeParensed bool) {
+	if couldBeParensed && !expression.IsAtomic() {
+		w.WriteRune('(')
+	}
 	switch expr := expression.(type) {
 	case *ExprIdent:
 		w.WriteString(expr.Val)
 	case *ExprLitFloat:
 		w.WriteString(strconv.FormatFloat(expr.Val, 'g', -1, 64))
 	case *ExprLambda:
-		w.WriteString("(\\")
+		w.WriteString("\\")
 		for _, lamarg := range expr.Args {
 			w.WriteString(lamarg)
 			w.WriteRune(' ')
 		}
 		w.WriteString("-> ")
-		me.expr(w, expr.Body)
-		w.WriteRune(')')
+		me.expr(w, expr.Body, true)
 	case *ExprCall:
-		w.WriteRune('(')
-		me.expr(w, expr.Callee)
+		me.expr(w, expr.Callee, true)
 		w.WriteRune(' ')
-		me.expr(w, expr.Arg)
-		w.WriteRune(')')
+		me.expr(w, expr.Arg, true)
 	case *ExprLetIn:
 		w.WriteString("let ")
 		for i, letdef := range expr.Defs {
@@ -72,7 +72,7 @@ func (me *InterpPrettyPrint) expr(w *bytes.Buffer, expression IExpr) {
 			}
 		}
 		w.WriteString(" in ")
-		me.expr(w, expr.Body)
+		me.expr(w, expr.Body, false)
 	case *ExprCtor:
 		w.WriteString("Pack{")
 		w.WriteString(strconv.Itoa(expr.Tag))
@@ -80,27 +80,29 @@ func (me *InterpPrettyPrint) expr(w *bytes.Buffer, expression IExpr) {
 		w.WriteString(strconv.Itoa(expr.Arity))
 		w.WriteRune('}')
 	case *ExprCaseOf:
-		w.WriteString("(case ")
-		me.expr(w, expr.Scrut)
+		w.WriteString("case ")
+		me.expr(w, expr.Scrut, false)
 		w.WriteString(" of ")
 		for i, alt := range expr.Alts {
 			w.WriteString(strconv.Itoa(alt.Tag))
 			w.WriteString(" -> ")
-			me.expr(w, alt.Body)
+			me.expr(w, alt.Body, false)
 
 			if i < (len(expr.Alts) - 1) {
 				w.WriteString("; ")
 			}
 		}
-		w.WriteRune(')')
 	default:
 		panic(fmt.Errorf("unknown expression type %T — %#v", expr, expr))
+	}
+	if couldBeParensed && !expression.IsAtomic() {
+		w.WriteRune(')')
 	}
 	return
 }
 
 func (me *InterpPrettyPrint) Expr(expr IExpr) (interface{}, error) {
 	var buf bytes.Buffer
-	me.expr(&buf, expr)
+	me.expr(&buf, expr, false)
 	return buf.String(), nil
 }

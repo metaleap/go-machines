@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	PreludeDefs = map[string]*Def{
+	PreludeDefs = map[string]*SynDef{
 		// id x = x
 		"id": {Name: "id", Args: []string{"x"},
 			Body: Id("x")},

@@ -1,10 +1,10 @@
 package clsyn
 
-func Alt(tag int, binds []string, body IExpr) *CaseAlt {
-	return &CaseAlt{Tag: tag, Binds: binds, Body: body}
+func Alt(tag int, binds []string, body IExpr) *SynCaseAlt {
+	return &SynCaseAlt{Tag: tag, Binds: binds, Body: body}
 }
 
-type CaseAlt struct {
+type SynCaseAlt struct {
 	syn
 	Tag   int
 	Binds []string

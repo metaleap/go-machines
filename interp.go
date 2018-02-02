@@ -5,7 +5,7 @@ import (
 )
 
 type IInterpreter interface {
-	Mod(*Module, ...interface{}) (interface{}, error)
-	Def(*Def, ...interface{}) (interface{}, error)
+	Mod(*SynMod, ...interface{}) (interface{}, error)
+	Def(*SynDef, ...interface{}) (interface{}, error)
 	Expr(IExpr) (interface{}, error)
 }
