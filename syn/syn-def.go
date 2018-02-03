@@ -13,19 +13,30 @@ type SynDef struct {
 	Body IExpr
 }
 
-func ParseDefs(srcFilePath string, parent ISyn, tokens []lex.IToken) (defs []*SynDef, errs []*Error) {
-	for len(tokens) > 0 {
-		if def, tail, deferr := parseDef(parent, tokens); deferr != nil {
-			deferr.Pos.Filename = srcFilePath
-			defs, tokens, errs = nil, nil, append(errs, deferr)
-		} else if len(errs) == 0 {
-			defs, tokens = append(defs, def), tail
-		}
+func ParseDefs(srcFilePath string, tokens lex.Tokens) (defs []*SynDef, errs []*Error) {
+	defs, errs = parseDefs(nil, tokens)
+	for _, e := range errs {
+		e.Pos.Filename = srcFilePath
 	}
 	return
 }
 
-func parseDef(parent ISyn, tokens []lex.IToken) (*SynDef, []lex.IToken, *Error) {
+func parseDefs(parent ISyn, tokens lex.Tokens) (defs []*SynDef, errs []*Error) {
+	for len(tokens) > 0 {
+		def, tail, deferr := parseDef(parent, tokens)
+		if tokens = tail; deferr != nil {
+			errs = append(errs, deferr)
+		} else if len(errs) == 0 {
+			defs = append(defs, def)
+		}
+	}
+	if len(errs) > 0 {
+		defs = nil
+	}
+	return
+}
+
+func parseDef(parent ISyn, tokens lex.Tokens) (*SynDef, lex.Tokens, *Error) {
 	if len(tokens) < 3 {
 		return nil, nil, errPos(lex.Pos(tokens, parent, ""), "not enough tokens to form a definition", 0)
 	}
@@ -39,9 +50,10 @@ func parseDef(parent ISyn, tokens []lex.IToken) (*SynDef, []lex.IToken, *Error) 
 	def.syn.pos, def.syn.parent = tid.TokenMeta, parent
 
 	// args up until `=`
-	for insig := true; insig && i < len(tokens); i++ {
+	for ; i < len(tokens); i++ {
 		if t, _ := tokens[i].(*lex.TokenOther); t != nil && t.Token == "=" {
-			insig = false // dont break, still want to inc i
+			i++
+			break
 		} else if t, _ := tokens[i].(*lex.TokenIdent); t != nil {
 			def.Args = append(def.Args, t.Token)
 		} else {

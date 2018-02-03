@@ -51,7 +51,7 @@ func lexAndParse(filePath string, src string, mod *coresyn.SynMod) error {
 		return e
 	}
 
-	defs, errs_parse := coresyn.ParseDefs(filePath, nil, lexed)
+	defs, errs_parse := coresyn.ParseDefs(filePath, lexed.SansComments())
 	for _, e := range errs_parse {
 		return e
 	}

@@ -42,8 +42,8 @@ func (me *InterpPrettyPrint) Def(def *SynDef, args ...interface{}) (interface{},
 	return buf.String(), nil
 }
 
-func (me *InterpPrettyPrint) expr(w *bytes.Buffer, expression IExpr, couldBeParensed bool) {
-	if couldBeParensed && !expression.IsAtomic() {
+func (me *InterpPrettyPrint) expr(w *bytes.Buffer, expression IExpr, parensUnlessAtomic bool) {
+	if parensUnlessAtomic && !expression.IsAtomic() {
 		w.WriteRune('(')
 	}
 	switch expr := expression.(type) {
@@ -110,7 +110,7 @@ func (me *InterpPrettyPrint) expr(w *bytes.Buffer, expression IExpr, couldBePare
 	default:
 		panic(fmt.Errorf("unknown expression type %T — %#v", expr, expr))
 	}
-	if couldBeParensed && !expression.IsAtomic() {
+	if parensUnlessAtomic && !expression.IsAtomic() {
 		w.WriteRune(')')
 	}
 	return

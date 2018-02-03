@@ -3,15 +3,15 @@ package main
 var srcMod = `
 
 hello =
-  (k0 "Hello") "(discarded)"
+  (k0 "Hello") // "(discarded)"
 
 foo = "bar"
 
 world =
-  (k1 "(ditched)") "World"
+  (k1 "(ditched)") // "World"
 
 
-
+/*
 helloOrWorld h0w1 =
   let foo = h0w1
       h = hello
@@ -19,4 +19,5 @@ helloOrWorld h0w1 =
   in case foo of
     H -> h
     W -> w
+*/
 `

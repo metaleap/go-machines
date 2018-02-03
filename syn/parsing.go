@@ -18,23 +18,26 @@ type Error struct {
 
 func (me *Error) Error() string { return me.msg }
 
-func parseExpr(parent ISyn, tokens []lex.IToken) (IExpr, []lex.IToken, *Error) {
-	if len(tokens) == 0 {
+func parseExpr(parent ISyn, tokens lex.Tokens) (IExpr, lex.Tokens, *Error) {
+	toks, tail := tokens.BreakOnIndent()
+	if len(toks) == 0 {
 		return nil, nil, errPos(lex.Pos(nil, parent, ""), "not enough tokens to form an expression", 0)
 	}
-	expr := parseLit(tokens[0])
-	if expr == nil {
-		switch t := tokens[0].(type) {
-		case *lex.TokenIdent:
-			expr = Id(t.Token)
-		case *lex.TokenOther:
-			expr = Id(t.Token)
-		}
+
+	var expr IExpr
+	sub, subtail, numunclosed := toks.SubTokens("(", ")")
+	if numunclosed > 0 {
+		return nil, nil, errPos(toks[0], "unclosed parens in current indent level", 1)
+	} else if len(sub) > 0 {
+		subexpr, _, suberr := parseExpr(parent, sub)
+		return subexpr, append(subtail, tail...), suberr
 	}
-	tail := tokens
+
+	expr = parseLit(toks[0])
 	if expr != nil {
-		tail = tokens[1:]
+		tail = append(toks[1:], tail...)
 	}
+
 	return expr, tail, nil
 }
 
