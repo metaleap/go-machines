@@ -15,7 +15,7 @@ func writeLn(s string) { _, _ = os.Stdout.WriteString(s + "\n") }
 func main() {
 	mod := &coresyn.SynMod{Defs: core.PreludeDefs}
 	if e := lexAndParse("", srcMod, mod); e != nil {
-		panic(e)
+		println(e.Error())
 	}
 
 	repl, pprint := bufio.NewScanner(os.Stdin), &core.InterpPrettyPrint{}
@@ -52,15 +52,15 @@ func lexAndParse(filePath string, src string, mod *coresyn.SynMod) error {
 	}
 
 	defs, errs_parse := coresyn.ParseDefs(filePath, lexed.SansComments())
-	for _, e := range errs_parse {
-		return e
-	}
-
 	for _, def := range defs {
 		if mod.Defs[def.Name] != nil {
 			println("Redefined: " + def.Name)
 		}
 		mod.Defs[def.Name] = def
+	}
+
+	for _, e := range errs_parse {
+		return e
 	}
 	return nil
 }

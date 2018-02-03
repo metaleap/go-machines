@@ -12,16 +12,16 @@ type SynDef struct {
 }
 
 func ParseDefs(srcFilePath string, tokens lex.Tokens) (defs []*SynDef, errs []*Error) {
-	defs, errs = parseDefs(nil, tokens)
+	defs, errs = parseDefs(tokens)
 	for _, e := range errs {
 		e.Pos.Filename = srcFilePath
 	}
 	return
 }
 
-func parseDefs(parent ISyn, tokens lex.Tokens) (defs []*SynDef, errs []*Error) {
+func parseDefs(tokens lex.Tokens) (defs []*SynDef, errs []*Error) {
 	for len(tokens) > 0 {
-		def, tail, deferr := parseDef(parent, tokens)
+		def, tail, deferr := parseDef(tokens)
 		if tokens = tail; deferr != nil {
 			errs = append(errs, deferr)
 		} else if len(errs) == 0 {
@@ -34,9 +34,9 @@ func parseDefs(parent ISyn, tokens lex.Tokens) (defs []*SynDef, errs []*Error) {
 	return
 }
 
-func parseDef(parent ISyn, tokens lex.Tokens) (*SynDef, lex.Tokens, *Error) {
+func parseDef(tokens lex.Tokens) (*SynDef, lex.Tokens, *Error) {
 	if len(tokens) < 3 {
-		return nil, nil, errPos(lex.Pos(tokens, parent, ""), "not enough tokens to form a definition", 0)
+		return nil, nil, errPos(lex.Pos(tokens, nil, ""), "not enough tokens to form a definition", 0)
 	}
 
 	tid, _ := tokens[0].(*lex.TokenIdent)
@@ -45,7 +45,7 @@ func parseDef(parent ISyn, tokens lex.Tokens) (*SynDef, lex.Tokens, *Error) {
 	}
 
 	i, def := 1, &SynDef{Name: tid.Token}
-	def.syn.pos, def.syn.parent = tid.TokenMeta, parent
+	def.syn.pos = tid.TokenMeta
 
 	// args up until `=`
 	for ; i < len(tokens); i++ {
@@ -60,9 +60,10 @@ func parseDef(parent ISyn, tokens lex.Tokens) (*SynDef, lex.Tokens, *Error) {
 	}
 
 	// body of definition after `=`
-	expr, tail, err := parseExpr(def, tokens[i:])
-	if err != nil {
-		return nil, nil, err
+	body, tail := tokens[i:].BreakOnIndent()
+	expr, exprerr := parseExpr(body)
+	if exprerr != nil {
+		return nil, nil, exprerr
 	}
 	def.Body = expr
 	return def, tail, nil
