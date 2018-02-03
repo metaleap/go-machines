@@ -8,9 +8,10 @@ let h = "Hello" in k0 h "disc\"arded"
 
 
 world =
-  /*let d = "ditched"
-      w = "World"
-  in*/ (k1 d) w
+  let
+    d = "ditched"
+    w = "World"
+    in (k1 d) w
 
 
 

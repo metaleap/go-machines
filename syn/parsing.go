@@ -6,9 +6,11 @@ import (
 
 type Keyword func(lex.Tokens) (IExpr, lex.Tokens, *Error)
 
-var Keywords = map[string]Keyword{
-	"let":  parseKeywordLet,
-	"case": parseKeywordCase,
+var Keywords = map[string]Keyword{}
+
+func init() {
+	Keywords["let"] = parseKeywordLet
+	Keywords["case"] = parseKeywordCase
 }
 
 func ParseDefs(srcFilePath string, tokens lex.Tokens) (defs []*SynDef, errs []*Error) {
@@ -70,7 +72,7 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 	for len(toks) > 0 {
 		var expr IExpr
 
-		if expr == nil { // LIT or IDENT or OP?
+		if expr == nil { // LIT or IDENT or OP or KEYWORD?
 			if lit := parseLit(toks[0]); lit != nil {
 				expr, toks = lit, toks[1:]
 			} else if toth, _ := toks[0].(*lex.TokenOther); toth != nil {
@@ -150,7 +152,23 @@ func parseLit(token lex.IToken) IExpr {
 }
 
 func parseKeywordLet(toks lex.Tokens) (let IExpr, tail lex.Tokens, err *Error) {
-	err = errPos(toks[0], "not yet supported: `let in` keyword", 0)
+	defstoks, bodytoks, numunclosed := toks.BreakOnIdent("in", "let")
+	if numunclosed != 0 {
+		return nil, nil, errPos(toks[0], "missing `in` for some `let`", 0)
+	} else if len(defstoks) == 0 {
+		return nil, nil, errPos(toks[0], "missing definitions between `let` and `in`", 0)
+	} else if len(bodytoks) == 0 {
+		return nil, nil, errPos(toks[0], "missing expression body following `in`", 0)
+	}
+	bodyexpr, bodyerr := parseExpr(bodytoks)
+	if bodyerr != nil {
+		return nil, nil, bodyerr
+	}
+	defsyns, defserrs := parseDefs(defstoks)
+	if len(defserrs) > 0 {
+		return nil, nil, defserrs[0]
+	}
+	tail, let = nil, &ExprLetIn{Body: bodyexpr, Defs: defsyns}
 	return
 }
 
