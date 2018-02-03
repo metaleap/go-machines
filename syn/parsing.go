@@ -114,15 +114,17 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 		}
 
 		if expr == nil { // PARENS SUB-EXPR?
-			sub, subtail, numunclosed := toks.SubTokens("(", ")")
-			if numunclosed > 0 {
-				return nil, errPos(toks[0], "unclosed parens in current indent level", 1)
-			} else if len(sub) == 0 {
-				return nil, errPos(toks[0], "unrecognized syntax", 0)
-			} else if subexpr, suberr := parseExpr(sub); suberr == nil {
-				expr, toks = subexpr, subtail
-			} else {
-				return nil, suberr
+			if tsep, _ := toks[0].(*lex.TokenSep); tsep != nil && tsep.Token == "(" {
+				sub, subtail, numunclosed := toks.SubTokens("(", ")")
+				if numunclosed > 0 {
+					return nil, errPos(toks[0], "unclosed parentheses in current indent level", 1)
+				} else if len(sub) == 0 {
+					return nil, errPos(toks[0], "empty or mis-matched parentheses", 0)
+				} else if subexpr, suberr := parseExpr(sub); suberr == nil {
+					expr, toks = subexpr, subtail
+				} else {
+					return nil, suberr
+				}
 			}
 		}
 
