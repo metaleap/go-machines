@@ -1,12 +1,14 @@
 package clsyn
 
 import (
-	"github.com/go-leap/dev/lex"
+	"text/scanner"
+
+	lex "github.com/go-leap/dev/lex"
 )
 
 type ISyn interface {
 	isExpr() bool
-	Pos() *udevlex.TokenMeta
+	Pos() *lex.TokenMeta
 }
 
 type IExpr interface {
@@ -15,14 +17,14 @@ type IExpr interface {
 }
 
 type syn struct {
-	pos    udevlex.TokenMeta
+	pos    lex.TokenMeta
 	root   *SynMod
 	parent ISyn
 }
 
 func (*syn) isExpr() bool { return false }
 
-func (me *syn) Pos() *udevlex.TokenMeta { return &me.pos }
+func (me *syn) Pos() *lex.TokenMeta { return &me.pos }
 
 type expr struct{ syn }
 
@@ -35,3 +37,15 @@ func (*exprAtomic) IsAtomic() bool { return true }
 type exprComp struct{ expr }
 
 func (*exprComp) IsAtomic() bool { return false }
+
+type Error struct {
+	msg      string
+	Pos      scanner.Position
+	RangeLen int
+}
+
+func errPos(pos lex.IPos, msg string, rangeLen int) *Error {
+	return &Error{Pos: pos.Pos().Position, msg: msg, RangeLen: rangeLen}
+}
+
+func (me *Error) Error() string { return me.msg }

@@ -1,22 +1,69 @@
 package clsyn
 
 import (
-	"text/scanner"
-
 	lex "github.com/go-leap/dev/lex"
 )
 
-func errPos(pos lex.IPos, msg string, rangeLen int) *Error {
-	return &Error{Pos: pos.Pos().Position, msg: msg, RangeLen: rangeLen}
+type Keyword func(lex.Tokens) (IExpr, *Error)
+
+var Keywords = map[string]Keyword{
+	"let":  parseKeywordLet,
+	"case": parseKeywordCase,
 }
 
-type Error struct {
-	msg      string
-	Pos      scanner.Position
-	RangeLen int
+func ParseDefs(srcFilePath string, tokens lex.Tokens) (defs []*SynDef, errs []*Error) {
+	defs, errs = parseDefs(tokens)
+	for _, e := range errs {
+		e.Pos.Filename = srcFilePath
+	}
+	return
 }
 
-func (me *Error) Error() string { return me.msg }
+func parseDefs(tokens lex.Tokens) (defs []*SynDef, errs []*Error) {
+	for len(tokens) > 0 {
+		def, tail, deferr := parseDef(tokens)
+		if tokens = tail; deferr != nil {
+			errs = append(errs, deferr)
+		} else {
+			defs = append(defs, def)
+		}
+	}
+	return
+}
+
+func parseDef(tokens lex.Tokens) (*SynDef, lex.Tokens, *Error) {
+	if len(tokens) < 3 {
+		return nil, nil, errPos(lex.Pos(tokens, nil, ""), "not enough tokens to form a definition", 0)
+	}
+
+	tid, _ := tokens[0].(*lex.TokenIdent)
+	if tid == nil {
+		return nil, nil, errPos(tokens[0], "expected identifier instead of `"+tokens[0].String()+"`", len(tokens[0].String()))
+	}
+
+	i, def := 1, &SynDef{Name: tid.Token}
+	def.syn.pos = tid.TokenMeta
+
+	// args up until `=`
+	for ; i < len(tokens); i++ {
+		if t, _ := tokens[i].(*lex.TokenOther); t != nil && t.Token == "=" {
+			i++
+			break
+		} else if t, _ := tokens[i].(*lex.TokenIdent); t != nil {
+			def.Args = append(def.Args, t.Token)
+		} else {
+			return nil, nil, errPos(tokens[i], def.Name+": expected argument name or `=` instead of `"+tokens[i].String()+"`", len(tokens[i].String()))
+		}
+	}
+
+	// body of definition after `=`
+	body, tail := tokens[i:].BreakOnIndent()
+	expr, exprerr := parseExpr(body)
+	if def.Body = expr; exprerr != nil {
+		exprerr.msg = def.Name + ": " + exprerr.msg
+	}
+	return def, tail, exprerr
+}
 
 func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 	var lastexpr IExpr
@@ -26,10 +73,16 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 		if expr == nil { // LIT or IDENT or OP?
 			if lit := parseLit(toks[0]); lit != nil {
 				expr, toks = lit, toks[1:]
-			} else if tid, _ := toks[0].(*lex.TokenIdent); tid != nil {
-				expr, toks = Id(tid.Token), toks[1:]
 			} else if toth, _ := toks[0].(*lex.TokenOther); toth != nil {
 				expr, toks = IdO(toth.Token), toks[1:]
+			} else if tid, _ := toks[0].(*lex.TokenIdent); tid != nil {
+				if keyword := Keywords[tid.Token]; keyword == nil {
+					expr, toks = Id(tid.Token), toks[1:]
+				} else if kx, ke := keyword(toks[1:]); ke != nil {
+					return nil, ke
+				} else {
+					expr, toks = kx, nil
+				}
 			}
 		}
 
@@ -91,4 +144,14 @@ func parseLit(token lex.IToken) IExpr {
 		return Lt(t.Token)
 	}
 	return nil
+}
+
+func parseKeywordLet(toks lex.Tokens) (let IExpr, err *Error) {
+	err = errPos(toks[0], "not yet supported: `let in` keyword", 0)
+	return
+}
+
+func parseKeywordCase(toks lex.Tokens) (let IExpr, err *Error) {
+	err = errPos(toks[0], "not yet supported: `case of` keyword", 0)
+	return
 }

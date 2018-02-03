@@ -2,13 +2,15 @@ package main
 
 var srcMod = `foo="bar"
 
-moo
-=
-321
-foo = "bar"
+
+hello =
+let h = "Hello" in k0 h "disc\"arded"
+
 
 world =
-  (k1 "ditched") "World" (yo 123)
+  /*let d = "ditched"
+      w = "World"
+  in*/ (k1 d) w
 
 
 
@@ -22,8 +24,5 @@ helloOrWorld h0w1 =
     W -> w
 */
 
-hello =
-  k0 "Hello" "disc\"arded"
-
-
+foo = bar
 `
