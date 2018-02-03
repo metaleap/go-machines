@@ -72,6 +72,31 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 	for len(toks) > 0 {
 		var expr IExpr
 
+		if expr == nil { // LAMBDA?
+			if tlam, _ := toks[0].(*lex.TokenOther); tlam != nil && tlam.Token == "\\" {
+				toks = toks[1:]
+				lamargs, lambody := toks.BreakOnOther("->")
+				if len(lambody) == 0 {
+					return nil, errPos(toks[0], "missing body for lambda expression", 0)
+				} else if len(lamargs) == 0 {
+					return nil, errPos(toks[0], "missing argument(s) for lambda expression", 0)
+				}
+				lam := Ab(nil, nil)
+				for _, lamarg := range lamargs {
+					if tid, _ := lamarg.(*lex.TokenIdent); tid != nil {
+						lam.Args = append(lam.Args, tid.Token)
+					} else {
+						return nil, errPos(lamarg, "expected identifier for lambda argument instead of `"+lamarg.String()+"`", len(lamarg.String()))
+					}
+				}
+				lamexpr, lamerr := parseExpr(lambody)
+				if lam.Body = lamexpr; lamerr != nil {
+					return nil, lamerr
+				}
+				expr, toks = lam, nil
+			}
+		}
+
 		if expr == nil { // LIT or IDENT or OP or KEYWORD?
 			if lit := parseLit(toks[0]); lit != nil {
 				expr, toks = lit, toks[1:]
@@ -88,31 +113,6 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 			}
 		}
 
-		if expr == nil { // LAMBDA?
-			if tlam, _ := toks[0].(*lex.TokenOther); tlam != nil && tlam.Token == "\\" {
-				lam := Ab(nil, nil)
-				lamargs, lambody := toks.BreakOnOther("->")
-				if len(lambody) == 0 {
-					return nil, errPos(toks[0], "missing body for lambda expression", 0)
-				}
-				if len(lamargs) == 0 {
-					return nil, errPos(toks[0], "missing argument(s) for lambda expression", 0)
-				}
-				for _, lamarg := range lamargs {
-					if tid, _ := lamarg.(*lex.TokenIdent); tid != nil {
-						lam.Args = append(lam.Args, tid.Token)
-					} else {
-						return nil, errPos(lamarg, "expected identifier for lambda argument instead of `"+lamarg.String()+"`", len(lamarg.String()))
-					}
-				}
-				lamexpr, lamerr := parseExpr(lambody)
-				if lam.Body = lamexpr; lamerr != nil {
-					return nil, lamerr
-				}
-				expr, toks = lam, nil
-			}
-		}
-
 		if expr == nil { // PARENS SUB-EXPR?
 			sub, subtail, numunclosed := toks.SubTokens("(", ")")
 			if numunclosed > 0 {
@@ -126,8 +126,9 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 			}
 		}
 
-		// NEXT
-		if lastexpr == nil {
+		if expr == nil { // should already have returned by now — if this message shows up, indicates a bug somewhere above
+			return nil, errPos(toks[0], "expression expected", 0)
+		} else if lastexpr == nil {
 			lastexpr = expr
 		} else {
 			lastexpr = Ap(lastexpr, expr)
