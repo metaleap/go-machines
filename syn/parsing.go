@@ -4,7 +4,7 @@ import (
 	lex "github.com/go-leap/dev/lex"
 )
 
-type Keyword func(lex.Tokens) (IExpr, *Error)
+type Keyword func(lex.Tokens) (IExpr, lex.Tokens, *Error)
 
 var Keywords = map[string]Keyword{
 	"let":  parseKeywordLet,
@@ -78,10 +78,10 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 			} else if tid, _ := toks[0].(*lex.TokenIdent); tid != nil {
 				if keyword := Keywords[tid.Token]; keyword == nil {
 					expr, toks = Id(tid.Token), toks[1:]
-				} else if kx, ke := keyword(toks[1:]); ke != nil {
+				} else if kx, kt, ke := keyword(toks[1:]); ke != nil {
 					return nil, ke
 				} else {
-					expr, toks = kx, nil
+					expr, toks = kx, kt
 				}
 			}
 		}
@@ -92,6 +92,9 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 				lamargs, lambody := toks.BreakOnOther("->")
 				if len(lambody) == 0 {
 					return nil, errPos(toks[0], "missing body for lambda expression", 0)
+				}
+				if len(lamargs) == 0 {
+					return nil, errPos(toks[0], "missing argument(s) for lambda expression", 0)
 				}
 				for _, lamarg := range lamargs {
 					if tid, _ := lamarg.(*lex.TokenIdent); tid != nil {
@@ -146,12 +149,12 @@ func parseLit(token lex.IToken) IExpr {
 	return nil
 }
 
-func parseKeywordLet(toks lex.Tokens) (let IExpr, err *Error) {
+func parseKeywordLet(toks lex.Tokens) (let IExpr, tail lex.Tokens, err *Error) {
 	err = errPos(toks[0], "not yet supported: `let in` keyword", 0)
 	return
 }
 
-func parseKeywordCase(toks lex.Tokens) (let IExpr, err *Error) {
+func parseKeywordCase(toks lex.Tokens) (let IExpr, tail lex.Tokens, err *Error) {
 	err = errPos(toks[0], "not yet supported: `case of` keyword", 0)
 	return
 }

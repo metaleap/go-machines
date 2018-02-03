@@ -1,6 +1,6 @@
 package main
 
-var srcMod = `foo="bar"
+var srcMod = `foo=bar
 
 
 hello =
@@ -24,5 +24,5 @@ helloOrWorld h0w1 =
     W -> w
 */
 
-foo = bar
+moo = "bar"
 `
