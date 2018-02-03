@@ -46,12 +46,12 @@ func lexAndParse(filePath string, src string, mod *coresyn.SynMod) error {
 	if filePath == "" {
 		filePath = "dummy-mod-src.go"
 	}
-	lexed, errs_lex := udevlex.Lex(filePath, src)
+	lexed, errs_lex := udevlex.Lex(filePath, src, "(", ")")
 	for _, e := range errs_lex {
 		return e
 	}
 
-	defs, errs_parse := coresyn.ParseDefs(filePath, coresyn.LexedTokensToTopLevelChunks(lexed))
+	defs, errs_parse := coresyn.ParseDefs(filePath, nil, lexed)
 	for _, e := range errs_parse {
 		return e
 	}

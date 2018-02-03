@@ -3,10 +3,10 @@ package clsyn
 import (
 	"text/scanner"
 
-	"github.com/go-leap/dev/lex"
+	lex "github.com/go-leap/dev/lex"
 )
 
-func errPos(pos udevlex.IPos, msg string, rangeLen int) *Error {
+func errPos(pos lex.IPos, msg string, rangeLen int) *Error {
 	return &Error{Pos: pos.Pos().Position, msg: msg, RangeLen: rangeLen}
 }
 
@@ -18,16 +18,16 @@ type Error struct {
 
 func (me *Error) Error() string { return me.msg }
 
-func parseExpr(parent ISyn, tokens []udevlex.IToken) (IExpr, []udevlex.IToken, *Error) {
+func parseExpr(parent ISyn, tokens []lex.IToken) (IExpr, []lex.IToken, *Error) {
 	if len(tokens) == 0 {
-		return nil, nil, errPos(udevlex.Pos(nil, parent, ""), "not enough tokens to form an expression", 0)
+		return nil, nil, errPos(lex.Pos(nil, parent, ""), "not enough tokens to form an expression", 0)
 	}
 	expr := parseLit(tokens[0])
 	if expr == nil {
 		switch t := tokens[0].(type) {
-		case *udevlex.TokenIdent:
+		case *lex.TokenIdent:
 			expr = Id(t.Token)
-		case *udevlex.TokenOther:
+		case *lex.TokenOther:
 			expr = Id(t.Token)
 		}
 	}
@@ -38,15 +38,15 @@ func parseExpr(parent ISyn, tokens []udevlex.IToken) (IExpr, []udevlex.IToken, *
 	return expr, tail, nil
 }
 
-func parseLit(token udevlex.IToken) IExpr {
+func parseLit(token lex.IToken) IExpr {
 	switch t := token.(type) {
-	case *udevlex.TokenFloat:
+	case *lex.TokenFloat:
 		return Lf(t.Token)
-	case *udevlex.TokenUint:
+	case *lex.TokenUint:
 		return Lu(t.Token, t.Base)
-	case *udevlex.TokenRune:
+	case *lex.TokenRune:
 		return Lr(t.Token)
-	case *udevlex.TokenStr:
+	case *lex.TokenStr:
 		return Lt(t.Token)
 	}
 	return nil
