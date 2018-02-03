@@ -35,8 +35,8 @@ func main() {
 					srcfmt, _ := pprint.Def(mod.Defs[readln])
 					writeLn(srcfmt.(string))
 				}
-			} else {
-				println("coming soon..")
+			} else if e := lexAndParse("<input>", readln, mod); e != nil {
+				println(e.Error())
 			}
 		}
 	}
