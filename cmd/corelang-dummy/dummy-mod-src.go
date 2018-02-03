@@ -1,14 +1,16 @@
 package main
 
-var srcMod = `
+var srcMod = `foo="bar"
 
-hello =
-  (k0 "Hello") // "(discarded)"
+moo=321`
+
+var foosrcMod = `
 
 foo = "bar"
 
 world =
   (k1 "(ditched)") // "World"
+
 
 
 /*
@@ -20,4 +22,9 @@ helloOrWorld h0w1 =
     H -> h
     W -> w
 */
+
+hello =
+  k0 "Hello" // "(discarded)"
+
+
 `

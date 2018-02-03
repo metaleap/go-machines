@@ -1,6 +1,7 @@
 package clsyn
 
 func Id(name string) *ExprIdent                { return &ExprIdent{Val: name} }
+func IdO(name string) *ExprIdent               { return &ExprIdent{Val: name, OpLike: true} }
 func Lf(lit float64) *ExprLitFloat             { return &ExprLitFloat{Val: lit} }
 func Lu(lit uint64, origBase int) *ExprLitUInt { return &ExprLitUInt{Val: lit, Base: origBase} }
 func Lr(lit rune) *ExprLitRune                 { return &ExprLitRune{Val: lit} }
@@ -8,7 +9,8 @@ func Lt(lit string) *ExprLitText               { return &ExprLitText{Val: lit} }
 
 type ExprIdent struct {
 	exprAtomic
-	Val string
+	Val    string
+	OpLike bool
 }
 
 type ExprLitFloat struct {

@@ -1,8 +1,6 @@
 package clsyn
 
 import (
-	"fmt"
-
 	lex "github.com/go-leap/dev/lex"
 )
 
@@ -43,7 +41,7 @@ func parseDef(parent ISyn, tokens lex.Tokens) (*SynDef, lex.Tokens, *Error) {
 
 	tid, _ := tokens[0].(*lex.TokenIdent)
 	if tid == nil {
-		return nil, nil, errPos(tokens[0], fmt.Sprintf("expected identifier instead of `%s`", tokens[0]), len(tokens[0].String()))
+		return nil, nil, errPos(tokens[0], "expected identifier instead of `"+tokens[0].String()+"`", len(tokens[0].String()))
 	}
 
 	i, def := 1, &SynDef{Name: tid.Token}
@@ -57,7 +55,7 @@ func parseDef(parent ISyn, tokens lex.Tokens) (*SynDef, lex.Tokens, *Error) {
 		} else if t, _ := tokens[i].(*lex.TokenIdent); t != nil {
 			def.Args = append(def.Args, t.Token)
 		} else {
-			return nil, nil, errPos(tokens[i], fmt.Sprintf("expected argument name or `=` instead of `%s`", tokens[i]), len(tokens[i].String()))
+			return nil, nil, errPos(tokens[i], "expected argument name or `=` instead of `"+tokens[i].String()+"`", len(tokens[i].String()))
 		}
 	}
 
