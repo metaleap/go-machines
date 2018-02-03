@@ -77,15 +77,18 @@ func (me *InterpPrettyPrint) expr(w *bytes.Buffer, expression IExpr, parensUnles
 	case *ExprLetIn:
 		w.WriteString("let\n")
 		me.curIndent++
-		w.WriteString(strings.Repeat("  ", me.curIndent))
 		for _, letdef := range expr.Defs {
+			w.WriteString(strings.Repeat("  ", me.curIndent))
 			me.def(w, letdef)
 			w.WriteRune('\n')
-			w.WriteString(strings.Repeat("  ", me.curIndent))
 		}
 		me.curIndent--
-		w.WriteString("in ")
+		w.WriteString(strings.Repeat("  ", me.curIndent))
+		w.WriteString("in\n")
+		me.curIndent++
+		w.WriteString(strings.Repeat("  ", me.curIndent))
 		me.expr(w, expr.Body, false)
+		me.curIndent--
 	case *ExprCtor:
 		w.WriteString("Pack{")
 		w.WriteString(strconv.Itoa(expr.Tag))

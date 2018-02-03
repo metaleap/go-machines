@@ -13,6 +13,10 @@ func init() {
 	Keywords["case"] = parseKeywordCase
 }
 
+func Lex(srcFilePath string, src string) (lex.Tokens, []*lex.Error) {
+	return lex.Lex(srcFilePath, src, true, "(", ")", "\\")
+}
+
 func ParseDefs(srcFilePath string, tokens lex.Tokens) (defs []*SynDef, errs []*Error) {
 	defs, errs = parseDefs(tokens)
 	for _, e := range errs {
@@ -43,24 +47,32 @@ func parseDef(tokens lex.Tokens) (*SynDef, lex.Tokens, *Error) {
 		return nil, nil, errPos(tokens[0], "expected identifier instead of `"+tokens[0].String()+"`", len(tokens[0].String()))
 	}
 
-	i, def := 1, &SynDef{Name: tid.Token}
+	toks, tail := tokens[1:].BreakOnIndent(tid.LineIndent)
+	if len(toks) < 2 {
+		return nil, nil, errPos(tid, "not enough tokens to form a definition", len(tid.Token))
+	}
+
+	i, def := 0, &SynDef{Name: tid.Token}
 	def.syn.pos = tid.TokenMeta
 
 	// args up until `=`
-	for ; i < len(tokens); i++ {
-		if t, _ := tokens[i].(*lex.TokenOther); t != nil && t.Token == "=" {
+	for ; i < len(toks); i++ {
+		if t, _ := toks[i].(*lex.TokenOther); t != nil && t.Token == "=" {
 			i++
 			break
-		} else if t, _ := tokens[i].(*lex.TokenIdent); t != nil {
+		} else if t, _ := toks[i].(*lex.TokenIdent); t != nil {
 			def.Args = append(def.Args, t.Token)
 		} else {
-			return nil, nil, errPos(tokens[i], def.Name+": expected argument name or `=` instead of `"+tokens[i].String()+"`", len(tokens[i].String()))
+			return nil, nil, errPos(toks[i], def.Name+": expected argument name or `=` instead of `"+toks[i].String()+"`", len(toks[i].String()))
 		}
 	}
 
 	// body of definition after `=`
-	body, tail := tokens[i:].BreakOnIndent()
-	expr, exprerr := parseExpr(body)
+	bodytoks := toks[i:]
+	if len(bodytoks) == 0 {
+		return nil, nil, errPos(toks[len(toks)-1], def.Name+": missing body of definition", 0)
+	}
+	expr, exprerr := parseExpr(toks[i:])
 	if def.Body = expr; exprerr != nil {
 		exprerr.msg = def.Name + ": " + exprerr.msg
 	}
@@ -73,12 +85,12 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 		var expr IExpr
 
 		if expr == nil { // LAMBDA?
-			if tlam, _ := toks[0].(*lex.TokenOther); tlam != nil && tlam.Token == "\\" {
-				toks = toks[1:]
+			if tlam, _ := toks[0].(*lex.TokenSep); tlam != nil && tlam.Token == "\\" {
+				if toks = toks[1:]; len(toks) == 0 {
+					return nil, errPos(tlam, "expected complete lambda abstraction", 0)
+				}
 				lamargs, lambody := toks.BreakOnOther("->")
-				if len(lambody) == 0 {
-					return nil, errPos(toks[0], "missing body for lambda expression", 0)
-				} else if len(lamargs) == 0 {
+				if len(lamargs) == 0 {
 					return nil, errPos(toks[0], "missing argument(s) for lambda expression", 0)
 				}
 				lam := Ab(nil, nil)
@@ -86,8 +98,11 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 					if tid, _ := lamarg.(*lex.TokenIdent); tid != nil {
 						lam.Args = append(lam.Args, tid.Token)
 					} else {
-						return nil, errPos(lamarg, "expected identifier for lambda argument instead of `"+lamarg.String()+"`", len(lamarg.String()))
+						return nil, errPos(lamarg, "expected `->` or identifier for lambda argument instead of `"+lamarg.String()+"`", len(lamarg.String()))
 					}
+				}
+				if len(lambody) == 0 {
+					return nil, errPos(toks[0], "missing body for lambda expression", 0)
 				}
 				lamexpr, lamerr := parseExpr(lambody)
 				if lam.Body = lamexpr; lamerr != nil {
@@ -103,9 +118,9 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 			} else if toth, _ := toks[0].(*lex.TokenOther); toth != nil {
 				expr, toks = IdO(toth.Token), toks[1:]
 			} else if tid, _ := toks[0].(*lex.TokenIdent); tid != nil {
-				if keyword := Keywords[tid.Token]; keyword == nil {
+				if keyword := Keywords[tid.Token]; keyword == nil || len(toks) == 1 {
 					expr, toks = Id(tid.Token), toks[1:]
-				} else if kx, kt, ke := keyword(toks[1:]); ke != nil {
+				} else if kx, kt, ke := keyword(toks); ke != nil {
 					return nil, ke
 				} else {
 					expr, toks = kx, kt
@@ -129,7 +144,7 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 		}
 
 		if expr == nil { // should already have returned by now — if this message shows up, indicates a bug somewhere above
-			return nil, errPos(toks[0], "expression expected", 0)
+			return nil, errPos(toks[0], "could not parse as expression", 0)
 		} else if lastexpr == nil {
 			lastexpr = expr
 		} else {
@@ -154,18 +169,22 @@ func parseLit(token lex.IToken) IExpr {
 	return nil
 }
 
-func parseKeywordLet(toks lex.Tokens) (let IExpr, tail lex.Tokens, err *Error) {
+func parseKeywordLet(tokens lex.Tokens) (let IExpr, tail lex.Tokens, err *Error) {
+	toks := tokens[1:] // tokens[0] is `let` keyword itself
 	defstoks, bodytoks, numunclosed := toks.BreakOnIdent("in", "let")
 	if numunclosed != 0 {
 		return nil, nil, errPos(toks[0], "missing `in` for some `let`", 0)
-	} else if len(defstoks) == 0 {
-		return nil, nil, errPos(toks[0], "missing definitions between `let` and `in`", 0)
 	} else if len(bodytoks) == 0 {
 		return nil, nil, errPos(toks[0], "missing expression body following `in`", 0)
+	} else if len(defstoks) == 0 {
+		return nil, nil, errPos(toks[0], "missing definitions between `let` and `in`", 0)
 	}
 	bodyexpr, bodyerr := parseExpr(bodytoks)
 	if bodyerr != nil {
 		return nil, nil, bodyerr
+	}
+	if def0, lkwd := defstoks[0].Meta(), tokens[0].Meta(); def0.Line == lkwd.Line {
+		def0.LineIndent += (def0.Column - lkwd.Column) // typically 4, ie. len("let ")
 	}
 	defsyns, defserrs := parseDefs(defstoks)
 	if len(defserrs) > 0 {

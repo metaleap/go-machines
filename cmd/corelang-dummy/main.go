@@ -5,7 +5,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/go-leap/dev/lex"
 	core "github.com/metaleap/go-corelang"
 	coresyn "github.com/metaleap/go-corelang/syn"
 )
@@ -46,7 +45,7 @@ func lexAndParse(filePath string, src string, mod *coresyn.SynMod) error {
 	if filePath == "" {
 		filePath = "dummy-mod-src.go"
 	}
-	lexed, errs_lex := udevlex.Lex(filePath, src, "(", ")")
+	lexed, errs_lex := coresyn.Lex(filePath, src)
 	for _, e := range errs_lex {
 		return e
 	}
