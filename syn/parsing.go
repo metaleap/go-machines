@@ -189,6 +189,7 @@ func parseKeywordLet(tokens lex.Tokens) (IExpr, lex.Tokens, *Error) {
 	if bodyerr != nil {
 		return nil, nil, bodyerr
 	}
+
 	if def0, lkwd := defstoks[0].Meta(), tokens[0].Meta(); def0.Line == lkwd.Line {
 		def0.LineIndent += (def0.Column - lkwd.Column) // typically 4, ie. len("let ")
 	}
@@ -199,7 +200,22 @@ func parseKeywordLet(tokens lex.Tokens) (IExpr, lex.Tokens, *Error) {
 	return &ExprLetIn{Body: bodyexpr, Defs: defsyns}, nil, nil
 }
 
-func parseKeywordCase(toks lex.Tokens) (let IExpr, tail lex.Tokens, err *Error) {
-	err = errPos(toks[0], "not yet supported: `case of` keyword", 0)
-	return
+func parseKeywordCase(tokens lex.Tokens) (let IExpr, tail lex.Tokens, err *Error) {
+	toks := tokens[1:] // tokens[0] is `case` keyword itself
+	scruttoks, altstoks, numunclosed := toks.BreakOnIdent("of", "case")
+	if numunclosed != 0 || (len(scruttoks) == 0 && len(altstoks) == 0) {
+		return nil, nil, errPos(toks[0], "missing `of` for some `case`", 0)
+	} else if len(scruttoks) == 0 {
+		return nil, nil, errPos(toks[0], "missing scrutinee between `case` and `of`", 0)
+	} else if len(altstoks) == 0 {
+		return nil, nil, errPos(toks[0], "missing case alternatives following `of`", 0)
+	}
+
+	scrutexpr, scruterr := parseExpr(scruttoks)
+	if scruterr != nil {
+		return nil, nil, scruterr
+	}
+	caseof := &ExprCaseOf{Scrut: scrutexpr}
+
+	return caseof, nil, errPos(tokens[0], "not yet implemented: `case` keyword", 4)
 }
