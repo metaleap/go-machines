@@ -79,6 +79,20 @@ func parseDef(tokens lex.Tokens) (*SynDef, lex.Tokens, *Error) {
 	return def, tail, exprerr
 }
 
+func parseLit(token lex.IToken) IExpr {
+	switch t := token.(type) {
+	case *lex.TokenFloat:
+		return Lf(t.Token)
+	case *lex.TokenUint:
+		return Lu(t.Token, t.Base)
+	case *lex.TokenRune:
+		return Lr(t.Token)
+	case *lex.TokenStr:
+		return Lt(t.Token)
+	}
+	return nil
+}
+
 func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 	var lastexpr IExpr
 	for len(toks) > 0 {
@@ -143,42 +157,34 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 			}
 		}
 
-		if expr == nil { // should already have returned by now — if this message shows up, indicates a bug somewhere above
-			return nil, errPos(toks[0], "could not parse as expression", 0)
+		if expr == nil { // should already have early-returned-with-error by now: if this message shows up, indicates earlier validations above are unacceptably not exhaustive
+			return nil, errPos(toks[0], "not an expression: "+toks[0].String(), 0)
 		} else if lastexpr == nil {
 			lastexpr = expr
 		} else {
+			if ctortag, _ := lastexpr.(*ExprLitUInt); ctortag != nil {
+				if ctorarity, _ := expr.(*ExprLitUInt); ctorarity != nil {
+					lastexpr = Ct(ctortag.Val, ctorarity.Val)
+					continue
+				}
+			}
 			lastexpr = Ap(lastexpr, expr)
 		}
-	}
-
+	} // big for-loop
 	return lastexpr, nil
 }
 
-func parseLit(token lex.IToken) IExpr {
-	switch t := token.(type) {
-	case *lex.TokenFloat:
-		return Lf(t.Token)
-	case *lex.TokenUint:
-		return Lu(t.Token, t.Base)
-	case *lex.TokenRune:
-		return Lr(t.Token)
-	case *lex.TokenStr:
-		return Lt(t.Token)
-	}
-	return nil
-}
-
-func parseKeywordLet(tokens lex.Tokens) (let IExpr, tail lex.Tokens, err *Error) {
+func parseKeywordLet(tokens lex.Tokens) (IExpr, lex.Tokens, *Error) {
 	toks := tokens[1:] // tokens[0] is `let` keyword itself
 	defstoks, bodytoks, numunclosed := toks.BreakOnIdent("in", "let")
-	if numunclosed != 0 {
+	if numunclosed != 0 || (len(defstoks) == 0 && len(bodytoks) == 0) {
 		return nil, nil, errPos(toks[0], "missing `in` for some `let`", 0)
-	} else if len(bodytoks) == 0 {
-		return nil, nil, errPos(toks[0], "missing expression body following `in`", 0)
 	} else if len(defstoks) == 0 {
 		return nil, nil, errPos(toks[0], "missing definitions between `let` and `in`", 0)
+	} else if len(bodytoks) == 0 {
+		return nil, nil, errPos(toks[0], "missing expression body following `in`", 0)
 	}
+
 	bodyexpr, bodyerr := parseExpr(bodytoks)
 	if bodyerr != nil {
 		return nil, nil, bodyerr
@@ -190,8 +196,7 @@ func parseKeywordLet(tokens lex.Tokens) (let IExpr, tail lex.Tokens, err *Error)
 	if len(defserrs) > 0 {
 		return nil, nil, defserrs[0]
 	}
-	tail, let = nil, &ExprLetIn{Body: bodyexpr, Defs: defsyns}
-	return
+	return &ExprLetIn{Body: bodyexpr, Defs: defsyns}, nil, nil
 }
 
 func parseKeywordCase(toks lex.Tokens) (let IExpr, tail lex.Tokens, err *Error) {

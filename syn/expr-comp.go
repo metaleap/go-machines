@@ -2,13 +2,13 @@ package clsyn
 
 func Ap(callee IExpr, arg IExpr) *ExprCall            { return &ExprCall{Callee: callee, Arg: arg} }
 func Ab(args []string, body IExpr) *ExprLambda        { return &ExprLambda{Args: args, Body: body} }
-func Ct(tag int, arity int) *ExprCtor                 { return &ExprCtor{Tag: tag, Arity: arity} }
+func Ct(tag uint64, arity uint64) *ExprCtor           { return &ExprCtor{Tag: tag, Arity: arity} }
 func Co(scrut IExpr, alts ...*SynCaseAlt) *ExprCaseOf { return &ExprCaseOf{Scrut: scrut, Alts: alts} }
 
 type ExprCtor struct {
 	exprComp
-	Tag   int
-	Arity int
+	Tag   uint64
+	Arity uint64
 }
 
 type ExprCall struct {

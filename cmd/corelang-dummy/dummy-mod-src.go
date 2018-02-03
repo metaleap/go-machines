@@ -3,13 +3,13 @@ package main
 var srcMod = `foo=bar
 
 
-hello =let h = "Hello" in k0 h "disc\"arded"
+hello=let h = "Hello" in k0 h "disc\"arded"
 
 
 world =
-  let d = "ditched"
-      w _ = "World"
-  in (k1 d) (w '?')
+  let d _ = "ditched"
+      w = "World"
+  in k1 (d '?') w
 
 
 

@@ -90,11 +90,11 @@ func (me *InterpPrettyPrint) expr(w *bytes.Buffer, expression IExpr, parensUnles
 		me.expr(w, expr.Body, false)
 		me.curIndent--
 	case *ExprCtor:
-		w.WriteString("Pack{")
-		w.WriteString(strconv.Itoa(expr.Tag))
-		w.WriteRune(',')
-		w.WriteString(strconv.Itoa(expr.Arity))
-		w.WriteRune('}')
+		w.WriteRune('(')
+		w.WriteString(strconv.FormatUint(expr.Tag, 10))
+		w.WriteRune(' ')
+		w.WriteString(strconv.FormatUint(expr.Arity, 10))
+		w.WriteRune(')')
 	case *ExprCaseOf:
 		w.WriteString("case ")
 		me.expr(w, expr.Scrut, false)
