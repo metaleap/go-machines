@@ -1,16 +1,26 @@
 package clsyn
 
 import (
+	"strings"
+
 	lex "github.com/go-leap/dev/lex"
 )
 
 type Keyword func(lex.Tokens) (IExpr, lex.Tokens, *Error)
 
-var Keywords = map[string]Keyword{}
+var keywords = map[string]Keyword{}
 
 func init() {
-	Keywords["let"] = parseKeywordLet
-	Keywords["case"] = parseKeywordCase
+	RegisterKeyword("LET", parseKeywordLet)
+	RegisterKeyword("CASE", parseKeywordCase)
+}
+
+func RegisterKeyword(triggerWord string, keyword Keyword) string {
+	if triggerWord = strings.ToUpper(strings.TrimSpace(triggerWord)); triggerWord != "" && keyword != nil && keywords[triggerWord] == nil {
+		keywords[triggerWord] = keyword
+		return triggerWord
+	}
+	return ""
 }
 
 func Lex(srcFilePath string, src string) (lex.Tokens, []*lex.Error) {
@@ -132,7 +142,7 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 			} else if toth, _ := toks[0].(*lex.TokenOther); toth != nil {
 				expr, toks = IdO(toth.Token), toks[1:]
 			} else if tid, _ := toks[0].(*lex.TokenIdent); tid != nil {
-				if keyword := Keywords[tid.Token]; keyword == nil || len(toks) == 1 {
+				if keyword := keywords[tid.Token]; keyword == nil || len(toks) == 1 {
 					expr, toks = Id(tid.Token), toks[1:]
 				} else if kx, kt, ke := keyword(toks); ke != nil {
 					return nil, ke
@@ -175,14 +185,14 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 }
 
 func parseKeywordLet(tokens lex.Tokens) (IExpr, lex.Tokens, *Error) {
-	toks := tokens[1:] // tokens[0] is `let` keyword itself
-	defstoks, bodytoks, numunclosed := toks.BreakOnIdent("in", "let")
+	toks := tokens[1:] // tokens[0] is `LET` keyword itself
+	defstoks, bodytoks, numunclosed := toks.BreakOnIdent("IN", "LET")
 	if numunclosed != 0 || (len(defstoks) == 0 && len(bodytoks) == 0) {
-		return nil, nil, errPos(toks[0], "missing `in` for some `let`", 0)
+		return nil, nil, errPos(toks[0], "missing `IN` for some `LET`", 0)
 	} else if len(defstoks) == 0 {
-		return nil, nil, errPos(toks[0], "missing definitions between `let` and `in`", 0)
+		return nil, nil, errPos(toks[0], "missing definitions between `LET` and `IN`", 0)
 	} else if len(bodytoks) == 0 {
-		return nil, nil, errPos(toks[0], "missing expression body following `in`", 0)
+		return nil, nil, errPos(toks[0], "missing expression body following `IN`", 0)
 	}
 
 	bodyexpr, bodyerr := parseExpr(bodytoks)
@@ -191,7 +201,7 @@ func parseKeywordLet(tokens lex.Tokens) (IExpr, lex.Tokens, *Error) {
 	}
 
 	if def0, lkwd := defstoks[0].Meta(), tokens[0].Meta(); def0.Line == lkwd.Line {
-		def0.LineIndent += (def0.Column - lkwd.Column) // typically 4, ie. len("let ")
+		def0.LineIndent += (def0.Column - lkwd.Column) // typically 4, ie. len("LET ")
 	}
 	defsyns, defserrs := parseDefs(defstoks)
 	if len(defserrs) > 0 {
@@ -201,14 +211,14 @@ func parseKeywordLet(tokens lex.Tokens) (IExpr, lex.Tokens, *Error) {
 }
 
 func parseKeywordCase(tokens lex.Tokens) (let IExpr, tail lex.Tokens, err *Error) {
-	toks := tokens[1:] // tokens[0] is `case` keyword itself
-	scruttoks, altstoks, numunclosed := toks.BreakOnIdent("of", "case")
+	toks := tokens[1:] // tokens[0] is `CASE` keyword itself
+	scruttoks, altstoks, numunclosed := toks.BreakOnIdent("OF", "CASE")
 	if numunclosed != 0 || (len(scruttoks) == 0 && len(altstoks) == 0) {
-		return nil, nil, errPos(toks[0], "missing `of` for some `case`", 0)
+		return nil, nil, errPos(toks[0], "missing `OF` for some `CASE`", 0)
 	} else if len(scruttoks) == 0 {
-		return nil, nil, errPos(toks[0], "missing scrutinee between `case` and `of`", 0)
+		return nil, nil, errPos(toks[0], "missing scrutinee between `CASE` and `OF`", 0)
 	} else if len(altstoks) == 0 {
-		return nil, nil, errPos(toks[0], "missing case alternatives following `of`", 0)
+		return nil, nil, errPos(toks[0], "missing `CASE` alternatives following `OF`", 0)
 	}
 
 	scrutexpr, scruterr := parseExpr(scruttoks)
@@ -217,5 +227,5 @@ func parseKeywordCase(tokens lex.Tokens) (let IExpr, tail lex.Tokens, err *Error
 	}
 	caseof := &ExprCaseOf{Scrut: scrutexpr}
 
-	return caseof, nil, errPos(tokens[0], "not yet implemented: `case` keyword", 4)
+	return caseof, nil, errPos(tokens[0], "not yet implemented: `CASE` keyword", 4)
 }

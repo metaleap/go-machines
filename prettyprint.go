@@ -75,7 +75,7 @@ func (me *InterpPrettyPrint) expr(w *bytes.Buffer, expression IExpr, parensUnles
 		w.WriteRune(' ')
 		me.expr(w, expr.Arg, true)
 	case *ExprLetIn:
-		w.WriteString("let\n")
+		w.WriteString("LET\n")
 		me.curIndent++
 		for _, letdef := range expr.Defs {
 			w.WriteString(strings.Repeat("  ", me.curIndent))
@@ -84,7 +84,7 @@ func (me *InterpPrettyPrint) expr(w *bytes.Buffer, expression IExpr, parensUnles
 		}
 		me.curIndent--
 		w.WriteString(strings.Repeat("  ", me.curIndent))
-		w.WriteString("in\n")
+		w.WriteString("IN\n")
 		me.curIndent++
 		w.WriteString(strings.Repeat("  ", me.curIndent))
 		me.expr(w, expr.Body, false)
@@ -96,9 +96,9 @@ func (me *InterpPrettyPrint) expr(w *bytes.Buffer, expression IExpr, parensUnles
 		w.WriteString(strconv.FormatUint(expr.Arity, 10))
 		w.WriteRune(')')
 	case *ExprCaseOf:
-		w.WriteString("case ")
+		w.WriteString("CASE ")
 		me.expr(w, expr.Scrut, false)
-		w.WriteString(" of\n")
+		w.WriteString(" OF\n")
 		me.curIndent++
 		w.WriteString(strings.Repeat("  ", me.curIndent))
 		for _, alt := range expr.Alts {

@@ -3,22 +3,22 @@ package main
 var srcMod = `foo=bar
 
 
-hello=let h = "Hello" in k0 h "disc\"arded"
+hello=LET h = "Hello" IN k0 h "disc\"arded"
 
 
 world =
-  let d _ = "ditched"
+  LET d _ = "ditched"
       w = "World"
-  in k1 (d '?') w
+  IN k1 (d '?') w
 
 
 
 /*
 helloOrWorld h0w1 =
-  let foo = h0w1
+  LET foo = h0w1
       h = hello
       w = world
-  in case foo of
+  IN CASE foo OF
     H -> h
     W -> w
 */
