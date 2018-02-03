@@ -52,6 +52,11 @@ func (me *InterpPrettyPrint) expr(w *bytes.Buffer, expression IExpr, couldBePare
 	case *ExprLitFloat:
 		w.WriteString(strconv.FormatFloat(expr.Val, 'g', -1, 64))
 	case *ExprLitUInt:
+		if expr.Base == 16 {
+			w.WriteString("0x")
+		} else if expr.Base == 8 {
+			w.WriteRune('0')
+		}
 		w.WriteString(strconv.FormatUint(expr.Val, expr.Base))
 	case *ExprLitText:
 		w.WriteString(strconv.Quote(expr.Val))
