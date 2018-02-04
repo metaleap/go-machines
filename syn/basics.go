@@ -44,8 +44,12 @@ type Error struct {
 	RangeLen int
 }
 
-func errPos(pos lex.IPos, msg string, rangeLen int) *Error {
-	return &Error{Pos: pos.Pos().Position, msg: msg, RangeLen: rangeLen}
+func errPos(pos *scanner.Position, msg string, rangeLen int) *Error {
+	return &Error{Pos: *pos, msg: msg, RangeLen: rangeLen}
+}
+
+func errTok(tok lex.IToken, msg string) *Error {
+	return errPos(&tok.Meta().Position, msg, len(tok.String()))
 }
 
 func (me *Error) Error() string { return me.msg }

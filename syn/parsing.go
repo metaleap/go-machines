@@ -50,16 +50,16 @@ func parseDefs(tokens lex.Tokens) (defs []*SynDef, errs []*Error) {
 func parseDef(tokens lex.Tokens) (*SynDef, lex.Tokens, *Error) {
 	tid, _ := tokens[0].(*lex.TokenIdent)
 	if tid == nil {
-		return nil, nil, errPos(tokens[0], "expected identifier instead of `"+tokens[0].String()+"`", len(tokens[0].String()))
+		return nil, nil, errTok(tokens[0], "expected identifier instead of `"+tokens[0].String()+"`")
 	} else if len(tokens) == 1 {
-		return nil, nil, errPos(tid, tid.Token+": expected argument name(s) or `=` next", len(tid.Token))
+		return nil, nil, errTok(tid, tid.Token+": expected argument name(s) or `=` next")
 	} else if len(tokens) == 2 {
-		return nil, nil, errPos(tokens[1], tid.Token+": expected definition body next", 0)
+		return nil, nil, errTok(tokens[1], tid.Token+": expected definition body next")
 	}
 
 	toks, tail := tokens[1:].BreakOnIndent(tid.LineIndent)
 	if len(toks) < 2 {
-		return nil, nil, errPos(tid, tid.Token+": incomplete definition", len(tid.Token))
+		return nil, nil, errTok(tid, tid.Token+": incomplete definition")
 	}
 
 	i, def := 0, &SynDef{Name: tid.Token}
@@ -73,14 +73,14 @@ func parseDef(tokens lex.Tokens) (*SynDef, lex.Tokens, *Error) {
 		} else if t, _ := toks[i].(*lex.TokenIdent); t != nil {
 			def.Args = append(def.Args, t.Token)
 		} else {
-			return nil, nil, errPos(toks[i], def.Name+": expected argument name or `=` instead of `"+toks[i].String()+"`", len(toks[i].String()))
+			return nil, nil, errTok(toks[i], def.Name+": expected argument name or `=` instead of `"+toks[i].String()+"`")
 		}
 	}
 
 	// body of definition after `=`
 	bodytoks := toks[i:]
 	if len(bodytoks) == 0 {
-		return nil, nil, errPos(toks[len(toks)-1], def.Name+": missing body of definition", 0)
+		return nil, nil, errTok(toks[len(toks)-1], def.Name+": missing body of definition")
 	}
 	expr, exprerr := parseExpr(toks[i:])
 	if def.Body = expr; exprerr != nil {
@@ -111,22 +111,22 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 		if expr == nil { // LAMBDA?
 			if tlam, _ := toks[0].(*lex.TokenSep); tlam != nil && tlam.Token == "\\" {
 				if toks = toks[1:]; len(toks) == 0 {
-					return nil, errPos(tlam, "expected complete lambda abstraction", 0)
+					return nil, errTok(tlam, "expected complete lambda abstraction")
 				}
 				lamargs, lambody := toks.BreakOnOther("->")
 				if len(lamargs) == 0 {
-					return nil, errPos(toks[0], "missing argument(s) for lambda expression", 0)
+					return nil, errTok(toks[0], "missing argument(s) for lambda expression")
 				}
 				lam := Ab(nil, nil)
 				for _, lamarg := range lamargs {
 					if tid, _ := lamarg.(*lex.TokenIdent); tid != nil {
 						lam.Args = append(lam.Args, tid.Token)
 					} else {
-						return nil, errPos(lamarg, "expected `->` or identifier for lambda argument instead of `"+lamarg.String()+"`", len(lamarg.String()))
+						return nil, errTok(lamarg, "expected `->` or identifier for lambda argument instead of `"+lamarg.String()+"`")
 					}
 				}
 				if len(lambody) == 0 {
-					return nil, errPos(toks[0], "missing body for lambda expression", 0)
+					return nil, errTok(toks[0], "missing body for lambda expression")
 				}
 				lamexpr, lamerr := parseExpr(lambody)
 				if lam.Body = lamexpr; lamerr != nil {
@@ -156,9 +156,9 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 			if tsep, _ := toks[0].(*lex.TokenSep); tsep != nil && tsep.Token == "(" {
 				sub, subtail, numunclosed := toks.SubTokens("(", ")")
 				if numunclosed > 0 {
-					return nil, errPos(toks[0], "unclosed parentheses in current indent level", 1)
+					return nil, errTok(toks[0], "unclosed parentheses in current indent level")
 				} else if len(sub) == 0 {
-					return nil, errPos(toks[0], "empty or mis-matched parentheses", 0)
+					return nil, errTok(toks[0], "empty or mis-matched parentheses")
 				} else if subexpr, suberr := parseExpr(sub); suberr == nil {
 					expr, toks = subexpr, subtail
 				} else {
@@ -168,7 +168,7 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 		}
 
 		if expr == nil { // should already have early-returned-with-error by now: if this message shows up, indicates earlier validations above are unacceptably not exhaustive
-			return nil, errPos(toks[0], "not an expression: "+toks[0].String(), 0)
+			return nil, errTok(toks[0], "not an expression: "+toks[0].String())
 		} else if lastexpr == nil {
 			lastexpr = expr
 		} else {
@@ -188,11 +188,11 @@ func parseKeywordLet(tokens lex.Tokens) (IExpr, lex.Tokens, *Error) {
 	toks := tokens[1:] // tokens[0] is `LET` keyword itself
 	defstoks, bodytoks, numunclosed := toks.BreakOnIdent("IN", "LET")
 	if numunclosed != 0 || (len(defstoks) == 0 && len(bodytoks) == 0) {
-		return nil, nil, errPos(toks[0], "a `LET` is missing a corresponding `IN`", 0)
+		return nil, nil, errTok(toks[0], "a `LET` is missing a corresponding `IN`")
 	} else if len(defstoks) == 0 {
-		return nil, nil, errPos(toks[0], "missing definitions between `LET` and `IN`", 0)
+		return nil, nil, errTok(toks[0], "missing definitions between `LET` and `IN`")
 	} else if len(bodytoks) == 0 {
-		return nil, nil, errPos(toks[0], "missing expression body following `IN`", 0)
+		return nil, nil, errTok(toks[0], "missing expression body following `IN`")
 	}
 
 	bodyexpr, bodyerr := parseExpr(bodytoks)
@@ -214,11 +214,11 @@ func parseKeywordCase(tokens lex.Tokens) (let IExpr, tail lex.Tokens, err *Error
 	toks := tokens[1:] // tokens[0] is `CASE` keyword itself
 	scruttoks, altstoks, numunclosed := toks.BreakOnIdent("OF", "CASE")
 	if numunclosed != 0 || (len(scruttoks) == 0 && len(altstoks) == 0) {
-		return nil, nil, errPos(toks[0], "a `CASE` is missing a corresponding `OF`", 0)
+		return nil, nil, errTok(toks[0], "a `CASE` is missing a corresponding `OF`")
 	} else if len(scruttoks) == 0 {
-		return nil, nil, errPos(toks[0], "missing scrutinee between `CASE` and `OF`", 0)
+		return nil, nil, errTok(toks[0], "missing scrutinee between `CASE` and `OF`")
 	} else if len(altstoks) == 0 {
-		return nil, nil, errPos(toks[0], "missing `CASE` alternatives following `OF`", 0)
+		return nil, nil, errTok(toks[0], "missing `CASE` alternatives following `OF`")
 	}
 
 	scrutexpr, scruterr := parseExpr(scruttoks)
@@ -253,16 +253,16 @@ func parseKeywordCaseAlts(tokens lex.Tokens) (alts []*SynCaseAlt, errs []*Error)
 func parseKeywordCaseAlt(tokens lex.Tokens) (*SynCaseAlt, lex.Tokens, *Error) {
 	tui, _ := tokens[0].(*lex.TokenUint)
 	if tui == nil {
-		return nil, nil, errPos(tokens[0], "expected constructor tag instead of `"+tokens[0].String()+"`", len(tokens[0].String()))
+		return nil, nil, errTok(tokens[0], "expected constructor tag instead of `"+tokens[0].String()+"`")
 	} else if len(tokens) == 1 {
-		return nil, nil, errPos(tui, "expected name(s) or `->` next", 0)
+		return nil, nil, errTok(tui, "expected name(s) or `->` next")
 	} else if len(tokens) == 2 {
-		return nil, nil, errPos(tokens[1], "expected `CASE`-alternative body next", 0)
+		return nil, nil, errTok(tokens[1], "expected `CASE`-alternative body next")
 	}
 
 	toks, tail := tokens[1:].BreakOnIndent(tui.LineIndent)
 	if len(toks) < 2 {
-		return nil, nil, errPos(tui, "incomplete `CASE` alternative", 0)
+		return nil, nil, errTok(tui, "incomplete `CASE` alternative")
 	}
 
 	i, alt := 0, &SynCaseAlt{Tag: tui.Token}
@@ -276,14 +276,14 @@ func parseKeywordCaseAlt(tokens lex.Tokens) (*SynCaseAlt, lex.Tokens, *Error) {
 		} else if t, _ := toks[i].(*lex.TokenIdent); t != nil {
 			alt.Binds = append(alt.Binds, t.Token)
 		} else {
-			return nil, nil, errPos(toks[i], "expected identifier or `->` instead of `"+toks[i].String()+"`", len(toks[i].String()))
+			return nil, nil, errTok(toks[i], "expected identifier or `->` instead of `"+toks[i].String()+"`")
 		}
 	}
 
 	// body of case-alternative after `->`
 	bodytoks := toks[i:]
 	if len(bodytoks) == 0 {
-		return nil, nil, errPos(toks[len(toks)-1], "missing body of `CASE` alternative", 0)
+		return nil, nil, errTok(toks[len(toks)-1], "missing body of `CASE` alternative")
 	}
 	expr, exprerr := parseExpr(toks[i:])
 	alt.Body = expr
