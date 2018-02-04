@@ -48,18 +48,18 @@ func parseDefs(tokens lex.Tokens) (defs []*SynDef, errs []*Error) {
 }
 
 func parseDef(tokens lex.Tokens) (*SynDef, lex.Tokens, *Error) {
-	if len(tokens) < 3 {
-		return nil, nil, errPos(lex.Pos(tokens, nil, ""), "not enough tokens to form a definition", 0)
-	}
-
 	tid, _ := tokens[0].(*lex.TokenIdent)
 	if tid == nil {
 		return nil, nil, errPos(tokens[0], "expected identifier instead of `"+tokens[0].String()+"`", len(tokens[0].String()))
+	} else if len(tokens) == 1 {
+		return nil, nil, errPos(tid, tid.Token+": expected argument name(s) or `=` next", len(tid.Token))
+	} else if len(tokens) == 2 {
+		return nil, nil, errPos(tokens[1], tid.Token+": expected definition body next", 0)
 	}
 
 	toks, tail := tokens[1:].BreakOnIndent(tid.LineIndent)
 	if len(toks) < 2 {
-		return nil, nil, errPos(tid, "not enough tokens to form a definition", len(tid.Token))
+		return nil, nil, errPos(tid, tid.Token+": incomplete definition", len(tid.Token))
 	}
 
 	i, def := 0, &SynDef{Name: tid.Token}
@@ -228,7 +228,7 @@ func parseKeywordCase(tokens lex.Tokens) (let IExpr, tail lex.Tokens, err *Error
 	caseof := &ExprCaseOf{Scrut: scrutexpr}
 
 	if alt0, kwdcase := altstoks[0].Meta(), tokens[0].Meta(); alt0.Line == kwdcase.Line {
-		alt0.LineIndent = (alt0.Column) // - kwdcase.Column )
+		alt0.LineIndent = alt0.Column
 	}
 	altsyns, alterrs := parseKeywordCaseAlts(altstoks)
 	if len(alterrs) > 0 {
@@ -251,18 +251,18 @@ func parseKeywordCaseAlts(tokens lex.Tokens) (alts []*SynCaseAlt, errs []*Error)
 }
 
 func parseKeywordCaseAlt(tokens lex.Tokens) (*SynCaseAlt, lex.Tokens, *Error) {
-	if len(tokens) < 3 {
-		return nil, nil, errPos(lex.Pos(tokens, nil, ""), "not enough tokens to form a `CASE` alternative", 0)
-	}
-
 	tui, _ := tokens[0].(*lex.TokenUint)
 	if tui == nil {
 		return nil, nil, errPos(tokens[0], "expected constructor tag instead of `"+tokens[0].String()+"`", len(tokens[0].String()))
+	} else if len(tokens) == 1 {
+		return nil, nil, errPos(tui, "expected name(s) or `->` next", 0)
+	} else if len(tokens) == 2 {
+		return nil, nil, errPos(tokens[1], "expected `CASE`-alternative body next", 0)
 	}
 
 	toks, tail := tokens[1:].BreakOnIndent(tui.LineIndent)
 	if len(toks) < 2 {
-		return nil, nil, errPos(tui, "not enough tokens to form a `CASE` alternative", 0)
+		return nil, nil, errPos(tui, "incomplete `CASE` alternative", 0)
 	}
 
 	i, alt := 0, &SynCaseAlt{Tag: tui.Token}
