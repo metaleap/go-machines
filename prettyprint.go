@@ -102,7 +102,7 @@ func (me *InterpPrettyPrint) expr(w *bytes.Buffer, expression IExpr, parensUnles
 		me.curIndent++
 		w.WriteString(strings.Repeat("  ", me.curIndent))
 		for _, alt := range expr.Alts {
-			w.WriteString(strconv.Itoa(alt.Tag))
+			w.WriteString(strconv.FormatUint(alt.Tag, 10))
 			for _, bind := range alt.Binds {
 				w.WriteRune(' ')
 				w.WriteString(bind)
@@ -112,6 +112,8 @@ func (me *InterpPrettyPrint) expr(w *bytes.Buffer, expression IExpr, parensUnles
 			w.WriteString(strings.Repeat("  ", me.curIndent))
 			me.expr(w, alt.Body, false)
 			me.curIndent--
+			w.WriteRune('\n')
+			w.WriteString(strings.Repeat("  ", me.curIndent))
 		}
 		me.curIndent--
 	default:

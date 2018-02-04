@@ -3,7 +3,9 @@ package main
 var srcMod = `foo=bar
 
 
-hello=LET h = "Hello" IN k0 h "disc\"arded"
+hello = LET
+        h = "Hello"
+        IN k0 h "disc\"arded"
 
 
 world =
@@ -12,16 +14,14 @@ world =
   IN k1 (d '?') w
 
 
-
-/*
 helloOrWorld h0w1 =
   LET foo = h0w1
       h = hello
       w = world
   IN CASE foo OF
-    H -> h
-    W -> w
-*/
+    0 -> h
+    1 -> w
+
 
 moo = "bar"
 `

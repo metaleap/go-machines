@@ -13,11 +13,11 @@ type SynDef struct {
 
 type SynCaseAlt struct {
 	syn
-	Tag   int
+	Tag   uint64
 	Binds []string
 	Body  IExpr
 }
 
-func Alt(tag int, binds []string, body IExpr) *SynCaseAlt {
+func Alt(tag uint64, binds []string, body IExpr) *SynCaseAlt {
 	return &SynCaseAlt{Tag: tag, Binds: binds, Body: body}
 }
