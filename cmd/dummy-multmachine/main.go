@@ -17,13 +17,13 @@ type multiplicator struct {
 func main() {
 	mul, readln, write := &multiplicator{}, bufio.NewScanner(os.Stdin), os.Stdout.WriteString
 	for {
-		if write("Keep entering 2 ints (separated by 1 space) to have them multiplied horribly inefficiently by a state transition machine using mere incr-by-1/decr-by-1 prim-ops:\n"); !readln.Scan() {
+		if write("Keep entering 2 ints (separated by 1 space) to have them (horribly inefficiently) multiplied by a state transition machine via mere incr1/decr1 operations:\n"); !readln.Scan() {
 			return
-		} else if snums := strings.Split(strings.TrimSpace(readln.Text()), " "); len(snums) != 2 {
+		} else if operands := strings.Split(strings.TrimSpace(readln.Text()), " "); len(operands) != 2 {
 			write("try again\n")
 		} else {
-			operand1, _ := strconv.ParseInt(snums[0], 0, 64)
-			operand2, _ := strconv.ParseInt(snums[1], 0, 64)
+			operand1, _ := strconv.ParseInt(operands[0], 0, 64)
+			operand2, _ := strconv.ParseInt(operands[1], 0, 64)
 			result := mul.eval(operand1, operand2)
 			write(strconv.FormatInt(result, 10) + "\n")
 		}

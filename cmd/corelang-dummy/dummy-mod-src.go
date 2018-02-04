@@ -1,6 +1,6 @@
 package main
 
-var srcMod = `foo=bar
+const srcMod = `foo=bar
 
 
 hello = LET
