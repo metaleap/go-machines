@@ -90,9 +90,9 @@ func parseDef(tokens lex.Tokens) (*SynDef, lex.Tokens, *Error) {
 }
 
 func parseExpr(toks lex.Tokens) (IExpr, *Error) {
-	var lastexpr IExpr
+	var prevexpr IExpr
 	for len(toks) > 0 {
-		var expr IExpr
+		var thisexpr IExpr
 
 		// LAMBDA?
 		if tlam, _ := toks[0].(*lex.TokenOther); tlam != nil && tlam.Token == "\\" {
@@ -118,33 +118,33 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 			if lam.Body = lamexpr; lamerr != nil {
 				return nil, lamerr
 			}
-			expr, toks = lam, nil
+			thisexpr, toks = lam, nil
 		}
 
-		if expr == nil { // LIT or IDENT or OP or KEYWORD?
+		if thisexpr == nil { // single-token cases: LIT or OP or IDENT/KEYWORD?
 			switch t := toks[0].(type) {
 			case *lex.TokenFloat:
-				toks, expr = toks[1:], Lf(t.Token)
+				toks, thisexpr = toks[1:], Lf(t.Token)
 			case *lex.TokenUint:
-				toks, expr = toks[1:], Lu(t.Token, t.Base)
+				toks, thisexpr = toks[1:], Lu(t.Token, t.Base)
 			case *lex.TokenRune:
-				toks, expr = toks[1:], Lr(t.Token)
+				toks, thisexpr = toks[1:], Lr(t.Token)
 			case *lex.TokenStr:
-				toks, expr = toks[1:], Lt(t.Token)
+				toks, thisexpr = toks[1:], Lt(t.Token)
 			case *lex.TokenOther: // any operator/separator/punctuation sequence other than "(" and ")"
-				toks, expr = toks[1:], IdO(t.Token, len(toks) == 1)
+				toks, thisexpr = toks[1:], IdO(t.Token, len(toks) == 1)
 			case *lex.TokenIdent:
 				if keyword := keywords[t.Token]; keyword == nil || len(toks) == 1 {
-					toks, expr = toks[1:], Id(t.Token)
+					toks, thisexpr = toks[1:], Id(t.Token)
 				} else if kx, kt, ke := keyword(toks); ke != nil {
 					return nil, ke
 				} else {
-					toks, expr = kt, kx
+					toks, thisexpr = kt, kx
 				}
 			}
 		}
 
-		if expr == nil { // PARENS SUB-EXPR?
+		if thisexpr == nil { // PARENSED SUB-EXPR?
 			if tsep, _ := toks[0].(*lex.TokenSep); tsep != nil && tsep.Token == "(" {
 				sub, subtail, numunclosed := toks.SubTokens("(", ")")
 				if numunclosed > 0 {
@@ -152,32 +152,38 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 				} else if len(sub) == 0 {
 					return nil, errTok(toks[0], "empty or mis-matched parentheses")
 				} else if subexpr, suberr := parseExpr(sub); suberr == nil {
-					expr, toks = subexpr, subtail
+					thisexpr, toks = subexpr, subtail
 				} else {
 					return nil, suberr
 				}
 			}
 		}
 
-		if expr == nil { // should already have early-returned-with-error by now: if this message shows up, indicates earlier validations above are unacceptably non-exhaustive
+		if thisexpr == nil { // should already have early-returned-with-error by now: if this message shows up, indicates earlier validations above are unacceptably non-exhaustive
 			return nil, errTok(toks[0], "not an expression: "+toks[0].String())
-		} else if lastexpr == nil {
-			lastexpr = expr
+		} else if prevexpr == nil {
+			prevexpr = thisexpr
 		} else {
-			if ctortag, _ := lastexpr.(*ExprLitUInt); ctortag != nil {
-				if ctorarity, _ := expr.(*ExprLitUInt); ctorarity != nil {
-					lastexpr = Ct(ctortag.Val, ctorarity.Val)
+			// at this point, the only sensible way in corelang to joint prev and cur expr is by application:
+
+			// special case, ctor? any appl form akin to (intlit intlit) is parsed as: Ctor{tag,arity} instead of application
+			if ctortag, _ := prevexpr.(*ExprLitUInt); ctortag != nil {
+				if ctorarity, _ := thisexpr.(*ExprLitUInt); ctorarity != nil {
+					prevexpr = Ct(ctortag.Val, ctorarity.Val)
 					continue
 				}
 			}
-			if exop, _ := expr.(*ExprIdent); exop != nil && exop.OpLike && !exop.OpLone {
-				lastexpr = Ap(expr, lastexpr)
+
+			// special case, infix op? any appl infix form of (expr op) is flipped to prefix form (op expr)
+			if exop, _ := thisexpr.(*ExprIdent); exop != nil && exop.OpLike && !exop.OpLone {
+				prevexpr = Ap(thisexpr, prevexpr)
 			} else {
-				lastexpr = Ap(lastexpr, expr)
+				// default case: apply (prev cur)
+				prevexpr = Ap(prevexpr, thisexpr)
 			}
 		}
 	} // big for-loop
-	return lastexpr, nil
+	return prevexpr, nil
 }
 
 func parseKeywordLet(tokens lex.Tokens) (IExpr, lex.Tokens, *Error) {
