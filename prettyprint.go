@@ -48,7 +48,13 @@ func (me *InterpPrettyPrint) expr(w *bytes.Buffer, expression IExpr, parensUnles
 	}
 	switch expr := expression.(type) {
 	case *ExprIdent:
+		if expr.OpLike && expr.OpLone {
+			w.WriteRune('(')
+		}
 		w.WriteString(expr.Val)
+		if expr.OpLike && expr.OpLone {
+			w.WriteRune(')')
+		}
 	case *ExprLitFloat:
 		w.WriteString(strconv.FormatFloat(expr.Val, 'g', -1, 64))
 	case *ExprLitUInt:

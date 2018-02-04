@@ -132,7 +132,7 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 			case *lex.TokenStr:
 				toks, expr = toks[1:], Lt(t.Token)
 			case *lex.TokenOther: // any operator/separator/punctuation sequence other than "(" and ")"
-				toks, expr = toks[1:], IdO(t.Token)
+				toks, expr = toks[1:], IdO(t.Token, len(toks) == 1)
 			case *lex.TokenIdent:
 				if keyword := keywords[t.Token]; keyword == nil || len(toks) == 1 {
 					toks, expr = toks[1:], Id(t.Token)
@@ -170,7 +170,11 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 					continue
 				}
 			}
-			lastexpr = Ap(lastexpr, expr)
+			if exop, _ := expr.(*ExprIdent); exop != nil && exop.OpLike && !exop.OpLone {
+				lastexpr = Ap(expr, lastexpr)
+			} else {
+				lastexpr = Ap(lastexpr, expr)
+			}
 		}
 	} // big for-loop
 	return lastexpr, nil
