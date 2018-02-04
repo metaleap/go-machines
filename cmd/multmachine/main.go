@@ -17,7 +17,7 @@ type multiplicator struct {
 func main() {
 	mul, readln, write := &multiplicator{}, bufio.NewScanner(os.Stdin), os.Stdout.WriteString
 	for {
-		if write("Keep entering 2 ints (separated by 1 space) to have them multiplied horribly inefficiently by a mere state transition machine using +/- prim-ops:\n"); !readln.Scan() {
+		if write("Keep entering 2 ints (separated by 1 space) to have them multiplied horribly inefficiently by a state transition machine using mere incr-by-1/decr-by-1 prim-ops:\n"); !readln.Scan() {
 			return
 		} else if snums := strings.Split(strings.TrimSpace(readln.Text()), " "); len(snums) != 2 {
 			write("try again\n")
