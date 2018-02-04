@@ -14,19 +14,19 @@ type multiplicator struct {
 	RunningTotal int64
 }
 
-func (me *multiplicator) finalState() bool {
-	return me.Operand2 == 0 && me.Jobber == 0
-}
-
-func (me *multiplicator) init(op1 int64, op2 int64) {
-	me.Operand1, me.Operand2, me.Jobber, me.RunningTotal = op1, op2, 0, 0
-}
-
-func (me *multiplicator) step() {
-	if me.Jobber > 0 {
-		me.Jobber, me.RunningTotal = me.Jobber-1, me.RunningTotal+1
-	} else {
-		me.Operand2, me.Jobber = me.Operand2-1, me.Operand1
+func main() {
+	mul, readln, write := &multiplicator{}, bufio.NewScanner(os.Stdin), os.Stdout.WriteString
+	for {
+		if write("Keep entering 2 ints (separated by 1 space) to have them multiplied horribly inefficiently by a mere state transition machine using +/- prim-ops:\n"); !readln.Scan() {
+			return
+		} else if snums := strings.Split(strings.TrimSpace(readln.Text()), " "); len(snums) != 2 {
+			write("try again\n")
+		} else {
+			operand1, _ := strconv.ParseInt(snums[0], 0, 64)
+			operand2, _ := strconv.ParseInt(snums[1], 0, 64)
+			result := mul.eval(operand1, operand2)
+			write(strconv.FormatInt(result, 10) + "\n")
+		}
 	}
 }
 
@@ -37,20 +37,18 @@ func (me *multiplicator) eval(op1 int64, op2 int64) int64 {
 	return me.RunningTotal
 }
 
-func main() {
-	write, readln := os.Stdout.WriteString, bufio.NewScanner(os.Stdin)
-	for {
-		write("Keep entering 2 ints (separated by 1 space) to have them multiplied horribly inefficiently by a mere state transition machine using +/- prim-ops:\n")
-		if !readln.Scan() {
-			return
-		}
-		if snums := strings.Split(strings.TrimSpace(readln.Text()), " "); len(snums) != 2 {
-			write("try again\n")
-		} else {
-			i1, _ := strconv.ParseInt(snums[0], 0, 64)
-			i2, _ := strconv.ParseInt(snums[1], 0, 64)
-			result := (&multiplicator{}).eval(i1, i2)
-			write(strconv.FormatInt(result, 10) + "\n")
-		}
+func (me *multiplicator) init(op1 int64, op2 int64) {
+	me.Operand1, me.Operand2, me.Jobber, me.RunningTotal = op1, op2, 0, 0
+}
+
+func (me *multiplicator) finalState() bool {
+	return me.Operand2 == 0 && me.Jobber == 0
+}
+
+func (me *multiplicator) step() {
+	if me.Jobber == 0 {
+		me.Jobber, me.Operand2 = me.Operand1, me.Operand2-1
+	} else {
+		me.Jobber, me.RunningTotal = me.Jobber-1, me.RunningTotal+1
 	}
 }
