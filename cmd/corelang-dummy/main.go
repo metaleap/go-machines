@@ -17,13 +17,22 @@ func main() {
 		println(e.Error())
 	}
 
-	repl, pprint := bufio.NewScanner(os.Stdin), &core.InterpPrettyPrint{}
-	writeLn("Ready.")
+	multiline, repl, pprint := "", bufio.NewScanner(os.Stdin), &core.InterpPrettyPrint{}
+	for defname := range mod.Defs {
+		writeLn(defname)
+	}
 	for repl.Scan() {
 		if errscan := repl.Err(); errscan != nil {
 			panic(errscan)
-		} else if readln := strings.TrimSpace(repl.Text()); readln != "" {
-			if !strings.Contains(readln, "=") {
+		} else if readln := strings.TrimRight(repl.Text(), " \t\r\n\v\b"); readln != "" {
+			if readln == "…" && multiline != "" {
+				readln, multiline = strings.TrimSpace(multiline), ""
+			}
+			if readln != "…" && multiline == "" && strings.HasSuffix(readln, "…") {
+				multiline = readln[:len(readln)-len("…")] + "\n  "
+			} else if multiline != "" {
+				multiline += readln + "\n  "
+			} else if !strings.Contains(readln, "=") {
 				if readln == "*" {
 					for defname := range mod.Defs {
 						writeLn(defname)
@@ -45,12 +54,8 @@ func lexAndParse(filePath string, src string, mod *coresyn.SynMod) error {
 	if filePath == "" {
 		filePath = "dummy-mod-src.go"
 	}
-	lexed, errs_lex := coresyn.Lex(filePath, src)
-	for _, e := range errs_lex {
-		return e
-	}
 
-	defs, errs_parse := coresyn.ParseDefs(filePath, lexed.SansComments())
+	defs, errs_parse := coresyn.LexAndParseDefs(filePath, src)
 	for _, def := range defs {
 		if mod.Defs[def.Name] != nil {
 			println("Redefined: " + def.Name)

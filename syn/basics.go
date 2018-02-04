@@ -7,8 +7,10 @@ import (
 )
 
 type ISyn interface {
+	init(lex.Tokens)
 	isExpr() bool
 	Pos() *lex.TokenMeta
+	Toks() lex.Tokens
 }
 
 type IExpr interface {
@@ -17,14 +19,18 @@ type IExpr interface {
 }
 
 type syn struct {
-	pos    lex.TokenMeta
-	root   *SynMod
-	parent ISyn
+	toks lex.Tokens
+	// root   *SynMod
+	// parent ISyn
 }
+
+func (me *syn) init(toks lex.Tokens) { me.toks = toks }
 
 func (*syn) isExpr() bool { return false }
 
-func (me *syn) Pos() *lex.TokenMeta { return &me.pos }
+func (me *syn) Pos() *lex.TokenMeta { return me.toks[0].Meta() }
+
+func (me *syn) Toks() lex.Tokens { return me.toks }
 
 type expr struct{ syn }
 

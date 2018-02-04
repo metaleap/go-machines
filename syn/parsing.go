@@ -27,6 +27,18 @@ func Lex(srcFilePath string, src string) (lex.Tokens, []*lex.Error) {
 	return lex.Lex(srcFilePath, src, true, "(", ")")
 }
 
+func LexAndParseDefs(srcFilePath string, src string) ([]*SynDef, []*Error) {
+	toks, lexerrs := Lex(srcFilePath, src)
+	if len(lexerrs) == 0 {
+		return ParseDefs(srcFilePath, toks.SansComments())
+	}
+	errs := make([]*Error, 0, len(lexerrs))
+	for _, lexerr := range lexerrs {
+		errs = append(errs, errPos(&lexerr.Pos, lexerr.Error(), 0))
+	}
+	return nil, errs
+}
+
 func ParseDefs(srcFilePath string, tokens lex.Tokens) (defs []*SynDef, errs []*Error) {
 	defs, errs = parseDefs(tokens)
 	for _, e := range errs {
@@ -63,7 +75,7 @@ func parseDef(tokens lex.Tokens) (*SynDef, lex.Tokens, *Error) {
 	}
 
 	i, def := 0, &SynDef{Name: tid.Token}
-	def.syn.pos = tid.TokenMeta
+	def.init(toks)
 
 	// args up until `=`
 	for ; i < len(toks); i++ {
@@ -93,6 +105,7 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 	var prevexpr IExpr
 	for len(toks) > 0 {
 		var thisexpr IExpr
+		var thistoks lex.Tokens // always set together with thisexpr
 
 		// LAMBDA?
 		if tlam, _ := toks[0].(*lex.TokenOther); tlam != nil && tlam.Token == "\\" {
@@ -118,28 +131,28 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 			if lam.Body = lamexpr; lamerr != nil {
 				return nil, lamerr
 			}
-			thisexpr, toks = lam, nil
+			thistoks, toks, thisexpr = toks, nil, lam
 		}
 
 		if thisexpr == nil { // single-token cases: LIT or OP or IDENT/KEYWORD?
 			switch t := toks[0].(type) {
 			case *lex.TokenFloat:
-				toks, thisexpr = toks[1:], Lf(t.Token)
+				thistoks, toks, thisexpr = toks[:1], toks[1:], Lf(t.Token)
 			case *lex.TokenUint:
-				toks, thisexpr = toks[1:], Lu(t.Token, t.Base)
+				thistoks, toks, thisexpr = toks[:1], toks[1:], Lu(t.Token, t.Base)
 			case *lex.TokenRune:
-				toks, thisexpr = toks[1:], Lr(t.Token)
+				thistoks, toks, thisexpr = toks[:1], toks[1:], Lr(t.Token)
 			case *lex.TokenStr:
-				toks, thisexpr = toks[1:], Lt(t.Token)
+				thistoks, toks, thisexpr = toks[:1], toks[1:], Lt(t.Token)
 			case *lex.TokenOther: // any operator/separator/punctuation sequence other than "(" and ")"
-				toks, thisexpr = toks[1:], IdO(t.Token, len(toks) == 1)
+				thistoks, toks, thisexpr = toks[:1], toks[1:], IdO(t.Token, len(toks) == 1)
 			case *lex.TokenIdent:
 				if keyword := keywords[t.Token]; keyword == nil || len(toks) == 1 {
-					toks, thisexpr = toks[1:], Id(t.Token)
+					thistoks, toks, thisexpr = toks[:1], toks[1:], Id(t.Token)
 				} else if kx, kt, ke := keyword(toks); ke != nil {
 					return nil, ke
 				} else {
-					toks, thisexpr = kt, kx
+					thistoks, toks, thisexpr = toks, kt, kx
 				}
 			}
 		}
@@ -147,12 +160,12 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 		if thisexpr == nil { // PARENSED SUB-EXPR?
 			if tsep, _ := toks[0].(*lex.TokenSep); tsep != nil && tsep.Token == "(" {
 				sub, subtail, numunclosed := toks.Sub("(", ")")
-				if numunclosed > 0 {
+				if numunclosed != 0 {
 					return nil, errTok(toks[0], "unclosed parentheses in current indent level")
 				} else if len(sub) == 0 {
 					return nil, errTok(toks[0], "empty or mis-matched parentheses")
 				} else if subexpr, suberr := parseExpr(sub); suberr == nil {
-					thisexpr, toks = subexpr, subtail
+					thistoks, toks, thisexpr = subexpr.Toks(), subtail, subexpr
 				} else {
 					return nil, suberr
 				}
@@ -161,7 +174,7 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 
 		if thisexpr == nil { // should already have early-returned-with-error by now: if this message shows up, indicates earlier validations above are unacceptably non-exhaustive
 			return nil, errTok(toks[0], "not an expression: "+toks[0].String())
-		} else if prevexpr == nil {
+		} else if thisexpr.init(thistoks); prevexpr == nil {
 			prevexpr = thisexpr
 		} else {
 			// at this point, the only sensible way in corelang to joint prev and cur expr is by application:
@@ -170,10 +183,12 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 			if ctortag, _ := prevexpr.(*ExprLitUInt); ctortag != nil {
 				if ctorarity, _ := thisexpr.(*ExprLitUInt); ctorarity != nil {
 					prevexpr = Ct(ctortag.Val, ctorarity.Val)
+					prevexpr.init(append(ctortag.toks, ctorarity.toks...))
 					continue
 				}
 			}
 
+			bothtoks := append(prevexpr.Toks(), thisexpr.Toks()...)
 			// special case, infix op? any appl infix form of (expr op) is flipped to prefix form (op expr)
 			if exop, _ := thisexpr.(*ExprIdent); exop != nil && exop.OpLike && !exop.OpLone {
 				prevexpr = Ap(thisexpr, prevexpr)
@@ -181,6 +196,7 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 				// default case: apply (prev cur)
 				prevexpr = Ap(prevexpr, thisexpr)
 			}
+			prevexpr.init(bothtoks)
 		}
 	} // big for-loop
 	return prevexpr, nil
@@ -209,7 +225,9 @@ func parseKeywordLet(tokens lex.Tokens) (IExpr, lex.Tokens, *Error) {
 	if len(defserrs) > 0 {
 		return nil, nil, defserrs[0]
 	}
-	return &ExprLetIn{Body: bodyexpr, Defs: defsyns}, nil, nil
+	letin := &ExprLetIn{Body: bodyexpr, Defs: defsyns}
+	letin.init(tokens)
+	return letin, nil, nil
 }
 
 func parseKeywordCase(tokens lex.Tokens) (let IExpr, tail lex.Tokens, err *Error) {
@@ -227,7 +245,6 @@ func parseKeywordCase(tokens lex.Tokens) (let IExpr, tail lex.Tokens, err *Error
 	if scruterr != nil {
 		return nil, nil, scruterr
 	}
-	caseof := &ExprCaseOf{Scrut: scrutexpr}
 
 	if alt0, kwdcase := altstoks[0].Meta(), tokens[0].Meta(); alt0.Line == kwdcase.Line {
 		alt0.LineIndent = alt0.Column
@@ -236,6 +253,9 @@ func parseKeywordCase(tokens lex.Tokens) (let IExpr, tail lex.Tokens, err *Error
 	if len(alterrs) > 0 {
 		return nil, nil, alterrs[0]
 	}
+
+	caseof := &ExprCaseOf{Scrut: scrutexpr}
+	caseof.init(tokens)
 	caseof.Alts = altsyns
 	return caseof, nil, nil
 }
@@ -268,7 +288,7 @@ func parseKeywordCaseAlt(tokens lex.Tokens) (*SynCaseAlt, lex.Tokens, *Error) {
 	}
 
 	i, alt := 0, &SynCaseAlt{Tag: tui.Token}
-	alt.syn.pos = tui.TokenMeta
+	alt.init(toks)
 
 	// binds up until `->`
 	for ; i < len(toks); i++ {

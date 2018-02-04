@@ -17,7 +17,3 @@ type SynCaseAlt struct {
 	Binds []string
 	Body  IExpr
 }
-
-func Alt(tag uint64, binds []string, body IExpr) *SynCaseAlt {
-	return &SynCaseAlt{Tag: tag, Binds: binds, Body: body}
-}
