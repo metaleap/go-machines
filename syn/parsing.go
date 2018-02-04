@@ -103,6 +103,7 @@ func parseDef(tokens lex.Tokens) (*SynDef, lex.Tokens, *Error) {
 
 func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 	var prevexpr IExpr
+
 	for len(toks) > 0 {
 		var thisexpr IExpr
 		var thistoks lex.Tokens // always set together with thisexpr
