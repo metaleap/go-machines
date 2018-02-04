@@ -192,6 +192,8 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 			// special case, infix op? any appl infix form of (expr op) is flipped to prefix form (op expr)
 			if exop, _ := thisexpr.(*ExprIdent); exop != nil && exop.OpLike && !exop.OpLone {
 				prevexpr = Ap(thisexpr, prevexpr)
+			} else if _, isid := prevexpr.(*ExprIdent); (!isid) && prevexpr.IsAtomic() {
+				return nil, errTok(prevexpr.Toks()[0], "atomic literal "+prevexpr.Toks()[0].String()+" cannot be applied like a function")
 			} else {
 				// default case: apply (prev cur)
 				prevexpr = Ap(prevexpr, thisexpr)
