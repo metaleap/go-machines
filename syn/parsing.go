@@ -24,7 +24,7 @@ func RegisterKeyword(triggerWord string, keyword Keyword) string {
 }
 
 func Lex(srcFilePath string, src string) (lex.Tokens, []*lex.Error) {
-	return lex.Lex(srcFilePath, src, true, "(", ")", "\\")
+	return lex.Lex(srcFilePath, src, true, "(", ")")
 }
 
 func ParseDefs(srcFilePath string, tokens lex.Tokens) (defs []*SynDef, errs []*Error) {
@@ -89,65 +89,57 @@ func parseDef(tokens lex.Tokens) (*SynDef, lex.Tokens, *Error) {
 	return def, tail, exprerr
 }
 
-func parseLit(token lex.IToken) IExpr {
-	switch t := token.(type) {
-	case *lex.TokenFloat:
-		return Lf(t.Token)
-	case *lex.TokenUint:
-		return Lu(t.Token, t.Base)
-	case *lex.TokenRune:
-		return Lr(t.Token)
-	case *lex.TokenStr:
-		return Lt(t.Token)
-	}
-	return nil
-}
-
 func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 	var lastexpr IExpr
 	for len(toks) > 0 {
 		var expr IExpr
 
-		if expr == nil { // LAMBDA?
-			if tlam, _ := toks[0].(*lex.TokenSep); tlam != nil && tlam.Token == "\\" {
-				if toks = toks[1:]; len(toks) == 0 {
-					return nil, errTok(tlam, "expected complete lambda abstraction")
-				}
-				lamargs, lambody := toks.BreakOnOther("->")
-				if len(lamargs) == 0 {
-					return nil, errTok(toks[0], "missing argument(s) for lambda expression")
-				}
-				lam := Ab(nil, nil)
-				for _, lamarg := range lamargs {
-					if tid, _ := lamarg.(*lex.TokenIdent); tid != nil {
-						lam.Args = append(lam.Args, tid.Token)
-					} else {
-						return nil, errTok(lamarg, "expected `->` or identifier for lambda argument instead of "+lamarg.String())
-					}
-				}
-				if len(lambody) == 0 {
-					return nil, errTok(toks[0], "missing body for lambda expression")
-				}
-				lamexpr, lamerr := parseExpr(lambody)
-				if lam.Body = lamexpr; lamerr != nil {
-					return nil, lamerr
-				}
-				expr, toks = lam, nil
+		// LAMBDA?
+		if tlam, _ := toks[0].(*lex.TokenOther); tlam != nil && tlam.Token == "\\" {
+			if toks = toks[1:]; len(toks) == 0 {
+				return nil, errTok(tlam, "expected complete lambda abstraction")
 			}
+			lamargs, lambody := toks.BreakOnOther("->")
+			if len(lamargs) == 0 {
+				return nil, errTok(toks[0], "missing argument(s) for lambda expression")
+			}
+			lam := Ab(nil, nil)
+			for _, lamarg := range lamargs {
+				if tid, _ := lamarg.(*lex.TokenIdent); tid != nil {
+					lam.Args = append(lam.Args, tid.Token)
+				} else {
+					return nil, errTok(lamarg, "expected `->` or identifier for lambda argument instead of "+lamarg.String())
+				}
+			}
+			if len(lambody) == 0 {
+				return nil, errTok(toks[0], "missing body for lambda expression")
+			}
+			lamexpr, lamerr := parseExpr(lambody)
+			if lam.Body = lamexpr; lamerr != nil {
+				return nil, lamerr
+			}
+			expr, toks = lam, nil
 		}
 
 		if expr == nil { // LIT or IDENT or OP or KEYWORD?
-			if lit := parseLit(toks[0]); lit != nil {
-				expr, toks = lit, toks[1:]
-			} else if toth, _ := toks[0].(*lex.TokenOther); toth != nil {
-				expr, toks = IdO(toth.Token), toks[1:]
-			} else if tid, _ := toks[0].(*lex.TokenIdent); tid != nil {
-				if keyword := keywords[tid.Token]; keyword == nil || len(toks) == 1 {
-					expr, toks = Id(tid.Token), toks[1:]
+			switch t := toks[0].(type) {
+			case *lex.TokenFloat:
+				toks, expr = toks[1:], Lf(t.Token)
+			case *lex.TokenUint:
+				toks, expr = toks[1:], Lu(t.Token, t.Base)
+			case *lex.TokenRune:
+				toks, expr = toks[1:], Lr(t.Token)
+			case *lex.TokenStr:
+				toks, expr = toks[1:], Lt(t.Token)
+			case *lex.TokenOther: // any operator/separator/punctuation sequence other than "(" and ")"
+				toks, expr = toks[1:], IdO(t.Token)
+			case *lex.TokenIdent:
+				if keyword := keywords[t.Token]; keyword == nil || len(toks) == 1 {
+					toks, expr = toks[1:], Id(t.Token)
 				} else if kx, kt, ke := keyword(toks); ke != nil {
 					return nil, ke
 				} else {
-					expr, toks = kx, kt
+					toks, expr = kt, kx
 				}
 			}
 		}
@@ -167,7 +159,7 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 			}
 		}
 
-		if expr == nil { // should already have early-returned-with-error by now: if this message shows up, indicates earlier validations above are unacceptably not exhaustive
+		if expr == nil { // should already have early-returned-with-error by now: if this message shows up, indicates earlier validations above are unacceptably non-exhaustive
 			return nil, errTok(toks[0], "not an expression: "+toks[0].String())
 		} else if lastexpr == nil {
 			lastexpr = expr
