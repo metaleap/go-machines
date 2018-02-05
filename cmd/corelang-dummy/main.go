@@ -2,10 +2,12 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"strings"
 
 	core "github.com/metaleap/go-corelang"
+	"github.com/metaleap/go-corelang/impl-mark1-tmplinst"
 	coresyn "github.com/metaleap/go-corelang/syn"
 )
 
@@ -34,6 +36,15 @@ func main() {
 				if readln == "*" || readln == "?" {
 					for defname := range mod.Defs {
 						writeLn(defname)
+					}
+				} else if strings.HasPrefix(readln, "!") {
+					machine := climpl.CompileToMachine(mod, readln[1:])
+					allsteps, evalerr := machine.Eval()
+					if evalerr != nil {
+						println(evalerr.Error())
+					} else {
+						finalstate := allsteps[len(allsteps)-1]
+						fmt.Printf("Reduced in %d steps to:\n%v\n", finalstate.Stats.NumberOfStepsTaken, finalstate.Heap[finalstate.Stack[0]])
 					}
 				} else if def := mod.Defs[readln]; def == nil {
 					println("not found: " + readln)

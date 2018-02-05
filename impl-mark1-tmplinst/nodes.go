@@ -10,16 +10,38 @@ type nodeAp struct {
 	Arg    clutil.Addr
 }
 
-func (*nodeAp) IsValue() bool { return false }
-
 type nodeDef clsyn.SynDef
-
-func (*nodeDef) IsValue() bool { return false }
 
 type nodeNumFloat float64
 
-func (nodeNumFloat) IsValue() bool { return true }
-
 type nodeNumUint uint64
 
-func (nodeNumUint) IsValue() bool { return true }
+func isDataNode(node clutil.INode) (isvalue bool) {
+	switch node.(type) {
+	case nodeNumFloat, nodeNumUint:
+		isvalue = true
+	}
+	return
+}
+
+func instantiateNodeFromExpr(body clsyn.IExpr, heap clutil.Heap, env map[string]clutil.Addr) (nuHeap clutil.Heap, resultAddr clutil.Addr) {
+	switch expr := body.(type) {
+	case *clsyn.ExprLitFloat:
+		nuHeap, resultAddr = heap.Alloc(nodeNumFloat(expr.Lit))
+	case *clsyn.ExprLitUInt:
+		nuHeap, resultAddr = heap.Alloc(nodeNumUint(expr.Lit))
+	case *clsyn.ExprCall:
+		heap1, a1 := instantiateNodeFromExpr(expr.Callee, heap, env)
+		heap2, a2 := instantiateNodeFromExpr(expr.Arg, heap1, env)
+		nuHeap, resultAddr = heap2.Alloc(&nodeAp{Callee: a1, Arg: a2})
+	case *clsyn.ExprIdent:
+		if nuHeap, resultAddr = heap, env[expr.Name]; resultAddr == 0 {
+			panic(expr.Name + ": undefined")
+		}
+	case *clsyn.ExprCaseOf, *clsyn.ExprLetIn, *clsyn.ExprCtor:
+		panic("instantiateNodeFromExpr: expr type coming soon")
+	default:
+		panic("instantiateNodeFromExpr: expr type not yet implemented")
+	}
+	return
+}

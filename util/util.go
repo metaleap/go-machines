@@ -5,7 +5,6 @@ import (
 )
 
 type INode interface {
-	IsValue() bool
 }
 
 type Addr int

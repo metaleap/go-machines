@@ -29,14 +29,14 @@ func CompileToMachine(mod *clsyn.SynMod, mainName string) (initialMachineState *
 }
 
 func (me *TiState) Eval() (allSteps []*TiState, err error) {
-	defer clutil.Catch(&err)
+	// defer clutil.Catch(&err)
 	allSteps = me.eval()
 	return
 }
 
 func (me *TiState) eval() (allSteps []*TiState) {
 	if allSteps = []*TiState{me}; !me.isFinalState() {
-		allSteps = append(allSteps, me.step().stats().eval()...)
+		allSteps = append(allSteps, me.step().eval()...)
 	}
 	return
 }
@@ -45,24 +45,19 @@ func (me *TiState) isFinalState() bool {
 	if len(me.Stack) == 0 {
 		panic("isFinalState: empty stack")
 	}
-	return len(me.Stack) == 1 && me.Heap[me.Stack[0]].IsValue()
-}
-
-func (me *TiState) stats() *TiState {
-	me.Stats.NumberOfStepsTaken++
-	return me
+	return len(me.Stack) == 1 && isDataNode(me.Heap[me.Stack[0]])
 }
 
 func (me *TiState) step() *TiState {
-	headaddr := me.Stack[len(me.Stack)-1]
+	headaddr := me.Stack[0]
 	nu, obj := *me, me.Heap[headaddr]
 	switch node := obj.(type) {
-	case *nodeNumFloat:
+	case nodeNumFloat:
 		panic("float applied as a function")
-	case *nodeNumUint:
+	case nodeNumUint:
 		panic("uint applied as a function")
 	case *nodeAp:
-		nu.Stack = append(nu.Stack, node.Callee)
+		nu.Stack = append([]clutil.Addr{node.Callee}, me.Stack...)
 	case *nodeDef:
 		argaddrs, argbinds := me.getArgs(len(node.Args)), make(map[string]clutil.Addr, len(node.Args))
 		for i, argname := range node.Args {
@@ -77,32 +72,20 @@ func (me *TiState) step() *TiState {
 			env[k] = v
 		}
 
-		nuheap, resultaddr := me.instantiate(node.Body, env)
-		pos := len(me.Stack) - (1 + len(node.Args))
-		nu.Heap, nu.Stack = nuheap, append(me.Stack[:pos], resultaddr)
+		nuheap, resultaddr := instantiateNodeFromExpr(node.Body, me.Heap, env)
+		nu.Heap, nu.Stack = nuheap, append([]clutil.Addr{resultaddr}, me.Stack[1+len(node.Args):]...)
 	default:
 		panic("step: node type not yet implemented")
 	}
+	nu.Stats.NumberOfStepsTaken = me.Stats.NumberOfStepsTaken + 1
 	return &nu
 }
 
 func (me *TiState) getArgs(num int) (argsaddrs []clutil.Addr) {
 	for i := 1; i <= num; i++ {
-		addr := me.Stack[len(me.Stack)-i]
+		addr := me.Stack[i]
 		nap, _ := me.Heap[addr].(*nodeAp)
 		argsaddrs = append(argsaddrs, nap.Arg)
-	}
-	return
-}
-
-func (me *TiState) instantiate(body clsyn.IExpr, env map[string]clutil.Addr) (nuHeap clutil.Heap, resultAddr clutil.Addr) {
-	switch expr := body.(type) {
-	case *clsyn.ExprLitFloat:
-		nuHeap, resultAddr = me.Heap.Alloc(nodeNumFloat(expr.Lit))
-	case *clsyn.ExprLitUInt:
-		nuHeap, resultAddr = me.Heap.Alloc(nodeNumUint(expr.Lit))
-	default:
-		panic("instantiate: expr type not yet implemented")
 	}
 	return
 }
