@@ -1,6 +1,7 @@
 package climpl
 
 import (
+	"errors"
 	"github.com/metaleap/go-corelang/syn"
 	"github.com/metaleap/go-corelang/util"
 )
@@ -15,7 +16,7 @@ type TiState struct {
 	}
 }
 
-func CompileToMachine(mod *clsyn.SynMod, mainName string) (initialMachineState *TiState) {
+func CompileToMachine(mod *clsyn.SynMod) (initialMachineState *TiState) {
 	initialMachineState = &TiState{
 		Globals: map[string]clutil.Addr{},
 		Heap:    clutil.Heap{},
@@ -24,12 +25,16 @@ func CompileToMachine(mod *clsyn.SynMod, mainName string) (initialMachineState *
 		ndef := nodeDef(*def)
 		initialMachineState.Heap, initialMachineState.Globals[def.Name] = initialMachineState.Heap.Alloc(&ndef)
 	}
-	initialMachineState.Stack = []clutil.Addr{initialMachineState.Globals[mainName]}
 	return
 }
 
-func (me *TiState) Eval() (allSteps []*TiState, err error) {
-	// defer clutil.Catch(&err)
+func (me *TiState) Eval(name string) (allSteps []*TiState, err error) {
+	defer clutil.Catch(&err)
+	addr := me.Globals[name]
+	if addr == 0 {
+		return nil, errors.New(name + ": undefined")
+	}
+	me.Stack = []clutil.Addr{addr}
 	allSteps = me.eval()
 	return
 }

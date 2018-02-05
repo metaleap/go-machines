@@ -23,6 +23,7 @@ func main() {
 	for defname := range mod.Defs {
 		writeLn(defname)
 	}
+	machine := climpl.CompileToMachine(mod)
 	for repl.Scan() {
 		if readln := strings.TrimSpace(repl.Text()); readln != "" {
 			if readln == "…" && multiline != "" {
@@ -38,8 +39,7 @@ func main() {
 						writeLn(defname)
 					}
 				} else if strings.HasPrefix(readln, "!") {
-					machine := climpl.CompileToMachine(mod, readln[1:])
-					allsteps, evalerr := machine.Eval()
+					allsteps, evalerr := machine.Eval(readln[1:])
 					if evalerr != nil {
 						println(evalerr.Error())
 					} else {
@@ -53,6 +53,7 @@ func main() {
 					writeLn(srcfmt.(string))
 				}
 			} else if lexAndParse("<input>", readln, mod) {
+				machine = climpl.CompileToMachine(mod)
 				writeLn("all definition successfully parsed, enter its name to pretty-print it's syntax tree")
 			}
 		}
