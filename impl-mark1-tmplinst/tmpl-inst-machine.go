@@ -87,12 +87,10 @@ func (me *TiState) step() *TiState {
 }
 
 func (me *TiState) getArgs(num int) (argsaddrs []clutil.Addr) {
-	for _, addr := range me.Stack {
-		if nap, _ := me.Heap[addr].(*nodeAp); nap != nil {
-			if argsaddrs = append(argsaddrs, nap.Arg); len(argsaddrs) == num {
-				return
-			}
-		}
+	for i := 1; i <= num; i++ {
+		addr := me.Stack[len(me.Stack)-i]
+		nap, _ := me.Heap[addr].(*nodeAp)
+		argsaddrs = append(argsaddrs, nap.Arg)
 	}
 	return
 }
