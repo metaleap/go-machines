@@ -32,7 +32,7 @@ func (me *TiState) Eval(name string) (allSteps []*TiState, err error) {
 	defer clutil.Catch(&err)
 	addr := me.Globals[name]
 	if addr == 0 {
-		return nil, errors.New(name + ": undefined")
+		return nil, errors.New("undefined: " + name)
 	}
 	me.Stack = []clutil.Addr{addr}
 	allSteps = me.eval()
