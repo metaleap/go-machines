@@ -145,7 +145,7 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 			case *lex.TokenStr:
 				thistoks, toks, thisexpr = toks[:1], toks[1:], Lt(t.Token)
 			case *lex.TokenOther: // any operator/separator/punctuation sequence other than "(" and ")"
-				thistoks, toks, thisexpr = toks[:1], toks[1:], IdO(t.Token, len(toks) == 1)
+				thistoks, toks, thisexpr = toks[:1], toks[1:], Op(t.Token, len(toks) == 1)
 			case *lex.TokenIdent:
 				if keyword := keywords[t.Token]; keyword == nil || len(toks) == 1 {
 					thistoks, toks, thisexpr = toks[:1], toks[1:], Id(t.Token)
@@ -182,14 +182,14 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 			// special case, ctor? any appl form akin to (intlit intlit) is parsed as: Ctor{tag,arity} instead of application
 			if ctortag, _ := prevexpr.(*ExprLitUInt); ctortag != nil {
 				if ctorarity, _ := thisexpr.(*ExprLitUInt); ctorarity != nil {
-					prevexpr = Ct(ctortag.Val, ctorarity.Val)
+					prevexpr = Ct(ctortag.Lit, ctorarity.Lit)
 					prevexpr.init(append(ctortag.toks, ctorarity.toks...)) // TODO: see comment below
 					continue
 				}
 			}
 
-			bothtoks := append(prevexpr.Toks(), thisexpr.Toks()...) // TODO: not nice --- so far, except for Ap and Ct, we could do without extra allocations, reusing the single tokens slice via sub-slices
-			// special case, infix op? any appl infix form of (expr op) is flipped to prefix form (op expr) --- precedence/associativity dont exist in corelang and are simply forced via parens — auto-inserting them being a matter of a later higher-level desugarer
+			bothtoks := append(prevexpr.Toks(), thisexpr.Toks()...) // TODO: not nice --- so far, for all syns except Ap and Ct, we could do without extra allocations, reusing the single incoming Tokens slice via sub-slices
+			// special case, infix op? any appl infix form of (expr op) is flipped to prefix form (op expr) --- precedence/associativity dont exist in corelang and are simply forced via parens — auto-inserting them via precedence etc being a matter of a later higher-level desugarer
 			if exop, _ := thisexpr.(*ExprIdent); exop != nil && exop.OpLike && !exop.OpLone {
 				prevexpr = Ap(thisexpr, prevexpr)
 			} else if _, isid := prevexpr.(*ExprIdent); (!isid) && prevexpr.IsAtomic() {

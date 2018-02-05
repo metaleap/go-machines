@@ -1,36 +1,36 @@
 package clsyn
 
-func Id(name string) *ExprIdent                { return &ExprIdent{Val: name} }
-func IdO(name string, lone bool) *ExprIdent    { return &ExprIdent{Val: name, OpLike: true, OpLone: lone} }
-func Lf(lit float64) *ExprLitFloat             { return &ExprLitFloat{Val: lit} }
-func Lu(lit uint64, origBase int) *ExprLitUInt { return &ExprLitUInt{Val: lit, Base: origBase} }
-func Lr(lit rune) *ExprLitRune                 { return &ExprLitRune{Val: lit} }
-func Lt(lit string) *ExprLitText               { return &ExprLitText{Val: lit} }
+func Id(name string) *ExprIdent                { return &ExprIdent{Name: name} }
+func Op(name string, lone bool) *ExprIdent     { return &ExprIdent{Name: name, OpLike: true, OpLone: lone} }
+func Lf(lit float64) *ExprLitFloat             { return &ExprLitFloat{Lit: lit} }
+func Lu(lit uint64, origBase int) *ExprLitUInt { return &ExprLitUInt{Lit: lit, Base: origBase} }
+func Lr(lit rune) *ExprLitRune                 { return &ExprLitRune{Lit: lit} }
+func Lt(lit string) *ExprLitText               { return &ExprLitText{Lit: lit} }
 
 type ExprIdent struct {
 	exprAtomic
-	Val    string
+	Name   string
 	OpLike bool
 	OpLone bool
 }
 
 type ExprLitFloat struct {
 	exprAtomic
-	Val float64
+	Lit float64
 }
 
 type ExprLitUInt struct {
 	exprAtomic
 	Base int
-	Val  uint64
+	Lit  uint64
 }
 
 type ExprLitRune struct {
 	exprAtomic
-	Val rune
+	Lit rune
 }
 
 type ExprLitText struct {
 	exprAtomic
-	Val string
+	Lit string
 }

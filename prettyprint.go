@@ -51,23 +51,23 @@ func (me *InterpPrettyPrint) expr(w *bytes.Buffer, expression IExpr, parensUnles
 		if expr.OpLike && expr.OpLone {
 			w.WriteRune('(')
 		}
-		w.WriteString(expr.Val)
+		w.WriteString(expr.Name)
 		if expr.OpLike && expr.OpLone {
 			w.WriteRune(')')
 		}
 	case *ExprLitFloat:
-		w.WriteString(strconv.FormatFloat(expr.Val, 'g', -1, 64))
+		w.WriteString(strconv.FormatFloat(expr.Lit, 'g', -1, 64))
 	case *ExprLitUInt:
 		if expr.Base == 16 {
 			w.WriteString("0x")
 		} else if expr.Base == 8 {
 			w.WriteRune('0')
 		}
-		w.WriteString(strconv.FormatUint(expr.Val, expr.Base))
+		w.WriteString(strconv.FormatUint(expr.Lit, expr.Base))
 	case *ExprLitText:
-		w.WriteString(strconv.Quote(expr.Val))
+		w.WriteString(strconv.Quote(expr.Lit))
 	case *ExprLitRune:
-		w.WriteString(strconv.QuoteRune(expr.Val))
+		w.WriteString(strconv.QuoteRune(expr.Lit))
 	case *ExprLambda:
 		w.WriteString("\\")
 		for _, lamarg := range expr.Args {
