@@ -12,6 +12,7 @@ var keywords = map[string]Keyword{}
 
 func init() {
 	RegisterKeyword("LET", parseKeywordLet)
+	RegisterKeyword("LETREC", parseKeywordLet)
 	RegisterKeyword("CASE", parseKeywordCase)
 }
 
@@ -205,7 +206,11 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 }
 
 func parseKeywordLet(tokens lex.Tokens) (IExpr, lex.Tokens, *Error) {
-	toks := tokens[1:] // tokens[0] is `LET` keyword itself
+	isrec, toks := false, tokens[1:] // tokens[0] is `LET` keyword itself
+
+	if tid, _ := toks[0].(*lex.TokenIdent); tid != nil && tid.Token == "REC" {
+		isrec, toks = true, toks[1:]
+	}
 
 	defstoks, bodytoks, numunclosed := toks.BreakOnIdent("IN", "LET")
 	if nodef, nobod := len(defstoks) == 0, len(bodytoks) == 0; (nodef && nobod) || numunclosed != 0 {
@@ -223,13 +228,15 @@ func parseKeywordLet(tokens lex.Tokens) (IExpr, lex.Tokens, *Error) {
 
 	if def0, kwdlet := defstoks[0].Meta(), tokens[0].Meta(); def0.Line == kwdlet.Line {
 		def0.LineIndent += (def0.Column - kwdlet.Column) // typically 4, ie. len("LET ")
+	} else if kwdrec := tokens[1].Meta(); isrec && def0.Line == kwdrec.Line {
+		def0.LineIndent += (def0.Column - kwdrec.Column) // same for REC if weirdly following its LET on a new line
 	}
 	defsyns, deferrs := parseDefs(defstoks)
 	if len(deferrs) > 0 {
 		return nil, nil, deferrs[0]
 	}
 
-	letin := &ExprLetIn{Body: bodyexpr, Defs: defsyns}
+	letin := &ExprLetIn{Body: bodyexpr, Defs: defsyns, Rec: isrec}
 	letin.init(tokens)
 	return letin, nil, nil
 }

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	core "github.com/metaleap/go-corelang"
-	"github.com/metaleap/go-corelang/impl-mark1-tmplinst"
+	"github.com/metaleap/go-corelang/impl-01-tmplinst"
 	coresyn "github.com/metaleap/go-corelang/syn"
 )
 

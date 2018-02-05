@@ -40,8 +40,7 @@ func instantiateNodeFromExpr(body clsyn.IExpr, heap clutil.Heap, env map[string]
 		}
 	case *clsyn.ExprLetIn:
 		for _, def := range expr.Defs {
-			ndef := nodeDef(*def)
-			heap, env[def.Name] = heap.Alloc(&ndef)
+			heap, env[def.Name] = instantiateNodeFromExpr(def.Body, heap, env)
 		}
 		nuHeap, resultAddr = instantiateNodeFromExpr(expr.Body, heap, env)
 	case *clsyn.ExprCaseOf, *clsyn.ExprCtor:

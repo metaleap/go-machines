@@ -1,6 +1,25 @@
 package main
 
-const srcMod = `foo=bar
+const srcMod = `
+
+
+pair x y f = f x y
+
+fst p = p k0
+
+snd p = p k1
+
+f x y =
+    LET REC a = pair x b
+            b = pair y a
+    IN fst (snd (snd (snd a)))
+
+main = f 3 4
+
+
+// random noisy rubbish..
+
+foo=bar
 
 
 hello = LET
@@ -12,6 +31,7 @@ world =
   LET d _ = "ditched"
       w = "World"
   IN k1 (d '?') w
+
 
 
 helloOrWorld h0w1 =

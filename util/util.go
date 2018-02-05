@@ -23,7 +23,7 @@ func (me Heap) copy() (nu Heap) {
 
 func (me Heap) Alloc(obj INode) (nu Heap, addr Addr) {
 	nu = me.copy()
-	addr = Addr(len(nu) + 1)
+	addr = nu.NextAddr()
 	nu[addr] = obj
 	return
 }
@@ -32,6 +32,10 @@ func (me Heap) Free(addr Addr) (nu Heap) {
 	nu = me.copy()
 	delete(nu, addr)
 	return
+}
+
+func (me Heap) NextAddr() Addr {
+	return Addr(len(me) + 1)
 }
 
 func (me Heap) Update(addr Addr, obj INode) (nu Heap) {
