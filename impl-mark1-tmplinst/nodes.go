@@ -38,7 +38,13 @@ func instantiateNodeFromExpr(body clsyn.IExpr, heap clutil.Heap, env map[string]
 		if nuHeap, resultAddr = heap, env[expr.Name]; resultAddr == 0 {
 			panic(expr.Name + ": undefined")
 		}
-	case *clsyn.ExprCaseOf, *clsyn.ExprLetIn, *clsyn.ExprCtor:
+	case *clsyn.ExprLetIn:
+		for _, def := range expr.Defs {
+			ndef := nodeDef(*def)
+			heap, env[def.Name] = heap.Alloc(&ndef)
+		}
+		nuHeap, resultAddr = instantiateNodeFromExpr(expr.Body, heap, env)
+	case *clsyn.ExprCaseOf, *clsyn.ExprCtor:
 		panic("instantiateNodeFromExpr: expr type coming soon")
 	default:
 		panic("instantiateNodeFromExpr: expr type not yet implemented")

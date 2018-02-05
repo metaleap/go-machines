@@ -87,6 +87,9 @@ func (me *TiState) step() *TiState {
 }
 
 func (me *TiState) getArgs(num int) (argsaddrs []clutil.Addr) {
+	if num >= len(me.Stack) {
+		panic("not enough arguments given")
+	}
 	for i := 1; i <= num; i++ {
 		addr := me.Stack[i]
 		nap, _ := me.Heap[addr].(*nodeAp)
