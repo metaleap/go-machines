@@ -24,29 +24,28 @@ func isDataNode(node clutil.INode) (isvalue bool) {
 	return
 }
 
-func instantiateNodeFromExpr(body clsyn.IExpr, heap clutil.Heap, env map[string]clutil.Addr) (nuHeap clutil.Heap, resultAddr clutil.Addr) {
-	switch expr := body.(type) {
+func (me *TiMachine) instantiate(expression clsyn.IExpr) (resultAddr clutil.Addr) {
+	switch expr := expression.(type) {
 	case *clsyn.ExprLitFloat:
-		nuHeap, resultAddr = heap.Alloc(nodeNumFloat(expr.Lit))
+		resultAddr = me.alloc(nodeNumFloat(expr.Lit))
 	case *clsyn.ExprLitUInt:
-		nuHeap, resultAddr = heap.Alloc(nodeNumUint(expr.Lit))
+		resultAddr = me.alloc(nodeNumUint(expr.Lit))
 	case *clsyn.ExprCall:
-		heap1, a1 := instantiateNodeFromExpr(expr.Callee, heap, env)
-		heap2, a2 := instantiateNodeFromExpr(expr.Arg, heap1, env)
-		nuHeap, resultAddr = heap2.Alloc(&nodeAp{Callee: a1, Arg: a2})
+		resultAddr = me.alloc(&nodeAp{me.instantiate(expr.Callee), me.instantiate(expr.Arg)})
 	case *clsyn.ExprIdent:
-		if nuHeap, resultAddr = heap, env[expr.Name]; resultAddr == 0 {
+		if resultAddr = me.Env[expr.Name]; resultAddr == 0 {
 			panic(expr.Name + ": undefined")
 		}
 	case *clsyn.ExprLetIn:
 		for _, def := range expr.Defs {
-			heap, env[def.Name] = instantiateNodeFromExpr(def.Body, heap, env)
+			ndef := nodeDef(*def)
+			me.Env[def.Name] = me.alloc(&ndef)
 		}
-		nuHeap, resultAddr = instantiateNodeFromExpr(expr.Body, heap, env)
+		resultAddr = me.instantiate(expr.Body)
 	case *clsyn.ExprCaseOf, *clsyn.ExprCtor:
-		panic("instantiateNodeFromExpr: expr type coming soon")
+		panic("instantiate: expr type coming soon")
 	default:
-		panic("instantiateNodeFromExpr: expr type not yet implemented")
+		panic("instantiate: expr type not yet implemented")
 	}
 	return
 }

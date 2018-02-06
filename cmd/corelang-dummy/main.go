@@ -39,12 +39,11 @@ func main() {
 						writeLn(defname)
 					}
 				} else if strings.HasPrefix(readln, "!") {
-					allsteps, evalerr := machine.Eval(readln[1:])
+					evalerr := machine.Eval(readln[1:])
 					if evalerr != nil {
 						println(evalerr.Error())
 					} else {
-						finalstate := allsteps[len(allsteps)-1]
-						fmt.Printf("Reduced in %d steps to:\n%v\n", finalstate.Stats.NumberOfStepsTaken, finalstate.Heap[finalstate.Stack[0]])
+						fmt.Printf("Reduced in %d steps to:\n%v\n", machine.Stats.NumStepsTaken, machine.Heap[machine.Stack[0]])
 					}
 				} else if def := mod.Defs[readln]; def == nil {
 					println("not found: " + readln)

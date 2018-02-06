@@ -16,6 +16,8 @@ f x y =
 
 main = f 3 4
 
+main2 = LET REC f = f x IN f
+
 
 // random noisy rubbish..
 
