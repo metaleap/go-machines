@@ -49,6 +49,11 @@ func (me *naiveMachine) reduce(syn clsyn.ISyn) clsyn.ISyn {
 	case *clsyn.ExprIdent:
 		return me.reduce(me.resolveIdent(n.Name))
 	case *clsyn.SynDef:
+		// oldlocals := me.locals
+		// if n.TopLevel {
+		// 	me.locals = map[string]clsyn.ISyn{}
+		// }
+
 		if len(me.args) < len(n.Args) {
 			panic(n.Name + ": not enough arguments available")
 		}
@@ -56,7 +61,11 @@ func (me *naiveMachine) reduce(syn clsyn.ISyn) clsyn.ISyn {
 			me.locals[arg] = me.args[i]
 		}
 		me.args = me.args[len(n.Args):]
-		return me.reduce(n.Body)
+		val := me.reduce(n.Body)
+		// if n.TopLevel {
+		// 	me.locals = oldlocals
+		// }
+		return val
 	case *clsyn.ExprCall:
 		me.args = append([]clsyn.ISyn{n.Arg}, me.args...)
 		return me.reduce(n.Callee)
