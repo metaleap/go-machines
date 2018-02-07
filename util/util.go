@@ -4,6 +4,10 @@ import (
 	"strconv"
 )
 
+type IMachine interface {
+	Eval(string) (interface{}, int, error)
+}
+
 type INode interface {
 }
 

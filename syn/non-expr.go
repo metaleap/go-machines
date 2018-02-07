@@ -6,9 +6,10 @@ type SynMod struct {
 
 type SynDef struct {
 	syn
-	Name string
-	Args []string
-	Body IExpr
+	Name     string
+	Args     []string
+	Body     IExpr
+	TopLevel bool
 }
 
 type SynCaseAlt struct {

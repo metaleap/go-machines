@@ -42,20 +42,20 @@ func LexAndParseDefs(srcFilePath string, src string) ([]*SynDef, []*Error) {
 }
 
 func ParseDefs(srcFilePath string, tokens lex.Tokens) (defs []*SynDef, errs []*Error) {
-	defs, errs = parseDefs(tokens)
+	defs, errs = parseDefs(tokens, true)
 	for _, e := range errs {
 		e.Pos.Filename = srcFilePath
 	}
 	return
 }
 
-func parseDefs(tokens lex.Tokens) (defs []*SynDef, errs []*Error) {
+func parseDefs(tokens lex.Tokens, topLevel bool) (defs []*SynDef, errs []*Error) {
 	for len(tokens) > 0 {
 		def, tail, deferr := parseDef(tokens)
 		if tokens = tail; deferr != nil {
 			errs = append(errs, deferr)
 		} else {
-			defs = append(defs, def)
+			def.TopLevel, defs = topLevel, append(defs, def)
 		}
 	}
 	return
@@ -227,11 +227,11 @@ func parseKeywordLet(tokens lex.Tokens) (IExpr, lex.Tokens, *Error) {
 	}
 
 	if def0, kwdlet := defstoks[0].Meta(), tokens[0].Meta(); def0.Line == kwdlet.Line {
-		def0.LineIndent += (def0.Column - kwdlet.Column) // typically 4, ie. len("LET ")
+		def0.LineIndent = def0.Column
 	} else if kwdrec := tokens[1].Meta(); isrec && def0.Line == kwdrec.Line {
-		def0.LineIndent += (def0.Column - kwdrec.Column) // same for REC if weirdly following its LET on a new line
+		def0.LineIndent = def0.Column
 	}
-	defsyns, deferrs := parseDefs(defstoks)
+	defsyns, deferrs := parseDefs(defstoks, false)
 	if len(deferrs) > 0 {
 		return nil, nil, deferrs[0]
 	}

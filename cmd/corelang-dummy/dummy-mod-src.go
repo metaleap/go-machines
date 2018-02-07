@@ -3,18 +3,24 @@ package main
 const srcMod = `
 
 
-pair x y f = f x y
+pair l r f = f l r
 
 fst p = p k0
 
 snd p = p k1
 
-f x y =
+freakish x y =
     LET REC a = pair x b
             b = pair y a
     IN fst (snd (snd (snd a)))
 
-main = f 3 4
+main0 = freakish 3 4
+
+main1 k = LET
+        p = pair 123
+        pp = p 456
+        fun = k
+    IN pp fun
 
 main2 = LET REC f = f x IN f
 

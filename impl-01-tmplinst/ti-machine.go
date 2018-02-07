@@ -1,8 +1,6 @@
 package climpl
 
 import (
-	"errors"
-
 	"github.com/metaleap/go-corelang/syn"
 	"github.com/metaleap/go-corelang/util"
 )
@@ -28,14 +26,16 @@ func CompileToMachine(mod *clsyn.SynMod) (me *TiMachine) {
 	return
 }
 
-func (me *TiMachine) Eval(name string) (err error) {
+func (me *TiMachine) Eval(name string) (val interface{}, numsteps int, err error) {
 	defer clutil.Catch(&err)
 	addr := me.Env[name]
-	if addr == 0 {
-		return errors.New("undefined: " + name)
+	if me.Stats.NumStepsTaken = 0; addr == 0 {
+		panic("undefined: " + name)
+	} else {
+		me.Stack = []clutil.Addr{addr}
+		me.eval()
+		val, numsteps = me.Heap[me.Stack[0]], me.Stats.NumStepsTaken
 	}
-	me.Stack = []clutil.Addr{addr}
-	me.eval()
 	return
 }
 
@@ -70,7 +70,7 @@ func (me *TiMachine) step() {
 			me.Env[k] = v
 		}
 
-		argsaddrs := me.getArgs(len(n.Args))
+		argsaddrs := me.getArgs(n.Name, len(n.Args))
 		for i, argname := range n.Args {
 			me.Env[argname] = argsaddrs[i]
 		}
@@ -88,10 +88,10 @@ func (me *TiMachine) alloc(obj clutil.INode) (addr clutil.Addr) {
 	return
 }
 
-func (me *TiMachine) getArgs(count int) (argsaddrs []clutil.Addr) {
+func (me *TiMachine) getArgs(name string, count int) (argsaddrs []clutil.Addr) {
 	stackzero := len(me.Stack) - (1 + count)
 	if stackzero < 0 {
-		panic("not enough arguments given")
+		panic(name + ": not enough arguments given")
 	}
 	argsaddrs = make([]clutil.Addr, count)
 	for i := 0; i < count; i++ {

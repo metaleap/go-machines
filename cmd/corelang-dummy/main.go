@@ -6,24 +6,26 @@ import (
 	"os"
 	"strings"
 
-	core "github.com/metaleap/go-corelang"
-	"github.com/metaleap/go-corelang/impl-01-tmplinst"
-	coresyn "github.com/metaleap/go-corelang/syn"
+	"github.com/metaleap/go-corelang"
+	"github.com/metaleap/go-corelang/impl-00-naive"
+	// "github.com/metaleap/go-corelang/impl-01-tmplinst"
+	"github.com/metaleap/go-corelang/syn"
+	"github.com/metaleap/go-corelang/util"
 )
 
 func writeLn(s string) { _, _ = os.Stdout.WriteString(s + "\n") }
 
 func main() {
-	mod := &coresyn.SynMod{Defs: core.PreludeDefs}
+	mod := &clsyn.SynMod{Defs: corelang.PreludeDefs}
 	if !lexAndParse("from-const-srcMod-in.dummy-mod-src.go", srcMod, mod) {
 		return
 	}
 
-	multiline, repl, pprint := "", bufio.NewScanner(os.Stdin), &core.InterpPrettyPrint{}
+	multiline, repl, pprint := "", bufio.NewScanner(os.Stdin), &corelang.InterpPrettyPrint{}
 	for defname := range mod.Defs {
 		writeLn(defname)
 	}
-	machine := climpl.CompileToMachine(mod)
+	var machine clutil.IMachine = climpl.CompileToMachine(mod)
 	for repl.Scan() {
 		if readln := strings.TrimSpace(repl.Text()); readln != "" {
 			if readln == "…" && multiline != "" {
@@ -39,11 +41,11 @@ func main() {
 						writeLn(defname)
 					}
 				} else if strings.HasPrefix(readln, "!") {
-					evalerr := machine.Eval(readln[1:])
+					val, numsteps, evalerr := machine.Eval(readln[1:])
 					if evalerr != nil {
 						println(evalerr.Error())
 					} else {
-						fmt.Printf("Reduced in %d steps to:\n%v\n", machine.Stats.NumStepsTaken, machine.Heap[machine.Stack[0]])
+						fmt.Printf("Reduced in %d steps to:\n%v\n", numsteps, val)
 					}
 				} else if def := mod.Defs[readln]; def == nil {
 					println("not found: " + readln)
@@ -59,8 +61,8 @@ func main() {
 	}
 }
 
-func lexAndParse(filePath string, src string, mod *coresyn.SynMod) bool {
-	defs, errs_parse := coresyn.LexAndParseDefs(filePath, src)
+func lexAndParse(filePath string, src string, mod *clsyn.SynMod) bool {
+	defs, errs_parse := clsyn.LexAndParseDefs(filePath, src)
 
 	for _, def := range defs {
 		if mod.Defs[def.Name] != nil {
