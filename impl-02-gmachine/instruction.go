@@ -14,6 +14,8 @@ const (
 	INSTR_PUSHARG
 	INSTR_MAKEAPPL
 	INSTR_SLIDE
+	INSTR_UPDATE
+	INSTR_POP
 )
 
 type instr struct {
@@ -36,6 +38,10 @@ func (me instr) String() string {
 		return "Slide:" + strconv.Itoa(me.Int)
 	case INSTR_MAKEAPPL:
 		return "MkAp"
+	case INSTR_UPDATE:
+		return "Upd@" + strconv.Itoa(me.Int)
+	case INSTR_POP:
+		return "Pop@" + strconv.Itoa(me.Int)
 	}
 	return strconv.Itoa(int(me.Op))
 }
@@ -77,10 +83,20 @@ func (me *gMachine) dispatch(cur instr, nuCode code) code {
 		// me.Stack = append(less, keep)
 		me.Stack = me.Stack[:len(me.Stack)-cur.Int]
 		me.Stack[len(me.Stack)-1] = keep
+	case INSTR_UPDATE:
+		pointee := me.Stack[stackpos]
+		addrptr := me.alloc(nodePointTo{Addr: pointee})
+		me.Stack = me.Stack[:len(me.Stack)-1]
+		me.Stack[len(me.Stack)-(1+cur.Int)] = addrptr
+	case INSTR_POP:
+		me.Stack = me.Stack[:len(me.Stack)-cur.Int]
 	case INSTR_UNWIND:
 		addr := me.Stack[stackpos]
 		node := me.Heap[addr]
 		switch n := node.(type) {
+		case nodePointTo:
+			me.Stack[stackpos] = n.Addr
+			nuCode = code{{Op: INSTR_UNWIND}} // if bugs, revert to (cur:nuCode)
 		case nodeLitUint:
 			if len(nuCode) > 0 {
 				panic("unexpected? or not?")

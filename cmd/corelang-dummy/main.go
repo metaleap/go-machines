@@ -23,14 +23,17 @@ func main() {
 		return
 	}
 
-	multiline, repl, pprint := "", bufio.NewScanner(os.Stdin), &corelang.InterpPrettyPrint{}
+	writeLn("module lexed and parsed, globals are:")
 	for defname := range mod.Defs {
-		writeLn(defname)
+		writeLn("\t" + defname)
 	}
+
 	timestarted := time.Now()
 	var machine clutil.IMachine = climpl.CompileToMachine(mod)
 	timetaken := time.Now().Sub(timestarted)
 	fmt.Printf("whole (already-parsed) module compiled in %s\n\n", timetaken)
+
+	multiline, repl, pprint := "", bufio.NewScanner(os.Stdin), &corelang.InterpPrettyPrint{}
 	for repl.Scan() {
 		if readln := strings.TrimSpace(repl.Text()); readln != "" {
 			if readln == "…" && multiline != "" {

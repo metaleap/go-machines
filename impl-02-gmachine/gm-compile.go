@@ -5,34 +5,48 @@ import (
 	"github.com/metaleap/go-corelang/util"
 )
 
+const (
+	Lazy = true
+)
+
 func CompileToMachine(mod *clsyn.SynMod) clutil.IMachine {
 	me := gMachine{
 		Heap:    clutil.Heap{},
 		Globals: make(map[string]clutil.Addr, len(mod.Defs)),
 	}
-	for _, def := range mod.Defs {
-		argsenv := make(map[string]int, len(def.Args))
-		for i, arg := range def.Args {
+
+	for _, global := range mod.Defs {
+		argsenv := make(map[string]int, len(global.Args))
+		for i, arg := range global.Args {
 			argsenv[arg] = i
 		}
 
-		me.Globals[def.Name] = me.alloc(nodeGlobal{
+		me.Globals[global.Name] = me.alloc(nodeGlobal{
 			NumArgs: len(argsenv),
-			Code:    me.compileR(def.Body, argsenv),
+			Code:    me.compileBody(global.Body, argsenv),
 		})
 	}
 	return &me
 }
 
-func (me *gMachine) compileR(expr clsyn.IExpr, argsEnv map[string]int) code {
-	return append(
-		me.compileC(expr, argsEnv),
-		instr{Op: INSTR_SLIDE, Int: 1 + len(argsEnv)},
+func (me *gMachine) compileBody(expr clsyn.IExpr, argsEnv map[string]int) code {
+	numargs, codeexpr := len(argsEnv), me.compileExpr(expr, argsEnv)
+
+	if Lazy {
+		return append(codeexpr,
+			instr{Op: INSTR_UPDATE, Int: numargs},
+			instr{Op: INSTR_POP, Int: numargs},
+			instr{Op: INSTR_UNWIND},
+		)
+	}
+
+	return append(codeexpr,
+		instr{Op: INSTR_SLIDE, Int: 1 + numargs},
 		instr{Op: INSTR_UNWIND},
 	)
 }
 
-func (me *gMachine) compileC(expression clsyn.IExpr, argsEnv map[string]int) code {
+func (me *gMachine) compileExpr(expression clsyn.IExpr, argsEnv map[string]int) code {
 	switch expr := expression.(type) {
 	case *clsyn.ExprLitUInt:
 		return code{{Op: INSTR_PUSHINT, Int: int(expr.Lit)}}
@@ -43,8 +57,8 @@ func (me *gMachine) compileC(expression clsyn.IExpr, argsEnv map[string]int) cod
 		return code{{Op: INSTR_PUSHGLOBAL, Name: expr.Name}}
 	case *clsyn.ExprCall:
 		return append(append(
-			me.compileC(expr.Arg, argsEnv),
-			me.compileC(expr.Callee, me.envOffsetBy(argsEnv, 1))...,
+			me.compileExpr(expr.Arg, argsEnv),
+			me.compileExpr(expr.Callee, me.envOffsetBy(argsEnv, 1))...,
 		), instr{Op: INSTR_MAKEAPPL})
 	default:
 		panic(expr)

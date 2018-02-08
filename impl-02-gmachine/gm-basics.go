@@ -13,7 +13,7 @@ type gMachine struct {
 }
 
 func (me *gMachine) Eval(name string) (val interface{}, numSteps int, err error) {
-	defer clutil.Catch(&err)
+	// defer clutil.Catch(&err)
 	me.Code = code{{Op: INSTR_PUSHGLOBAL, Name: name}, {Op: INSTR_UNWIND}}
 	// println(me.Heap[me.Globals[name]].(nodeGlobal).Code.String())
 	me.eval()

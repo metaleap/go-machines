@@ -15,3 +15,7 @@ type nodeGlobal struct {
 	NumArgs int
 	Code    code
 }
+
+type nodePointTo struct {
+	Addr clutil.Addr
+}
