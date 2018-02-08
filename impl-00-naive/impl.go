@@ -1,6 +1,8 @@
 package climpl
 
 import (
+	"fmt"
+
 	"github.com/metaleap/go-corelang/syn"
 	"github.com/metaleap/go-corelang/util"
 )
@@ -10,6 +12,7 @@ type naiveMachine struct {
 	locals        map[string]clsyn.ISyn
 	args          []clsyn.ISyn
 	numStepsTaken int
+	printSteps    bool
 }
 
 func CompileToMachine(mod *clsyn.SynMod) clutil.IMachine {
@@ -17,13 +20,13 @@ func CompileToMachine(mod *clsyn.SynMod) clutil.IMachine {
 	for _, def := range mod.Defs {
 		globals[def.Name] = def
 	}
-	return &naiveMachine{globals: globals, locals: map[string]clsyn.ISyn{}}
+	return &naiveMachine{globals: globals}
 }
 
 func (me *naiveMachine) Eval(name string) (val interface{}, numSteps int, err error) {
 	defer clutil.Catch(&err)
 	def := me.resolveIdent(name)
-	me.numStepsTaken = 0
+	me.numStepsTaken, me.locals = 0, map[string]clsyn.ISyn{}
 	syn := me.reduce(def)
 	switch n := syn.(type) {
 	case *clsyn.ExprLitFloat:
@@ -42,29 +45,34 @@ func (me *naiveMachine) Eval(name string) (val interface{}, numSteps int, err er
 }
 
 func (me *naiveMachine) reduce(syn clsyn.ISyn) clsyn.ISyn {
+	if me.printSteps {
+		fmt.Printf("\n\n%d — %T\n\t%v\n\t%v\n", me.numStepsTaken, syn, me.args, me.locals)
+	}
 	me.numStepsTaken++
 	switch n := syn.(type) {
 	case *clsyn.ExprLitFloat, *clsyn.ExprLitRune, *clsyn.ExprLitText, *clsyn.ExprLitUInt:
 		return syn
 	case *clsyn.ExprIdent:
+		if me.printSteps {
+			fmt.Printf("\t%s\n", n.Name)
+		}
 		return me.reduce(me.resolveIdent(n.Name))
 	case *clsyn.SynDef:
-		// oldlocals := me.locals
-		// if n.TopLevel {
-		// 	me.locals = map[string]clsyn.ISyn{}
-		// }
-
+		if me.printSteps {
+			fmt.Printf("\t%s\n", n.Name)
+		}
 		if len(me.args) < len(n.Args) {
-			panic(n.Name + ": not enough arguments available")
+			for i, arg := range me.args {
+				me.locals[n.Args[i]] = arg
+			}
+			me.args = []clsyn.ISyn{}
+		} else {
+			for i, arg := range n.Args {
+				me.locals[arg] = me.args[i]
+			}
+			me.args = me.args[len(n.Args):]
 		}
-		for i, arg := range n.Args {
-			me.locals[arg] = me.args[i]
-		}
-		me.args = me.args[len(n.Args):]
 		val := me.reduce(n.Body)
-		// if n.TopLevel {
-		// 	me.locals = oldlocals
-		// }
 		return val
 	case *clsyn.ExprCall:
 		me.args = append([]clsyn.ISyn{n.Arg}, me.args...)
