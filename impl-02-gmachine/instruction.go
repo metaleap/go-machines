@@ -94,14 +94,15 @@ func (me *gMachine) dispatch(cur instr, nuCode code) code {
 		addr := me.Stack[stackpos]
 		node := me.Heap[addr]
 		switch n := node.(type) {
+		case nodeLitUint:
+			// nothing to do
 		case nodePointTo:
 			me.Stack[stackpos] = n.Addr
-			nuCode = code{{Op: INSTR_UNWIND}} // if bugs, revert to (cur:nuCode)
-		case nodeLitUint:
-			if len(nuCode) > 0 {
-				panic("unexpected? or not?")
+			if len(nuCode) > 0 { // temporarily to observe
+				panic("does dis ever happen?")
 			}
-			// nuCode = nil
+			// nuCode = append(code{{Op: INSTR_UNWIND}}, nuCode...)
+			nuCode = code{{Op: INSTR_UNWIND}}
 		case nodeAppl:
 			me.Stack = append(me.Stack, n.Callee)
 			nuCode = code{{Op: INSTR_UNWIND}}
