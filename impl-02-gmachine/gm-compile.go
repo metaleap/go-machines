@@ -6,41 +6,45 @@ import (
 )
 
 func CompileToMachine(mod *clsyn.SynMod) clutil.IMachine {
-	me := gMachine{Heap: clutil.Heap{}, Globals: make(map[string]clutil.Addr, len(mod.Defs))}
+	me := gMachine{
+		Heap:    clutil.Heap{},
+		Globals: make(map[string]clutil.Addr, len(mod.Defs)),
+	}
 	for _, def := range mod.Defs {
-		args := make(map[string]int, len(def.Args))
+		argsenv := make(map[string]int, len(def.Args))
 		for i, arg := range def.Args {
-			args[arg] = i
+			argsenv[arg] = i
 		}
+
 		me.Globals[def.Name] = me.alloc(nodeGlobal{
-			NumArgs: len(args),
-			Code:    me.compileExpr(def.Body, args),
+			NumArgs: len(argsenv),
+			Code:    me.compileR(def.Body, argsenv),
 		})
 	}
 	return &me
 }
 
-func (me *gMachine) compileExpr(expr clsyn.IExpr, env map[string]int) code {
+func (me *gMachine) compileR(expr clsyn.IExpr, argsEnv map[string]int) code {
 	return append(
-		me.compileAppl(expr, env),
-		instr{Op: INSTR_SLIDE, Int: 1 + len(env)},
+		me.compileC(expr, argsEnv),
+		instr{Op: INSTR_SLIDE, Int: 1 + len(argsEnv)},
 		instr{Op: INSTR_UNWIND},
 	)
 }
 
-func (me *gMachine) compileAppl(expression clsyn.IExpr, env map[string]int) code {
+func (me *gMachine) compileC(expression clsyn.IExpr, argsEnv map[string]int) code {
 	switch expr := expression.(type) {
 	case *clsyn.ExprLitUInt:
 		return code{{Op: INSTR_PUSHINT, Int: int(expr.Lit)}}
 	case *clsyn.ExprIdent:
-		if i, islocal := env[expr.Name]; islocal {
-			return code{{Op: INSTR_PUSH, Int: i}}
+		if i, islocal := argsEnv[expr.Name]; islocal {
+			return code{{Op: INSTR_PUSHARG, Int: i}}
 		}
 		return code{{Op: INSTR_PUSHGLOBAL, Name: expr.Name}}
 	case *clsyn.ExprCall:
 		return append(append(
-			me.compileAppl(expr.Arg, env),
-			me.compileAppl(expr.Callee, me.envOffsetBy(env, 1))...,
+			me.compileC(expr.Arg, argsEnv),
+			me.compileC(expr.Callee, me.envOffsetBy(argsEnv, 1))...,
 		), instr{Op: INSTR_MAKEAPPL})
 	default:
 		panic(expr)

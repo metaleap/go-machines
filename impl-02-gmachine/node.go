@@ -4,7 +4,7 @@ import (
 	"github.com/metaleap/go-corelang/util"
 )
 
-type nodeNumUint uint64
+type nodeLitUint uint64
 
 type nodeAppl struct {
 	Callee clutil.Addr

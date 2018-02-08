@@ -15,15 +15,18 @@ type gMachine struct {
 func (me *gMachine) Eval(name string) (val interface{}, numSteps int, err error) {
 	defer clutil.Catch(&err)
 	me.Code = code{{Op: INSTR_PUSHGLOBAL, Name: name}, {Op: INSTR_UNWIND}}
-	println(me.Heap[me.Globals[name]].(nodeGlobal).Code.String())
+	// println(me.Heap[me.Globals[name]].(nodeGlobal).Code.String())
 	me.eval()
 	numSteps, val = me.NumStepsTaken, me.Heap[me.Stack[len(me.Stack)-1]]
 	return
 }
 
 func (me *gMachine) eval() {
-	for me.NumStepsTaken = 0; len(me.Code) != 0; me.NumStepsTaken++ {
+	for me.NumStepsTaken = 0; len(me.Code) != 0 && me.NumStepsTaken <= 99999; me.NumStepsTaken++ {
 		me.step()
+	}
+	if me.NumStepsTaken >= 99999 {
+		panic("infinite loop")
 	}
 }
 

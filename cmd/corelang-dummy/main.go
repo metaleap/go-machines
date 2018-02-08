@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/metaleap/go-corelang"
 	// "github.com/metaleap/go-corelang/impl-00-naive"
@@ -26,27 +27,33 @@ func main() {
 	for defname := range mod.Defs {
 		writeLn(defname)
 	}
+	timestarted := time.Now()
 	var machine clutil.IMachine = climpl.CompileToMachine(mod)
+	timetaken := time.Now().Sub(timestarted)
+	fmt.Printf("whole (already-parsed) module compiled in %s\n\n", timetaken)
 	for repl.Scan() {
 		if readln := strings.TrimSpace(repl.Text()); readln != "" {
 			if readln == "…" && multiline != "" {
 				readln, multiline = strings.TrimSpace(multiline), ""
 			}
-			if strings.HasSuffix(readln, "…") {
+			switch {
+			case strings.HasSuffix(readln, "…"):
 				multiline = readln[:len(readln)-len("…")] + "\n  "
-			} else if multiline != "" {
+			case multiline != "":
 				multiline += readln + "\n  "
-			} else if !strings.Contains(readln, "=") { // will do until we introduce == / != / <= / >= / >>= etc ;)
+			case !strings.Contains(readln, "="):
 				if readln == "*" || readln == "?" {
 					for defname := range mod.Defs {
 						writeLn(defname)
 					}
 				} else if strings.HasPrefix(readln, "!") {
-					val, numsteps, evalerr := machine.Eval(readln[1:])
+					defname, starttime := readln[1:], time.Now()
+					val, numsteps, evalerr := machine.Eval(defname)
+					timetaken = time.Now().Sub(starttime)
 					if evalerr != nil {
 						println(evalerr.Error())
 					} else {
-						fmt.Printf("Reduced in %d steps to:\n%v\n", numsteps, val)
+						fmt.Printf("Reduced in %v (%d steps) to:\n%v\n", timetaken, numsteps, val)
 					}
 				} else if def := mod.Defs[readln]; def == nil {
 					println("not found: " + readln)
@@ -54,9 +61,11 @@ func main() {
 					srcfmt, _ := pprint.Def(mod.Defs[readln])
 					writeLn(srcfmt.(string))
 				}
-			} else if lexAndParse("<input>", readln, mod) {
+			case lexAndParse("<input>", readln, mod):
+				timestarted = time.Now()
 				machine = climpl.CompileToMachine(mod)
-				writeLn("all definition successfully parsed, enter its name to pretty-print it's syntax tree")
+				timetaken = time.Now().Sub(timestarted)
+				fmt.Printf("took %s to successfully parse definition and re-compile whole module: enter its name to pretty-print it's syntax tree or !name to evaluate\n\n", timetaken)
 			}
 		}
 	}

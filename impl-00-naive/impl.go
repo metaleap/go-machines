@@ -10,10 +10,10 @@ import (
 const PrintSteps = false
 
 type naiveMachine struct {
-	globals       map[string]clsyn.ISyn
-	locals        map[string]clsyn.ISyn
-	args          []clsyn.ISyn
-	numStepsTaken int
+	Globals       map[string]clsyn.ISyn
+	Locals        map[string]clsyn.ISyn
+	Args          []clsyn.ISyn
+	NumStepsTaken int
 }
 
 func CompileToMachine(mod *clsyn.SynMod) clutil.IMachine {
@@ -21,13 +21,13 @@ func CompileToMachine(mod *clsyn.SynMod) clutil.IMachine {
 	for _, def := range mod.Defs {
 		globals[def.Name] = def
 	}
-	return &naiveMachine{globals: globals}
+	return &naiveMachine{Globals: globals}
 }
 
 func (me *naiveMachine) Eval(name string) (val interface{}, numSteps int, err error) {
 	defer clutil.Catch(&err)
 	def := me.resolveIdent(name)
-	me.numStepsTaken, me.locals = 0, map[string]clsyn.ISyn{}
+	me.NumStepsTaken, me.Locals = 0, map[string]clsyn.ISyn{}
 	syn := me.reduce(def)
 	switch n := syn.(type) {
 	case *clsyn.ExprLitFloat:
@@ -41,15 +41,15 @@ func (me *naiveMachine) Eval(name string) (val interface{}, numSteps int, err er
 	default:
 		panic("no atomic result")
 	}
-	numSteps = me.numStepsTaken
+	numSteps = me.NumStepsTaken
 	return
 }
 
 func (me *naiveMachine) reduce(syn clsyn.ISyn) clsyn.ISyn {
 	if PrintSteps {
-		fmt.Printf("\n\n%d — %T\n\t%v\n\t%v\n", me.numStepsTaken, syn, me.args, me.locals)
+		fmt.Printf("\n\n%d — %T\n\t%v\n\t%v\n", me.NumStepsTaken, syn, me.Args, me.Locals)
 	}
-	me.numStepsTaken++
+	me.NumStepsTaken++
 	switch n := syn.(type) {
 	case *clsyn.ExprLitFloat, *clsyn.ExprLitRune, *clsyn.ExprLitText, *clsyn.ExprLitUInt:
 		return syn
@@ -62,25 +62,25 @@ func (me *naiveMachine) reduce(syn clsyn.ISyn) clsyn.ISyn {
 		if PrintSteps {
 			fmt.Printf("\t%s\n", n.Name)
 		}
-		if len(me.args) < len(n.Args) {
-			for i, arg := range me.args {
-				me.locals[n.Args[i]] = arg
+		if len(me.Args) < len(n.Args) {
+			for i, arg := range me.Args {
+				me.Locals[n.Args[i]] = arg
 			}
-			me.args = []clsyn.ISyn{}
+			me.Args = []clsyn.ISyn{}
 		} else {
 			for i, arg := range n.Args {
-				me.locals[arg] = me.args[i]
+				me.Locals[arg] = me.Args[i]
 			}
-			me.args = me.args[len(n.Args):]
+			me.Args = me.Args[len(n.Args):]
 		}
 		val := me.reduce(n.Body)
 		return val
 	case *clsyn.ExprCall:
-		me.args = append([]clsyn.ISyn{n.Arg}, me.args...)
+		me.Args = append([]clsyn.ISyn{n.Arg}, me.Args...)
 		return me.reduce(n.Callee)
 	case *clsyn.ExprLetIn:
 		for _, def := range n.Defs {
-			me.locals[def.Name] = def
+			me.Locals[def.Name] = def
 		}
 		return me.reduce(n.Body)
 	}
@@ -88,8 +88,8 @@ func (me *naiveMachine) reduce(syn clsyn.ISyn) clsyn.ISyn {
 }
 
 func (me *naiveMachine) resolveIdent(name string) (syn clsyn.ISyn) {
-	if syn = me.locals[name]; syn == nil {
-		if syn = me.globals[name]; syn == nil {
+	if syn = me.Locals[name]; syn == nil {
+		if syn = me.Globals[name]; syn == nil {
 			panic("undefined: " + name)
 		}
 	}

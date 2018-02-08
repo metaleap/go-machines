@@ -11,7 +11,7 @@ const (
 	INSTR_UNWIND
 	INSTR_PUSHGLOBAL
 	INSTR_PUSHINT
-	INSTR_PUSH
+	INSTR_PUSHARG
 	INSTR_MAKEAPPL
 	INSTR_SLIDE
 )
@@ -27,11 +27,11 @@ func (me instr) String() string {
 	case INSTR_UNWIND:
 		return "Unwind"
 	case INSTR_PUSHGLOBAL:
-		return "PushG:" + me.Name
+		return "Push`" + me.Name
 	case INSTR_PUSHINT:
-		return "PushI:" + strconv.Itoa(me.Int)
-	case INSTR_PUSH:
-		return "Push:" + strconv.Itoa(me.Int)
+		return "Push=" + strconv.Itoa(me.Int)
+	case INSTR_PUSHARG:
+		return "Push@" + strconv.Itoa(me.Int)
 	case INSTR_SLIDE:
 		return "Slide:" + strconv.Itoa(me.Int)
 	case INSTR_MAKEAPPL:
@@ -60,26 +60,28 @@ func (me *gMachine) dispatch(cur instr, nuCode code) code {
 		addr := me.lookup(cur.Name)
 		me.Stack = append(me.Stack, addr)
 	case INSTR_PUSHINT:
-		addr := me.alloc(nodeNumUint(cur.Int))
+		addr := me.alloc(nodeLitUint(cur.Int))
 		me.Stack = append(me.Stack, addr)
 	case INSTR_MAKEAPPL:
 		addrcallee := me.Stack[stackpos]
 		addrarg := me.Stack[stackpos-1]
-		addrappl := me.alloc(nodeAppl{Callee: addrcallee, Arg: addrarg})
-		me.Stack[stackpos-1] = addrappl
+		addr := me.alloc(nodeAppl{Callee: addrcallee, Arg: addrarg})
+		me.Stack[stackpos-1] = addr
 		me.Stack = me.Stack[:len(me.Stack)-1]
-	case INSTR_PUSH:
-		applarg := me.Heap[me.Stack[stackpos-(1+cur.Int)]].(nodeAppl).Arg
-		me.Stack = append(me.Stack, applarg)
+	case INSTR_PUSHARG:
+		addrarg := me.Heap[me.Stack[stackpos-(1+cur.Int)]].(nodeAppl).Arg
+		me.Stack = append(me.Stack, addrarg)
 	case INSTR_SLIDE:
 		keep := me.Stack[stackpos]
-		less := me.Stack[:len(me.Stack)-(1+cur.Int)]
-		me.Stack = append(less, keep)
+		// less := me.Stack[:len(me.Stack)-(1+cur.Int)]
+		// me.Stack = append(less, keep)
+		me.Stack = me.Stack[:len(me.Stack)-cur.Int]
+		me.Stack[len(me.Stack)-1] = keep
 	case INSTR_UNWIND:
 		addr := me.Stack[stackpos]
 		node := me.Heap[addr]
 		switch n := node.(type) {
-		case nodeNumUint:
+		case nodeLitUint:
 			if len(nuCode) > 0 {
 				panic("unexpected? or not?")
 			}
