@@ -10,12 +10,13 @@ type TiMachine struct {
 	Stack []clutil.Addr
 	Env   map[string]clutil.Addr
 	Stats struct {
-		NumStepsTaken int
+		NumApplications int
+		NumStepsTaken   int
 	}
 }
 
-func CompileToMachine(mod *clsyn.SynMod) (me *TiMachine) {
-	me = &TiMachine{
+func CompileToMachine(mod *clsyn.SynMod) clutil.IMachine {
+	me := &TiMachine{
 		Env:  make(map[string]clutil.Addr, len(mod.Defs)),
 		Heap: clutil.Heap{},
 	}
@@ -23,18 +24,18 @@ func CompileToMachine(mod *clsyn.SynMod) (me *TiMachine) {
 		addr, ndef := me.nextAddr(), nodeDef(*def)
 		me.Env[def.Name], me.Heap[addr] = addr, &ndef
 	}
-	return
+	return me
 }
 
-func (me *TiMachine) Eval(name string) (val interface{}, numsteps int, err error) {
+func (me *TiMachine) Eval(name string) (val interface{}, numAppl int, numSteps int, err error) {
 	defer clutil.Catch(&err)
 	addr := me.Env[name]
-	if me.Stats.NumStepsTaken = 0; addr == 0 {
+	if me.Stats.NumStepsTaken, me.Stats.NumApplications = 0, 0; addr == 0 {
 		panic("undefined: " + name)
 	} else {
 		me.Stack = []clutil.Addr{addr}
 		me.eval()
-		val, numsteps = me.Heap[me.Stack[0]], me.Stats.NumStepsTaken
+		val, numAppl, numSteps = me.Heap[me.Stack[0]], me.Stats.NumApplications, me.Stats.NumStepsTaken
 	}
 	return
 }
@@ -62,6 +63,7 @@ func (me *TiMachine) step() {
 	case nodeNumFloat, nodeNumUint:
 		panic("number applied as a function")
 	case *nodeAp:
+		me.Stats.NumApplications++
 		me.Stack = append(me.Stack, n.Callee)
 	case *nodeDef:
 		oldenv := me.Env

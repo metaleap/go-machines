@@ -51,12 +51,12 @@ func main() {
 					}
 				} else if strings.HasPrefix(readln, "!") {
 					defname, starttime := readln[1:], time.Now()
-					val, numsteps, evalerr := machine.Eval(defname)
+					val, numappl, numsteps, evalerr := machine.Eval(defname)
 					timetaken = time.Now().Sub(starttime)
 					if evalerr != nil {
 						println(evalerr.Error())
 					} else {
-						fmt.Printf("Reduced in %v (%d steps) to:\n%v\n", timetaken, numsteps, val)
+						fmt.Printf("Reduced in %v (%d appls / %d steps) to:\n%v\n", timetaken, numappl, numsteps, val)
 					}
 				} else if def := mod.Defs[readln]; def == nil {
 					println("not found: " + readln)

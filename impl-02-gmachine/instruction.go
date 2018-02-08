@@ -104,6 +104,7 @@ func (me *gMachine) dispatch(cur instr, nuCode code) code {
 			// nuCode = append(code{{Op: INSTR_UNWIND}}, nuCode...)
 			nuCode = code{{Op: INSTR_UNWIND}}
 		case nodeAppl:
+			me.NumApplications++
 			me.Stack = append(me.Stack, n.Callee)
 			nuCode = code{{Op: INSTR_UNWIND}}
 		case nodeGlobal:

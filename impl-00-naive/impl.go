@@ -10,10 +10,11 @@ import (
 const PrintSteps = false
 
 type naiveMachine struct {
-	Globals       map[string]clsyn.ISyn
-	Locals        map[string]clsyn.ISyn
-	Args          []clsyn.ISyn
-	NumStepsTaken int
+	Globals         map[string]clsyn.ISyn
+	Locals          map[string]clsyn.ISyn
+	Args            []clsyn.ISyn
+	NumStepsTaken   int
+	NumApplications int
 }
 
 func CompileToMachine(mod *clsyn.SynMod) clutil.IMachine {
@@ -24,10 +25,10 @@ func CompileToMachine(mod *clsyn.SynMod) clutil.IMachine {
 	return &naiveMachine{Globals: globals}
 }
 
-func (me *naiveMachine) Eval(name string) (val interface{}, numSteps int, err error) {
+func (me *naiveMachine) Eval(name string) (val interface{}, numAppl int, numSteps int, err error) {
 	defer clutil.Catch(&err)
 	def := me.resolveIdent(name)
-	me.NumStepsTaken, me.Locals = 0, map[string]clsyn.ISyn{}
+	me.NumStepsTaken, me.NumApplications, me.Locals = 0, 0, map[string]clsyn.ISyn{}
 	syn := me.reduce(def)
 	switch n := syn.(type) {
 	case *clsyn.ExprLitFloat:
@@ -41,7 +42,7 @@ func (me *naiveMachine) Eval(name string) (val interface{}, numSteps int, err er
 	default:
 		panic("no atomic result")
 	}
-	numSteps = me.NumStepsTaken
+	numAppl, numSteps = me.NumApplications, me.NumStepsTaken
 	return
 }
 
@@ -77,6 +78,7 @@ func (me *naiveMachine) reduce(syn clsyn.ISyn) clsyn.ISyn {
 		return val
 	case *clsyn.ExprCall:
 		me.Args = append([]clsyn.ISyn{n.Arg}, me.Args...)
+		me.NumApplications++
 		return me.reduce(n.Callee)
 	case *clsyn.ExprLetIn:
 		for _, def := range n.Defs {

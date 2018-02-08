@@ -5,7 +5,7 @@ import (
 )
 
 type IMachine interface {
-	Eval(string) (interface{}, int, error)
+	Eval(string) (interface{}, int, int, error)
 }
 
 type INode interface {
