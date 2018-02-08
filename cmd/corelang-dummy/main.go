@@ -7,8 +7,9 @@ import (
 	"strings"
 
 	"github.com/metaleap/go-corelang"
-	"github.com/metaleap/go-corelang/impl-00-naive"
+	// "github.com/metaleap/go-corelang/impl-00-naive"
 	// "github.com/metaleap/go-corelang/impl-01-tmplinst"
+	"github.com/metaleap/go-corelang/impl-02-gmachine"
 	"github.com/metaleap/go-corelang/syn"
 	"github.com/metaleap/go-corelang/util"
 )

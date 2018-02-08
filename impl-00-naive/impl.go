@@ -7,12 +7,13 @@ import (
 	"github.com/metaleap/go-corelang/util"
 )
 
+const PrintSteps = false
+
 type naiveMachine struct {
 	globals       map[string]clsyn.ISyn
 	locals        map[string]clsyn.ISyn
 	args          []clsyn.ISyn
 	numStepsTaken int
-	printSteps    bool
 }
 
 func CompileToMachine(mod *clsyn.SynMod) clutil.IMachine {
@@ -45,7 +46,7 @@ func (me *naiveMachine) Eval(name string) (val interface{}, numSteps int, err er
 }
 
 func (me *naiveMachine) reduce(syn clsyn.ISyn) clsyn.ISyn {
-	if me.printSteps {
+	if PrintSteps {
 		fmt.Printf("\n\n%d — %T\n\t%v\n\t%v\n", me.numStepsTaken, syn, me.args, me.locals)
 	}
 	me.numStepsTaken++
@@ -53,12 +54,12 @@ func (me *naiveMachine) reduce(syn clsyn.ISyn) clsyn.ISyn {
 	case *clsyn.ExprLitFloat, *clsyn.ExprLitRune, *clsyn.ExprLitText, *clsyn.ExprLitUInt:
 		return syn
 	case *clsyn.ExprIdent:
-		if me.printSteps {
+		if PrintSteps {
 			fmt.Printf("\t%s\n", n.Name)
 		}
 		return me.reduce(me.resolveIdent(n.Name))
 	case *clsyn.SynDef:
-		if me.printSteps {
+		if PrintSteps {
 			fmt.Printf("\t%s\n", n.Name)
 		}
 		if len(me.args) < len(n.Args) {
