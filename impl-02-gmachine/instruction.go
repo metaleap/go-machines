@@ -20,6 +20,7 @@ const (
 	INSTR_SLIDE
 	INSTR_UPDATE
 	INSTR_POP
+	INSTR_ALLOC
 )
 
 type instr struct {
@@ -31,7 +32,7 @@ type instr struct {
 func (me instr) String() string {
 	switch me.Op {
 	case INSTR_UNWIND:
-		return "Unwind"
+		return "Unwd"
 	case INSTR_PUSHGLOBAL:
 		return "Push`" + me.Name
 	case INSTR_PUSHINT:
@@ -46,6 +47,8 @@ func (me instr) String() string {
 		return "Upd@" + strconv.Itoa(me.Int)
 	case INSTR_POP:
 		return "Pop@" + strconv.Itoa(me.Int)
+	case INSTR_ALLOC:
+		return "Alloc=" + strconv.Itoa(me.Int)
 	}
 	return strconv.Itoa(int(me.Op))
 }
@@ -95,6 +98,10 @@ func (me *gMachine) dispatch(cur instr, next code) code {
 		me.Stack[me.Stack.Pos(cur.Int)] = addrptr
 	case INSTR_POP:
 		me.Stack = me.Stack.Dropped(cur.Int)
+	case INSTR_ALLOC:
+		for i := 0; i < cur.Int; i++ {
+			me.Stack.Push(me.Heap.Alloc(nodeIndirection{}))
+		}
 	case INSTR_UNWIND:
 		addr := me.Stack.Top(0)
 		node := me.Heap[addr]
@@ -122,11 +129,8 @@ func (me *gMachine) dispatch(cur instr, next code) code {
 			if MARK3_REARRANGESTACK {
 				nustack := make(clutil.Stack, 0, n.NumArgs)
 				for i := n.NumArgs; i > 0; i-- {
-					addr = me.Stack.Top(i)
-					node = me.Heap[addr]
-					nustack.Push(node.(nodeAppl).Arg)
+					nustack.Push(me.Heap[me.Stack.Top(i)].(nodeAppl).Arg)
 				}
-				// we do this after the loop rather than inlining into the iteration to avoid a most-baffling bug, of whose exact nature & cause I have not the feintest inkling
 				me.Stack = append(me.Stack.Dropped(n.NumArgs), nustack...)
 			}
 			next = n.Code

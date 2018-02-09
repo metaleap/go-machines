@@ -9,6 +9,8 @@ import (
 
 const MARK2_LAZY = true
 
+type compilation func(clsyn.IExpr, map[string]int) code
+
 func CompileToMachine(mod *clsyn.SynMod) (clutil.IMachine, []error) {
 	errs, me := []error{}, gMachine{
 		Heap:    clutil.Heap{},
@@ -64,9 +66,22 @@ func (me *gMachine) compileExpr(expression clsyn.IExpr, argsEnv map[string]int) 
 			me.compileExpr(expr.Arg, argsEnv),
 			me.compileExpr(expr.Callee, me.envOffsetBy(argsEnv, 1))...,
 		), instr{Op: INSTR_MAKEAPPL})
+	case *clsyn.ExprLetIn:
+		if expr.Rec {
+			return me.compileLetRec(me.compileExpr)
+		}
+		return me.compileLet(me.compileExpr)
 	default:
 		panic(expr)
 	}
+}
+
+func (me *gMachine) compileLet(comp compilation) code {
+	return nil
+}
+
+func (me *gMachine) compileLetRec(comp compilation) code {
+	return nil
 }
 
 func (*gMachine) envOffsetBy(env map[string]int, offsetBy int) (envOffset map[string]int) { // TODO: ditch this and replace with a new `offset` arg to compileAppl()
