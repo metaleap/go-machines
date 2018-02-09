@@ -33,7 +33,7 @@ func (me *TiMachine) instantiate(expression clsyn.IExpr) (resultAddr clutil.Addr
 	case *clsyn.ExprCall:
 		resultAddr = me.Heap.Alloc(&nodeAp{me.instantiate(expr.Callee), me.instantiate(expr.Arg)})
 	case *clsyn.ExprIdent:
-		resultAddr = me.Env.Lookup(expr.Name)
+		resultAddr = me.Env.LookupOrPanic(expr.Name)
 	case *clsyn.ExprLetIn:
 		for _, def := range expr.Defs {
 			ndef := nodeDef(*def)

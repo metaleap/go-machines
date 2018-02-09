@@ -7,9 +7,7 @@ import (
 	"github.com/metaleap/go-corelang/util"
 )
 
-const (
-	Lazy = false
-)
+const Lazy = true
 
 func CompileToMachine(mod *clsyn.SynMod) (clutil.IMachine, []error) {
 	errs, me := []error{}, gMachine{

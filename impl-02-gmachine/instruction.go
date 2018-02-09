@@ -60,10 +60,9 @@ func (me code) String() (s string) {
 }
 
 func (me *gMachine) dispatch(cur instr, next code) code {
-	stackpos := me.Stack.Pos(0)
 	switch cur.Op {
 	case INSTR_PUSHGLOBAL:
-		addr := me.Globals.Lookup(cur.Name)
+		addr := me.Globals.LookupOrPanic(cur.Name)
 		me.Stack.Push(addr)
 	case INSTR_PUSHINT:
 		addr := me.Heap.Alloc(nodeLitUint(cur.Int))
@@ -72,22 +71,20 @@ func (me *gMachine) dispatch(cur instr, next code) code {
 		addrcallee := me.Stack.Top(0)
 		addrarg := me.Stack.Top(1)
 		addr := me.Heap.Alloc(nodeAppl{Callee: addrcallee, Arg: addrarg})
-		me.Stack[stackpos-1] = addr
+		me.Stack[me.Stack.Pos(1)] = addr
 		me.Stack = me.Stack.Dropped(1)
 	case INSTR_PUSHARG:
 		addrarg := me.Heap[me.Stack.Top(1+cur.Int)].(nodeAppl).Arg
 		me.Stack.Push(addrarg)
 	case INSTR_SLIDE:
 		keep := me.Stack.Top(0)
-		// less := me.Stack[:len(me.Stack)-(1+cur.Int)]
-		// me.Stack = append(less, keep)
 		me.Stack = me.Stack.Dropped(cur.Int)
-		me.Stack[len(me.Stack)-1] = keep
+		me.Stack[me.Stack.Pos(0)] = keep
 	case INSTR_UPDATE:
 		pointee := me.Stack.Top(0)
 		addrptr := me.Heap.Alloc(nodeIndirection{Addr: pointee})
 		me.Stack = me.Stack.Dropped(1)
-		me.Stack[len(me.Stack)-(1+cur.Int)] = addrptr
+		me.Stack[me.Stack.Pos(cur.Int)] = addrptr
 	case INSTR_POP:
 		me.Stack = me.Stack.Dropped(cur.Int)
 	case INSTR_UNWIND:
@@ -97,7 +94,7 @@ func (me *gMachine) dispatch(cur instr, next code) code {
 		case nodeLitUint:
 			// nothing to do
 		case nodeIndirection:
-			me.Stack[stackpos] = n.Addr
+			me.Stack[me.Stack.Pos(0)] = n.Addr
 			if len(next) > 0 { // temporarily to observe
 				panic("does dis ever happen?")
 				// nuCode = append(code{cur}, nuCode...)

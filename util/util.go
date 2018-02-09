@@ -29,7 +29,7 @@ func (me Heap) NextAddr() Addr {
 
 type Env map[string]Addr
 
-func (me Env) Lookup(name string) (addr Addr) {
+func (me Env) LookupOrPanic(name string) (addr Addr) {
 	if addr = me[name]; addr == 0 {
 		panic("undefined: " + name)
 	}
