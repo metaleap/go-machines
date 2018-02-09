@@ -2,7 +2,11 @@ package climpl
 
 import (
 	"strconv"
+
+	"github.com/metaleap/go-corelang/util"
 )
+
+const MARK3_REARRANGESTACK = true
 
 type instruction int
 
@@ -74,8 +78,12 @@ func (me *gMachine) dispatch(cur instr, next code) code {
 		me.Stack[me.Stack.Pos(1)] = addr
 		me.Stack = me.Stack.Dropped(1)
 	case INSTR_PUSHARG:
-		addrarg := me.Heap[me.Stack.Top(1+cur.Int)].(nodeAppl).Arg
-		me.Stack.Push(addrarg)
+		if MARK3_REARRANGESTACK {
+			me.Stack.Push(me.Stack.Top(cur.Int))
+		} else {
+			addrarg := me.Heap[me.Stack.Top(1+cur.Int)].(nodeAppl).Arg
+			me.Stack.Push(addrarg)
+		}
 	case INSTR_SLIDE:
 		keep := me.Stack.Top(0)
 		me.Stack = me.Stack.Dropped(cur.Int)
@@ -92,12 +100,15 @@ func (me *gMachine) dispatch(cur instr, next code) code {
 		node := me.Heap[addr]
 		switch n := node.(type) {
 		case nodeLitUint:
-			// nothing to do
+			if len(next) > 0 { // temporarily to observe
+				panic("nodeLitUint: code remaining")
+				// next =nil
+			}
 		case nodeIndirection:
 			me.Stack[me.Stack.Pos(0)] = n.Addr
 			if len(next) > 0 { // temporarily to observe
-				panic("does dis ever happen?")
-				// nuCode = append(code{cur}, nuCode...)
+				panic("nodeIndirection: code remaining")
+				// next = append(code{cur}, next...)
 			}
 			next = code{cur}
 		case nodeAppl:
@@ -107,6 +118,16 @@ func (me *gMachine) dispatch(cur instr, next code) code {
 		case nodeGlobal:
 			if (len(me.Stack) - 1) < n.NumArgs {
 				panic("unwinding with too few arguments")
+			}
+			if MARK3_REARRANGESTACK {
+				nustack := make(clutil.Stack, 0, n.NumArgs)
+				for i := n.NumArgs; i > 0; i-- {
+					addr = me.Stack.Top(i)
+					node = me.Heap[addr]
+					nustack.Push(node.(nodeAppl).Arg)
+				}
+				// we do this after the loop rather than inlining into the iteration to avoid a most-baffling bug, of whose exact nature & cause I have not the feintest inkling
+				me.Stack = append(me.Stack.Dropped(n.NumArgs), nustack...)
 			}
 			next = n.Code
 		default:

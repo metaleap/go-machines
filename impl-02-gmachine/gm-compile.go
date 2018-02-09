@@ -7,7 +7,7 @@ import (
 	"github.com/metaleap/go-corelang/util"
 )
 
-const Lazy = true
+const MARK2_LAZY = true
 
 func CompileToMachine(mod *clsyn.SynMod) (clutil.IMachine, []error) {
 	errs, me := []error{}, gMachine{
@@ -35,7 +35,7 @@ func (me *gMachine) compileBody(bodyexpr clsyn.IExpr, argsEnv map[string]int) (b
 	defer clutil.Catch(&err)
 	numargs, codeexpr := len(argsEnv), me.compileExpr(bodyexpr, argsEnv)
 
-	if Lazy {
+	if MARK2_LAZY {
 		bodycode = append(codeexpr,
 			instr{Op: INSTR_UPDATE, Int: numargs},
 			instr{Op: INSTR_POP, Int: numargs},
