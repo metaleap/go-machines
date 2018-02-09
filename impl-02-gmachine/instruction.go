@@ -59,7 +59,7 @@ func (me code) String() (s string) {
 	return s + "]"
 }
 
-func (me *gMachine) dispatch(cur instr, nuCode code) code {
+func (me *gMachine) dispatch(cur instr, next code) code {
 	stackpos := len(me.Stack) - 1
 	switch cur.Op {
 	case INSTR_PUSHGLOBAL:
@@ -85,7 +85,7 @@ func (me *gMachine) dispatch(cur instr, nuCode code) code {
 		me.Stack[len(me.Stack)-1] = keep
 	case INSTR_UPDATE:
 		pointee := me.Stack[stackpos]
-		addrptr := me.alloc(nodePointTo{Addr: pointee})
+		addrptr := me.alloc(nodeIndirection{Addr: pointee})
 		me.Stack = me.Stack[:len(me.Stack)-1]
 		me.Stack[len(me.Stack)-(1+cur.Int)] = addrptr
 	case INSTR_POP:
@@ -96,27 +96,27 @@ func (me *gMachine) dispatch(cur instr, nuCode code) code {
 		switch n := node.(type) {
 		case nodeLitUint:
 			// nothing to do
-		case nodePointTo:
+		case nodeIndirection:
 			me.Stack[stackpos] = n.Addr
-			if len(nuCode) > 0 { // temporarily to observe
+			if len(next) > 0 { // temporarily to observe
 				panic("does dis ever happen?")
+				// nuCode = append(code{cur}, nuCode...)
 			}
-			// nuCode = append(code{{Op: INSTR_UNWIND}}, nuCode...)
-			nuCode = code{{Op: INSTR_UNWIND}}
+			next = code{cur}
 		case nodeAppl:
 			me.NumApplications++
 			me.Stack = append(me.Stack, n.Callee)
-			nuCode = code{{Op: INSTR_UNWIND}}
+			next = code{cur}
 		case nodeGlobal:
 			if (len(me.Stack) - 1) < n.NumArgs {
 				panic("unwinding with too few arguments")
 			}
-			nuCode = n.Code
+			next = n.Code
 		default:
 			panic(n)
 		}
 	default:
 		panic(cur.Op)
 	}
-	return nuCode
+	return next
 }

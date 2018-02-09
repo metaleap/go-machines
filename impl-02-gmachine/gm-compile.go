@@ -13,6 +13,7 @@ func CompileToMachine(mod *clsyn.SynMod) clutil.IMachine {
 	me := gMachine{
 		Heap:    clutil.Heap{},
 		Globals: make(map[string]clutil.Addr, len(mod.Defs)),
+		Stack:   make([]clutil.Addr, 0, 128),
 	}
 
 	for _, global := range mod.Defs {

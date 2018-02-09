@@ -5,10 +5,10 @@ import (
 )
 
 type gMachine struct {
-	Stack           []clutil.Addr // push-to and pop-from end
+	Stack           []clutil.Addr // push-to and pop-from its end
 	Heap            clutil.Heap   // no GC here, forever growing
 	Globals         map[string]clutil.Addr
-	Code            code // sequential ordering
+	Code            code // evaluated l2r
 	NumApplications int
 	NumStepsTaken   int
 }

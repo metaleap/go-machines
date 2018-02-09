@@ -9,6 +9,15 @@ fst p = p k0
 
 snd p = p k1
 
+cons a b cc cn = cc a b
+nil cc cn = cn
+hd list = list k0 abort
+tl list = list k1 abort
+abort = abort
+infinite n = cons n (infinite n)
+listish = hd (tl (infinite 4))
+
+
 // freakish x y =
 //     LET REC a = pair x b
 //             b = pair y a

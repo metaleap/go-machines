@@ -16,6 +16,6 @@ type nodeGlobal struct {
 	Code    code
 }
 
-type nodePointTo struct {
+type nodeIndirection struct {
 	Addr clutil.Addr
 }
