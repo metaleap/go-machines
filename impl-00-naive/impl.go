@@ -10,25 +10,24 @@ import (
 const PrintSteps = false
 
 type naiveMachine struct {
-	Globals         map[string]clsyn.ISyn
-	Locals          map[string]clsyn.ISyn
-	Args            []clsyn.ISyn
-	NumStepsTaken   int
-	NumApplications int
+	Globals map[string]clsyn.ISyn
+	Locals  map[string]clsyn.ISyn
+	Args    []clsyn.ISyn
+	Stats   clutil.Stats
 }
 
-func CompileToMachine(mod *clsyn.SynMod) clutil.IMachine {
+func CompileToMachine(mod *clsyn.SynMod) (clutil.IMachine, []error) {
 	globals := make(map[string]clsyn.ISyn, len(mod.Defs))
 	for _, def := range mod.Defs {
 		globals[def.Name] = def
 	}
-	return &naiveMachine{Globals: globals}
+	return &naiveMachine{Globals: globals}, nil
 }
 
-func (me *naiveMachine) Eval(name string) (val interface{}, numAppl int, numSteps int, err error) {
+func (me *naiveMachine) Eval(name string) (val interface{}, stats clutil.Stats, err error) {
 	defer clutil.Catch(&err)
 	def := me.resolveIdent(name)
-	me.NumStepsTaken, me.NumApplications, me.Locals = 0, 0, map[string]clsyn.ISyn{}
+	me.Stats.NumSteps, me.Stats.NumAppls, me.Locals = 0, 0, map[string]clsyn.ISyn{}
 	syn := me.reduce(def)
 	switch n := syn.(type) {
 	case *clsyn.ExprLitFloat:
@@ -42,15 +41,15 @@ func (me *naiveMachine) Eval(name string) (val interface{}, numAppl int, numStep
 	default:
 		panic("no atomic result")
 	}
-	numAppl, numSteps = me.NumApplications, me.NumStepsTaken
+	stats = me.Stats
 	return
 }
 
 func (me *naiveMachine) reduce(syn clsyn.ISyn) clsyn.ISyn {
 	if PrintSteps {
-		fmt.Printf("\n\n%d — %T\n\t%v\n\t%v\n", me.NumStepsTaken, syn, me.Args, me.Locals)
+		fmt.Printf("\n\n%d — %T\n\t%v\n\t%v\n", me.Stats.NumSteps, syn, me.Args, me.Locals)
 	}
-	me.NumStepsTaken++
+	me.Stats.NumSteps++
 	switch n := syn.(type) {
 	case *clsyn.ExprLitFloat, *clsyn.ExprLitRune, *clsyn.ExprLitText, *clsyn.ExprLitUInt:
 		return syn
@@ -78,7 +77,7 @@ func (me *naiveMachine) reduce(syn clsyn.ISyn) clsyn.ISyn {
 		return val
 	case *clsyn.ExprCall:
 		me.Args = append([]clsyn.ISyn{n.Arg}, me.Args...)
-		me.NumApplications++
+		me.Stats.NumAppls++
 		return me.reduce(n.Callee)
 	case *clsyn.ExprLetIn:
 		for _, def := range n.Defs {

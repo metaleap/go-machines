@@ -27,11 +27,7 @@ func main() {
 	for defname := range mod.Defs {
 		writeLn("\t" + defname)
 	}
-
-	timestarted := time.Now()
-	var machine clutil.IMachine = climpl.CompileToMachine(mod)
-	timetaken := time.Now().Sub(timestarted)
-	fmt.Printf("whole (already-parsed) module compiled in %s\n\n", timetaken)
+	machine := recompile(mod)
 
 	multiline, repl, pprint := "", bufio.NewScanner(os.Stdin), &corelang.InterpPrettyPrint{}
 	for repl.Scan() {
@@ -51,12 +47,12 @@ func main() {
 					}
 				} else if strings.HasPrefix(readln, "!") {
 					defname, starttime := readln[1:], time.Now()
-					val, numappl, numsteps, evalerr := machine.Eval(defname)
-					timetaken = time.Now().Sub(starttime)
+					val, stats, evalerr := machine.Eval(defname)
+					timetaken := time.Now().Sub(starttime)
 					if evalerr != nil {
 						println(evalerr.Error())
 					} else {
-						fmt.Printf("Reduced in %v (%d appls / %d steps) to:\n%v\n", timetaken, numappl, numsteps, val)
+						fmt.Printf("Reduced in %v (%d appls / %d steps) to:\n%v\n", timetaken, stats.NumAppls, stats.NumSteps, val)
 					}
 				} else if def := mod.Defs[readln]; def == nil {
 					println("not found: " + readln)
@@ -65,13 +61,22 @@ func main() {
 					writeLn(srcfmt.(string))
 				}
 			case lexAndParse("<input>", readln, mod):
-				timestarted = time.Now()
-				machine = climpl.CompileToMachine(mod)
-				timetaken = time.Now().Sub(timestarted)
-				fmt.Printf("took %s to successfully parse definition and re-compile whole module: enter its name to pretty-print it's syntax tree or !name to evaluate\n\n", timetaken)
+				machine = recompile(mod)
 			}
 		}
 	}
+}
+
+func recompile(mod *clsyn.SynMod) clutil.IMachine {
+	timestarted := time.Now()
+	machine, errs := climpl.CompileToMachine(mod)
+	timetaken := time.Now().Sub(timestarted)
+
+	for _, err := range errs {
+		println(err.Error())
+	}
+	fmt.Printf("module re-compiled in %s\n\n", timetaken)
+	return machine
 }
 
 func lexAndParse(filePath string, src string, mod *clsyn.SynMod) bool {

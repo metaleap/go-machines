@@ -7,64 +7,57 @@ import (
 
 type TiMachine struct {
 	Heap  clutil.Heap
-	Stack []clutil.Addr
-	Env   map[string]clutil.Addr
-	Stats struct {
-		NumApplications int
-		NumStepsTaken   int
-	}
+	Stack clutil.Stack
+	Env   clutil.Env
+	Stats clutil.Stats
 }
 
-func CompileToMachine(mod *clsyn.SynMod) clutil.IMachine {
+func CompileToMachine(mod *clsyn.SynMod) (clutil.IMachine, []error) {
 	me := &TiMachine{
-		Env:  make(map[string]clutil.Addr, len(mod.Defs)),
+		Env:  make(clutil.Env, len(mod.Defs)),
 		Heap: clutil.Heap{},
 	}
 	for _, def := range mod.Defs {
-		addr, ndef := me.nextAddr(), nodeDef(*def)
+		addr, ndef := me.Heap.NextAddr(), nodeDef(*def)
 		me.Env[def.Name], me.Heap[addr] = addr, &ndef
 	}
-	return me
+	return me, nil
 }
 
-func (me *TiMachine) Eval(name string) (val interface{}, numAppl int, numSteps int, err error) {
+func (me *TiMachine) Eval(name string) (val interface{}, stats clutil.Stats, err error) {
 	defer clutil.Catch(&err)
 	addr := me.Env[name]
-	if me.Stats.NumStepsTaken, me.Stats.NumApplications = 0, 0; addr == 0 {
+	if addr == 0 {
 		panic("undefined: " + name)
 	} else {
-		me.Stack = []clutil.Addr{addr}
+		me.Stack = clutil.Stack{addr}
 		me.eval()
-		val, numAppl, numSteps = me.Heap[me.Stack[0]], me.Stats.NumApplications, me.Stats.NumStepsTaken
+		val, stats = me.Heap[me.Stack[0]], me.Stats
 	}
 	return
 }
 
 func (me *TiMachine) eval() {
-	for !me.isFinalState() {
-		me.step()
+	for me.Stats.NumSteps, me.Stats.NumAppls = 0, 0; !me.isFinalState(); me.step() {
 	}
 }
 
 func (me *TiMachine) isFinalState() bool {
-	if len(me.Stack) == 0 {
-		panic("isFinalState: empty stack")
-	}
 	return len(me.Stack) == 1 && isDataNode(me.Heap[me.Stack[0]])
 }
 
 func (me *TiMachine) step() {
-	if me.Stats.NumStepsTaken++; me.Stats.NumStepsTaken > 9999 {
+	if me.Stats.NumSteps++; me.Stats.NumSteps > 9999 {
 		panic("infinite loop")
 	}
-	addr := me.Stack[len(me.Stack)-1]
+	addr := me.Stack.Top(0)
 	obj := me.Heap[addr]
 	switch n := obj.(type) {
 	case nodeNumFloat, nodeNumUint:
 		panic("number applied as a function")
 	case *nodeAp:
-		me.Stats.NumApplications++
-		me.Stack = append(me.Stack, n.Callee)
+		me.Stats.NumAppls++
+		me.Stack.Push(n.Callee)
 	case *nodeDef:
 		oldenv := me.Env
 		me.Env = make(map[string]clutil.Addr, len(n.Args)+len(oldenv))
@@ -78,32 +71,22 @@ func (me *TiMachine) step() {
 		}
 
 		resultaddr := me.instantiate(n.Body)
-		me.Stack = append(me.Stack[:len(me.Stack)-(1+len(n.Args))], resultaddr)
+		me.Stack = me.Stack.Dropped(1 + len(n.Args)).Pushed(resultaddr)
 
 		// me.Env = oldenv
 	}
 }
 
-func (me *TiMachine) alloc(obj clutil.INode) (addr clutil.Addr) {
-	addr = me.nextAddr()
-	me.Heap[addr] = obj
-	return
-}
-
 func (me *TiMachine) getArgs(name string, count int) (argsaddrs []clutil.Addr) {
-	stackzero := len(me.Stack) - (1 + count)
-	if stackzero < 0 {
+	pos := me.Stack.Pos(count)
+	if pos < 0 {
 		panic(name + ": not enough arguments given")
 	}
 	argsaddrs = make([]clutil.Addr, count)
 	for i := 0; i < count; i++ {
-		addr := me.Stack[stackzero+i]
+		addr := me.Stack[pos+i]
 		nap, _ := me.Heap[addr].(*nodeAp)
 		argsaddrs[count-1-i] = nap.Arg
 	}
 	return
-}
-
-func (me *TiMachine) nextAddr() clutil.Addr {
-	return clutil.Addr(len(me.Heap) + 1)
 }

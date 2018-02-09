@@ -60,38 +60,38 @@ func (me code) String() (s string) {
 }
 
 func (me *gMachine) dispatch(cur instr, next code) code {
-	stackpos := len(me.Stack) - 1
+	stackpos := me.Stack.Pos(0)
 	switch cur.Op {
 	case INSTR_PUSHGLOBAL:
-		addr := me.lookup(cur.Name)
-		me.Stack = append(me.Stack, addr)
+		addr := me.Globals.Lookup(cur.Name)
+		me.Stack.Push(addr)
 	case INSTR_PUSHINT:
-		addr := me.alloc(nodeLitUint(cur.Int))
-		me.Stack = append(me.Stack, addr)
+		addr := me.Heap.Alloc(nodeLitUint(cur.Int))
+		me.Stack.Push(addr)
 	case INSTR_MAKEAPPL:
-		addrcallee := me.Stack[stackpos]
-		addrarg := me.Stack[stackpos-1]
-		addr := me.alloc(nodeAppl{Callee: addrcallee, Arg: addrarg})
+		addrcallee := me.Stack.Top(0)
+		addrarg := me.Stack.Top(1)
+		addr := me.Heap.Alloc(nodeAppl{Callee: addrcallee, Arg: addrarg})
 		me.Stack[stackpos-1] = addr
-		me.Stack = me.Stack[:len(me.Stack)-1]
+		me.Stack = me.Stack.Dropped(1)
 	case INSTR_PUSHARG:
-		addrarg := me.Heap[me.Stack[stackpos-(1+cur.Int)]].(nodeAppl).Arg
-		me.Stack = append(me.Stack, addrarg)
+		addrarg := me.Heap[me.Stack.Top(1+cur.Int)].(nodeAppl).Arg
+		me.Stack.Push(addrarg)
 	case INSTR_SLIDE:
-		keep := me.Stack[stackpos]
+		keep := me.Stack.Top(0)
 		// less := me.Stack[:len(me.Stack)-(1+cur.Int)]
 		// me.Stack = append(less, keep)
-		me.Stack = me.Stack[:len(me.Stack)-cur.Int]
+		me.Stack = me.Stack.Dropped(cur.Int)
 		me.Stack[len(me.Stack)-1] = keep
 	case INSTR_UPDATE:
-		pointee := me.Stack[stackpos]
-		addrptr := me.alloc(nodeIndirection{Addr: pointee})
-		me.Stack = me.Stack[:len(me.Stack)-1]
+		pointee := me.Stack.Top(0)
+		addrptr := me.Heap.Alloc(nodeIndirection{Addr: pointee})
+		me.Stack = me.Stack.Dropped(1)
 		me.Stack[len(me.Stack)-(1+cur.Int)] = addrptr
 	case INSTR_POP:
-		me.Stack = me.Stack[:len(me.Stack)-cur.Int]
+		me.Stack = me.Stack.Dropped(cur.Int)
 	case INSTR_UNWIND:
-		addr := me.Stack[stackpos]
+		addr := me.Stack.Top(0)
 		node := me.Heap[addr]
 		switch n := node.(type) {
 		case nodeLitUint:
@@ -104,8 +104,8 @@ func (me *gMachine) dispatch(cur instr, next code) code {
 			}
 			next = code{cur}
 		case nodeAppl:
-			me.NumApplications++
-			me.Stack = append(me.Stack, n.Callee)
+			me.Stats.NumAppls++
+			me.Stack.Push(n.Callee)
 			next = code{cur}
 		case nodeGlobal:
 			if (len(me.Stack) - 1) < n.NumArgs {

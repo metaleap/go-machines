@@ -5,6 +5,11 @@ import (
 	"fmt"
 )
 
+type Stats struct {
+	NumSteps int
+	NumAppls int
+}
+
 func Catch(err *error) {
 	switch e := recover().(type) {
 	case string:
@@ -13,7 +18,7 @@ func Catch(err *error) {
 		*err = e
 	default:
 		if e != nil {
-			*err = fmt.Errorf("%v", e)
+			*err = fmt.Errorf("%T", e)
 		}
 	}
 }

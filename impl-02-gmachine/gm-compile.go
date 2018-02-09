@@ -1,19 +1,21 @@
 package climpl
 
 import (
+	"errors"
+
 	"github.com/metaleap/go-corelang/syn"
 	"github.com/metaleap/go-corelang/util"
 )
 
 const (
-	Lazy = true
+	Lazy = false
 )
 
-func CompileToMachine(mod *clsyn.SynMod) clutil.IMachine {
-	me := gMachine{
+func CompileToMachine(mod *clsyn.SynMod) (clutil.IMachine, []error) {
+	errs, me := []error{}, gMachine{
 		Heap:    clutil.Heap{},
-		Globals: make(map[string]clutil.Addr, len(mod.Defs)),
-		Stack:   make([]clutil.Addr, 0, 128),
+		Globals: make(clutil.Env, len(mod.Defs)),
+		Stack:   make(clutil.Stack, 0, 128),
 	}
 
 	for _, global := range mod.Defs {
@@ -22,29 +24,32 @@ func CompileToMachine(mod *clsyn.SynMod) clutil.IMachine {
 			argsenv[arg] = i
 		}
 
-		me.Globals[global.Name] = me.alloc(nodeGlobal{
-			NumArgs: len(argsenv),
-			Code:    me.compileBody(global.Body, argsenv),
-		})
+		if bodycode, err := me.compileBody(global.Body, argsenv); err != nil {
+			errs = append(errs, errors.New(global.Name+": "+err.Error()))
+		} else {
+			me.Globals[global.Name] = me.Heap.Alloc(nodeGlobal{len(argsenv), bodycode})
+		}
 	}
-	return &me
+	return &me, errs
 }
 
-func (me *gMachine) compileBody(expr clsyn.IExpr, argsEnv map[string]int) code {
-	numargs, codeexpr := len(argsEnv), me.compileExpr(expr, argsEnv)
+func (me *gMachine) compileBody(bodyexpr clsyn.IExpr, argsEnv map[string]int) (bodycode code, err error) {
+	defer clutil.Catch(&err)
+	numargs, codeexpr := len(argsEnv), me.compileExpr(bodyexpr, argsEnv)
 
 	if Lazy {
-		return append(codeexpr,
+		bodycode = append(codeexpr,
 			instr{Op: INSTR_UPDATE, Int: numargs},
 			instr{Op: INSTR_POP, Int: numargs},
 			instr{Op: INSTR_UNWIND},
 		)
 	}
 
-	return append(codeexpr,
+	bodycode = append(codeexpr,
 		instr{Op: INSTR_SLIDE, Int: 1 + numargs},
 		instr{Op: INSTR_UNWIND},
 	)
+	return
 }
 
 func (me *gMachine) compileExpr(expression clsyn.IExpr, argsEnv map[string]int) code {

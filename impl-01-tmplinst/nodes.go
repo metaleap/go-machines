@@ -27,19 +27,17 @@ func isDataNode(node clutil.INode) (isvalue bool) {
 func (me *TiMachine) instantiate(expression clsyn.IExpr) (resultAddr clutil.Addr) {
 	switch expr := expression.(type) {
 	case *clsyn.ExprLitFloat:
-		resultAddr = me.alloc(nodeNumFloat(expr.Lit))
+		resultAddr = me.Heap.Alloc(nodeNumFloat(expr.Lit))
 	case *clsyn.ExprLitUInt:
-		resultAddr = me.alloc(nodeNumUint(expr.Lit))
+		resultAddr = me.Heap.Alloc(nodeNumUint(expr.Lit))
 	case *clsyn.ExprCall:
-		resultAddr = me.alloc(&nodeAp{me.instantiate(expr.Callee), me.instantiate(expr.Arg)})
+		resultAddr = me.Heap.Alloc(&nodeAp{me.instantiate(expr.Callee), me.instantiate(expr.Arg)})
 	case *clsyn.ExprIdent:
-		if resultAddr = me.Env[expr.Name]; resultAddr == 0 {
-			panic(expr.Name + ": undefined")
-		}
+		resultAddr = me.Env.Lookup(expr.Name)
 	case *clsyn.ExprLetIn:
 		for _, def := range expr.Defs {
 			ndef := nodeDef(*def)
-			me.Env[def.Name] = me.alloc(&ndef)
+			me.Env[def.Name] = me.Heap.Alloc(&ndef)
 		}
 		resultAddr = me.instantiate(expr.Body)
 	case *clsyn.ExprCaseOf, *clsyn.ExprCtor:
