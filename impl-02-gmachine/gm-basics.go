@@ -122,15 +122,13 @@ func (me *gMachine) step() {
 		addr := me.Heap.Alloc(-node)
 		me.Stack[me.Stack.Pos(0)] = addr
 	case INSTR_PRIM_COND:
-		node := me.Heap[me.Stack.Top(0)].(nodeInt)
-		next = append(code{{Op: INSTR_PUSHARG, Int: 2 - int(node)}}, next...)
-		// if node := me.Heap[me.Stack.Top(0)].(nodeLitUint); node == 1 {
-		// 	next = append(me.Code[0].CondThen, next...)
-		// } else if node == 0 {
-		// 	next = append(me.Code[0].CondElse, next...)
-		// } else {
-		// 	panic("boolean bug")
-		// }
+		if node := me.Heap[me.Stack.Top(0)].(nodeInt); node == 1 {
+			next = append(me.Code[0].CondThen, next...)
+		} else if node == 0 {
+			next = append(me.Code[0].CondElse, next...)
+		} else {
+			panic("boolean bug")
+		}
 		me.Stack = me.Stack.Dropped(1)
 	case INSTR_UNWIND:
 		addr := me.Stack.Top(0)
