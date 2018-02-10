@@ -2,8 +2,6 @@ package climpl
 
 import (
 	"strconv"
-
-	"github.com/metaleap/go-corelang/util"
 )
 
 const MARK3_REARRANGESTACK = true
@@ -18,15 +16,32 @@ const (
 	INSTR_PUSHARG
 	INSTR_MAKEAPPL
 	INSTR_SLIDE
+
 	INSTR_UPDATE
 	INSTR_POP
 	INSTR_ALLOC
+
+	INSTR_EVAL
+	INSTR_PRIM_AR_ADD
+	INSTR_PRIM_AR_SUB
+	INSTR_PRIM_AR_MUL
+	INSTR_PRIM_AR_DIV
+	INSTR_PRIM_AR_NEG
+	INSTR_PRIM_CMP_EQ
+	INSTR_PRIM_CMP_NEQ
+	INSTR_PRIM_CMP_LT
+	INSTR_PRIM_CMP_LEQ
+	INSTR_PRIM_CMP_GT
+	INSTR_PRIM_CMP_GEQ
+	INSTR_PRIM_COND
 )
 
 type instr struct {
-	Op   instruction
-	Int  int
-	Name string
+	Op       instruction
+	Int      int
+	Name     string
+	CondThen code
+	CondElse code
 }
 
 func (me instr) String() string {
@@ -49,6 +64,32 @@ func (me instr) String() string {
 		return "Pop@" + strconv.Itoa(me.Int)
 	case INSTR_ALLOC:
 		return "Alloc=" + strconv.Itoa(me.Int)
+	case INSTR_EVAL:
+		return "Eval"
+	case INSTR_PRIM_AR_ADD:
+		return "Add"
+	case INSTR_PRIM_AR_SUB:
+		return "Sub"
+	case INSTR_PRIM_AR_MUL:
+		return "Mul"
+	case INSTR_PRIM_AR_DIV:
+		return "Div"
+	case INSTR_PRIM_AR_NEG:
+		return "Neg"
+	case INSTR_PRIM_CMP_EQ:
+		return "Eq"
+	case INSTR_PRIM_CMP_NEQ:
+		return "NEq"
+	case INSTR_PRIM_CMP_LT:
+		return "Lt"
+	case INSTR_PRIM_CMP_LEQ:
+		return "LEq"
+	case INSTR_PRIM_CMP_GT:
+		return "Gt"
+	case INSTR_PRIM_CMP_GEQ:
+		return "GEq"
+	case INSTR_PRIM_COND:
+		return "Cond"
 	}
 	return strconv.Itoa(int(me.Op))
 }
@@ -64,74 +105,4 @@ func (me code) String() (s string) {
 		s += instr.String()
 	}
 	return s + "]"
-}
-
-func (me *gMachine) dispatch(cur instr, next code) code {
-	switch cur.Op {
-	case INSTR_PUSHGLOBAL:
-		addr := me.Globals.LookupOrPanic(cur.Name)
-		me.Stack.Push(addr)
-	case INSTR_PUSHINT:
-		addr := me.Heap.Alloc(nodeLitUint(cur.Int))
-		me.Stack.Push(addr)
-	case INSTR_MAKEAPPL:
-		addrcallee := me.Stack.Top(0)
-		addrarg := me.Stack.Top(1)
-		addr := me.Heap.Alloc(nodeAppl{Callee: addrcallee, Arg: addrarg})
-		me.Stack[me.Stack.Pos(1)] = addr
-		me.Stack = me.Stack.Dropped(1)
-	case INSTR_PUSHARG:
-		if MARK3_REARRANGESTACK {
-			me.Stack.Push(me.Stack.Top(cur.Int))
-		} else {
-			addrarg := me.Heap[me.Stack.Top(1+cur.Int)].(nodeAppl).Arg
-			me.Stack.Push(addrarg)
-		}
-	case INSTR_SLIDE:
-		keep := me.Stack.Top(0)
-		me.Stack = me.Stack.Dropped(cur.Int)
-		me.Stack[me.Stack.Pos(0)] = keep
-	case INSTR_UPDATE:
-		pointee := me.Stack.Top(0)
-		addrptr := me.Heap.Alloc(nodeIndirection{Addr: pointee})
-		me.Stack = me.Stack.Dropped(1)
-		me.Stack[me.Stack.Pos(cur.Int)] = addrptr
-	case INSTR_POP:
-		me.Stack = me.Stack.Dropped(cur.Int)
-	case INSTR_ALLOC:
-		for i := 0; i < cur.Int; i++ {
-			me.Stack.Push(me.Heap.Alloc(nodeIndirection{}))
-		}
-	case INSTR_UNWIND:
-		addr := me.Stack.Top(0)
-		node := me.Heap[addr]
-		switch n := node.(type) {
-		case nodeLitUint:
-			next = nil
-		case nodeIndirection:
-			me.Stack[me.Stack.Pos(0)] = n.Addr
-			next = code{cur} // unwind again
-		case nodeAppl:
-			me.Stats.NumAppls++
-			me.Stack.Push(n.Callee)
-			next = code{cur} // unwind again
-		case nodeGlobal:
-			if (len(me.Stack) - 1) < n.NumArgs {
-				panic("unwinding with too few arguments")
-			}
-			if MARK3_REARRANGESTACK {
-				nustack := make(clutil.Stack, 0, n.NumArgs)
-				for i := n.NumArgs; i > 0; i-- {
-					nustack.Push(me.Heap[me.Stack.Top(i)].(nodeAppl).Arg)
-				}
-				me.Stack = append(me.Stack.Dropped(n.NumArgs), nustack...)
-			}
-			next = n.Code
-		default:
-			panic(n)
-		}
-	default:
-		panic(cur.Op)
-	}
-	return next
 }
