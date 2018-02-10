@@ -9,18 +9,18 @@ type gMachine struct {
 	Heap    clutil.Heap  // no GC here, forever growing
 	Globals clutil.Env
 	Code    code // evaluated l2r
-	Dump    []gDumpItem
+	Dump    []dumpItem
 	Stats   clutil.Stats
 }
 
-type gDumpItem struct {
+type dumpItem struct {
 	Code  code
 	Stack clutil.Stack
 }
 
 func (me *gMachine) Eval(name string) (val interface{}, stats clutil.Stats, err error) {
 	// defer clutil.Catch(&err)
-	me.Code = code{{Op: INSTR_PUSHGLOBAL, Name: name}, {Op: INSTR_UNWIND}}
+	me.Code = code{{Op: INSTR_PUSHGLOBAL, Name: name}, {Op: INSTR_EVAL}}
 	println(me.Heap[me.Globals[name]].(nodeGlobal).Code.String())
 	me.eval()
 	stats, val = me.Stats, me.Heap[me.Stack.Top(0)]
@@ -72,12 +72,69 @@ func (me *gMachine) step() {
 		for i := 0; i < me.Code[cur].Int; i++ {
 			me.Stack.Push(me.Heap.Alloc(nodeIndirection{}))
 		}
+	case INSTR_EVAL:
+		pos := me.Stack.Pos(0)
+		me.Dump = append(me.Dump, dumpItem{Code: next, Stack: me.Stack[:pos]})
+		me.Stack = me.Stack[pos:]
+		next = code{{Op: INSTR_UNWIND}}
+	case INSTR_PRIM_AR_ADD, INSTR_PRIM_AR_SUB, INSTR_PRIM_AR_MUL, INSTR_PRIM_AR_DIV,
+		INSTR_PRIM_CMP_EQ, INSTR_PRIM_CMP_NEQ, INSTR_PRIM_CMP_LT, INSTR_PRIM_CMP_LEQ, INSTR_PRIM_CMP_GT, INSTR_PRIM_CMP_GEQ:
+		node1, node2 := me.Heap[me.Stack.Top(0)].(nodeLitUint), me.Heap[me.Stack.Top(1)].(nodeLitUint)
+		var result nodeLitUint
+		var istrue bool
+		switch me.Code[cur].Op {
+		case INSTR_PRIM_AR_ADD:
+			result = node1 + node2
+		case INSTR_PRIM_AR_SUB:
+			result = node1 - node2
+		case INSTR_PRIM_AR_MUL:
+			result = node1 * node2
+		case INSTR_PRIM_AR_DIV:
+			result = node1 / node2
+		case INSTR_PRIM_CMP_EQ:
+			istrue = (node1 == node2)
+		case INSTR_PRIM_CMP_NEQ:
+			istrue = (node1 != node2)
+		case INSTR_PRIM_CMP_LT:
+			istrue = (node1 < node2)
+		case INSTR_PRIM_CMP_LEQ:
+			istrue = (node1 <= node2)
+		case INSTR_PRIM_CMP_GT:
+			istrue = (node1 > node2)
+		case INSTR_PRIM_CMP_GEQ:
+			istrue = (node1 >= node2)
+		}
+		if istrue {
+			result = 1
+		}
+		addr := me.Heap.Alloc(result)
+		me.Stack = me.Stack.Dropped(1)
+		me.Stack[me.Stack.Pos(0)] = addr
+	case INSTR_PRIM_AR_NEG:
+		node := me.Heap[me.Stack.Top(0)].(nodeLitUint)
+		addr := me.Heap.Alloc(-node)
+		me.Stack[me.Stack.Pos(0)] = addr
+	case INSTR_PRIM_COND:
+		if node := me.Heap[me.Stack.Top(0)].(nodeLitUint); node == 1 {
+			next = append(me.Code[0].CondThen, next...)
+		} else if node == 0 {
+			next = append(me.Code[0].CondElse, next...)
+		} else {
+			panic("boolean bug")
+		}
+		me.Stack = me.Stack.Dropped(1)
 	case INSTR_UNWIND:
 		addr := me.Stack.Top(0)
 		node := me.Heap[addr]
 		switch n := node.(type) {
 		case nodeLitUint:
-			next = nil
+			if len(me.Dump) == 0 {
+				next = nil
+			} else {
+				restore := me.Dump[len(me.Dump)-1]
+				next, me.Dump, me.Stack =
+					restore.Code, me.Dump[:len(me.Dump)-1], append(restore.Stack, addr)
+			}
 		case nodeIndirection:
 			me.Stack[me.Stack.Pos(0)] = n.Addr
 			next = code{instr{Op: INSTR_UNWIND}} // unwind again
