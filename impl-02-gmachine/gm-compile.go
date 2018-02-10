@@ -68,23 +68,39 @@ func (me *gMachine) compileExpr(expression clsyn.IExpr, argsEnv map[string]int) 
 		), instr{Op: INSTR_MAKEAPPL})
 	case *clsyn.ExprLetIn:
 		if expr.Rec {
-			return me.compileLetRec(me.compileExpr)
+			return me.compileLetRec(me.compileExpr, expr, argsEnv)
 		}
-		return me.compileLet(me.compileExpr)
+		return me.compileLet(me.compileExpr, expr, argsEnv)
 	default:
 		panic(expr)
 	}
 }
 
-func (me *gMachine) compileLet(comp compilation) code {
+func (me *gMachine) compileLet(compbody compilation, let *clsyn.ExprLetIn, argsEnv map[string]int) code {
+	n := len(let.Defs)
+	bodyargsenv := me.envOffsetBy(argsEnv, n)
+	for i, def := range let.Defs {
+		bodyargsenv[def.Name] = n - (i + 1)
+	}
+
+	return append(append(
+		me.compileLetDefs(let.Defs, argsEnv),
+		compbody(let.Body, bodyargsenv)...,
+	), instr{Op: INSTR_SLIDE, Int: n})
+}
+
+func (me *gMachine) compileLetDefs(letDefs []*clsyn.SynDef, argsEnv map[string]int) (instrs code) {
+	for i, def := range letDefs {
+		instrs = append(instrs, me.compileExpr(def.Body, me.envOffsetBy(argsEnv, i))...)
+	}
+	return
+}
+
+func (me *gMachine) compileLetRec(comp compilation, let *clsyn.ExprLetIn, argsEnv map[string]int) code {
 	return nil
 }
 
-func (me *gMachine) compileLetRec(comp compilation) code {
-	return nil
-}
-
-func (*gMachine) envOffsetBy(env map[string]int, offsetBy int) (envOffset map[string]int) { // TODO: ditch this and replace with a new `offset` arg to compileAppl()
+func (*gMachine) envOffsetBy(env map[string]int, offsetBy int) (envOffset map[string]int) {
 	envOffset = make(map[string]int, len(env))
 	for k, v := range env {
 		envOffset[k] = v + offsetBy

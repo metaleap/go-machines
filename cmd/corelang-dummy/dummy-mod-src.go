@@ -26,10 +26,9 @@ freakish x y =
 main0 = freakish 3 4
 
 main1 k = LET
-        p = pair 123
-        pp = p 456
-        fun = k
-    IN pp fun
+        pp = LET n = 123 IN pair n
+        fun = k0 k k
+    IN (pp 567) fun
 
 main2 = LET REC f = f x IN f
 
@@ -45,9 +44,9 @@ hello = LET
 
 
 world =
-  LET d _ = "ditched"
+  LET d = "ditched"
       w = "World"
-  IN k1 (d '?') w
+  IN k1 (k0 d "ditched") w
 
 
 
