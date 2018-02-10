@@ -18,6 +18,9 @@ infinite n = cons n (infinite n)
 listish = hd (tl (infinite 4))
 
 
+Ycomb f = LET REC x = f x IN x
+
+
 freakish x y =
     LET REC a = pair x b
             b = pair y a

@@ -77,27 +77,34 @@ func (me *gMachine) compileExpr(expression clsyn.IExpr, argsEnv map[string]int) 
 }
 
 func (me *gMachine) compileLet(compbody compilation, let *clsyn.ExprLetIn, argsEnv map[string]int) code {
+	n, instrs := len(let.Defs), code{}
+
+	bodyargsenv := me.envOffsetBy(argsEnv, n)
+	for i, def := range let.Defs {
+		bodyargsenv[def.Name] = n - (i + 1)
+		instrs = append(instrs, me.compileExpr(def.Body, me.envOffsetBy(argsEnv, i))...)
+	}
+
+	instrs = append(instrs, compbody(let.Body, bodyargsenv)...)
+	return append(instrs, instr{Op: INSTR_SLIDE, Int: n})
+}
+
+func (me *gMachine) compileLetRec(compbody compilation, let *clsyn.ExprLetIn, argsEnv map[string]int) code {
 	n := len(let.Defs)
+	instrs := code{{Op: INSTR_ALLOC, Int: n}}
+
 	bodyargsenv := me.envOffsetBy(argsEnv, n)
 	for i, def := range let.Defs {
 		bodyargsenv[def.Name] = n - (i + 1)
 	}
 
-	return append(append(
-		me.compileLetDefs(let.Defs, argsEnv),
-		compbody(let.Body, bodyargsenv)...,
-	), instr{Op: INSTR_SLIDE, Int: n})
-}
-
-func (me *gMachine) compileLetDefs(letDefs []*clsyn.SynDef, argsEnv map[string]int) (instrs code) {
-	for i, def := range letDefs {
-		instrs = append(instrs, me.compileExpr(def.Body, me.envOffsetBy(argsEnv, i))...)
+	for i, def := range let.Defs {
+		instrs = append(instrs, me.compileExpr(def.Body, bodyargsenv)...)
+		instrs = append(instrs, instr{Op: INSTR_UPDATE, Int: n - (i + 1)})
 	}
-	return
-}
 
-func (me *gMachine) compileLetRec(comp compilation, let *clsyn.ExprLetIn, argsEnv map[string]int) code {
-	return nil
+	instrs = append(instrs, compbody(let.Body, bodyargsenv)...)
+	return append(instrs, instr{Op: INSTR_SLIDE, Int: n})
 }
 
 func (*gMachine) envOffsetBy(env map[string]int, offsetBy int) (envOffset map[string]int) {
