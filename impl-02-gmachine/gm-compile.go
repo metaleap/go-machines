@@ -28,6 +28,9 @@ func CompileToMachine(mod *clsyn.SynMod) (clutil.IMachine, []error) {
 			errs = append(errs, errors.New(global.Name+": "+err.Error()))
 		} else {
 			me.Globals[global.Name] = me.Heap.Alloc(nodeGlobal{len(argsenv), bodycode})
+			if global.Name == "Ycomb" {
+				println(bodycode.String())
+			}
 		}
 	}
 	return &me, errs
@@ -43,12 +46,12 @@ func (me *gMachine) compileBody(bodyexpr clsyn.IExpr, argsEnv map[string]int) (b
 			instr{Op: INSTR_POP, Int: numargs},
 			instr{Op: INSTR_UNWIND},
 		)
+	} else {
+		bodycode = append(codeexpr,
+			instr{Op: INSTR_SLIDE, Int: 1 + numargs},
+			instr{Op: INSTR_UNWIND},
+		)
 	}
-
-	bodycode = append(codeexpr,
-		instr{Op: INSTR_SLIDE, Int: 1 + numargs},
-		instr{Op: INSTR_UNWIND},
-	)
 	return
 }
 
