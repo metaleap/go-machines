@@ -21,15 +21,9 @@ listish = hd (tl (infinite 4))
 Ycomb f = LET REC x = f x IN x
 
 
-freakish x y =
-    LET REC a = pair x b
-            b = pair y a
-    IN fst (snd (snd (snd a)))
-
-main0 = freakish 3 4
-
-main1 k = LET
-        pp = LET n = 123 IN pair n
+main1 k = LET REC
+        pa = pair
+        pp = LET n = 123 IN pa n
         fun = k0 k k
     IN (pp 567) fun
 
