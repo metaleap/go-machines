@@ -107,21 +107,14 @@ func (me *gMachine) dispatch(cur instr, next code) code {
 		node := me.Heap[addr]
 		switch n := node.(type) {
 		case nodeLitUint:
-			if len(next) > 0 { // temporarily to observe
-				panic("nodeLitUint: code remaining")
-				// next =nil
-			}
+			next = nil
 		case nodeIndirection:
 			me.Stack[me.Stack.Pos(0)] = n.Addr
-			if len(next) > 0 { // temporarily to observe
-				panic("nodeIndirection: code remaining")
-				// next = append(code{cur}, next...)
-			}
-			next = code{cur}
+			next = code{cur} // unwind again
 		case nodeAppl:
 			me.Stats.NumAppls++
 			me.Stack.Push(n.Callee)
-			next = code{cur}
+			next = code{cur} // unwind again
 		case nodeGlobal:
 			if (len(me.Stack) - 1) < n.NumArgs {
 				panic("unwinding with too few arguments")
