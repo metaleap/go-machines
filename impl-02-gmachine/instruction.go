@@ -48,11 +48,11 @@ const (
 )
 
 type instr struct {
-	Op       instruction
-	Int      int
-	Name     string
-	CondThen code
-	CondElse code
+	Op   instruction
+	Int  int
+	Name string
+	// CondThen code
+	// CondElse code
 }
 
 func (me instr) String() string {

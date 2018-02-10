@@ -36,7 +36,7 @@ var preCompiledPrims = map[string]nodeGlobal{
 	">":  {2, code{{Op: INSTR_PUSHARG, Int: 1}, {Op: INSTR_EVAL}, {Op: INSTR_PUSHARG, Int: 1}, {Op: INSTR_EVAL}, {Op: INSTR_PRIM_CMP_GT}, {Op: INSTR_UPDATE, Int: 2}, {Op: INSTR_POP, Int: 2}, {Op: INSTR_UNWIND}}},
 	">=": {2, code{{Op: INSTR_PUSHARG, Int: 1}, {Op: INSTR_EVAL}, {Op: INSTR_PUSHARG, Int: 1}, {Op: INSTR_EVAL}, {Op: INSTR_PRIM_CMP_GEQ}, {Op: INSTR_UPDATE, Int: 2}, {Op: INSTR_POP, Int: 2}, {Op: INSTR_UNWIND}}},
 
-	"if": {3, code{{Op: INSTR_PUSHARG}, {Op: INSTR_EVAL}, {Op: INSTR_PRIM_COND, CondThen: code{{Op: INSTR_PUSHARG, Int: 1}}, CondElse: code{{Op: INSTR_PUSHARG, Int: 2}}}, {Op: INSTR_UPDATE, Int: 3}, {Op: INSTR_POP, Int: 3}, {Op: INSTR_UNWIND}}},
+	"if": {3, code{{Op: INSTR_PUSHARG}, {Op: INSTR_EVAL}, {Op: INSTR_PRIM_COND /*, CondThen: code{{Op: INSTR_PUSHARG, Int: 1}}, CondElse: code{{Op: INSTR_PUSHARG, Int: 2}}*/}, {Op: INSTR_UPDATE, Int: 3}, {Op: INSTR_POP, Int: 3}, {Op: INSTR_UNWIND}}},
 }
 
 func CompileToMachine(mod *clsyn.SynMod) (clutil.IMachine, []error) {
@@ -56,7 +56,7 @@ func CompileToMachine(mod *clsyn.SynMod) (clutil.IMachine, []error) {
 			argsenv[arg] = i
 		}
 
-		if bodycode, err := me.compileTopLevelDefBody(global.Body, argsenv); err != nil {
+		if bodycode, err := me.compileGlobal(global.Body, argsenv); err != nil {
 			errs = append(errs, errors.New(global.Name+": "+err.Error()))
 		} else {
 			me.Globals[global.Name] = me.Heap.Alloc(nodeGlobal{len(argsenv), bodycode})
@@ -65,9 +65,9 @@ func CompileToMachine(mod *clsyn.SynMod) (clutil.IMachine, []error) {
 	return &me, errs
 }
 
-func (me *gMachine) compileTopLevelDefBody(bodyexpr clsyn.IExpr, argsEnv map[string]int) (bodycode code, err error) {
+func (me *gMachine) compileGlobal(bodyexpr clsyn.IExpr, argsEnv map[string]int) (bodycode code, err error) {
 	defer clutil.Catch(&err)
-	numargs, codeexpr := len(argsEnv), me.compileExpr(bodyexpr, argsEnv)
+	numargs, codeexpr := len(argsEnv), me.compileExprStrict(bodyexpr, argsEnv)
 	// if MARK2_LAZY {
 	bodycode = append(codeexpr,
 		instr{Op: INSTR_UPDATE, Int: numargs},
@@ -83,7 +83,18 @@ func (me *gMachine) compileTopLevelDefBody(bodyexpr clsyn.IExpr, argsEnv map[str
 	return
 }
 
-func (me *gMachine) compileExpr(expression clsyn.IExpr, argsEnv map[string]int) code {
+func (me *gMachine) compileExprStrict(expression clsyn.IExpr, argsEnv map[string]int) code {
+	switch expr := expression.(type) {
+	case *clsyn.ExprLitUInt:
+		return code{{Op: INSTR_PUSHINT, Int: int(expr.Lit)}}
+	case *clsyn.ExprLetIn:
+		return me.compileLet(me.compileExprStrict, expr, argsEnv)
+	default:
+		return append(me.compileExprLazy(expr, argsEnv), instr{Op: INSTR_EVAL})
+	}
+}
+
+func (me *gMachine) compileExprLazy(expression clsyn.IExpr, argsEnv map[string]int) code {
 	switch expr := expression.(type) {
 	case *clsyn.ExprLitUInt:
 		return code{{Op: INSTR_PUSHINT, Int: int(expr.Lit)}}
@@ -94,48 +105,39 @@ func (me *gMachine) compileExpr(expression clsyn.IExpr, argsEnv map[string]int) 
 		return code{{Op: INSTR_PUSHGLOBAL, Name: expr.Name}}
 	case *clsyn.ExprCall:
 		return append(append(
-			me.compileExpr(expr.Arg, argsEnv),
-			me.compileExpr(expr.Callee, me.envOffsetBy(argsEnv, 1))...,
+			me.compileExprLazy(expr.Arg, argsEnv),
+			me.compileExprLazy(expr.Callee, me.envOffsetBy(argsEnv, 1))...,
 		), instr{Op: INSTR_MAKEAPPL})
 	case *clsyn.ExprLetIn:
-		if expr.Rec {
-			return me.compileLetRec(me.compileExpr, expr, argsEnv)
-		}
-		return me.compileLet(me.compileExpr, expr, argsEnv)
+		return me.compileLet(me.compileExprLazy, expr, argsEnv)
 	default:
 		panic(expr)
 	}
 }
 
-func (me *gMachine) compileLet(compbody compilation, let *clsyn.ExprLetIn, argsEnv map[string]int) code {
-	n, instrs := len(let.Defs), code{}
-
-	bodyargsenv := me.envOffsetBy(argsEnv, n)
-	for i, def := range let.Defs {
-		bodyargsenv[def.Name] = n - (i + 1)
-		instrs = append(instrs, me.compileExpr(def.Body, me.envOffsetBy(argsEnv, i))...)
-	}
-
-	instrs = append(instrs, compbody(let.Body, bodyargsenv)...)
-	return append(instrs, instr{Op: INSTR_SLIDE, Int: n})
-}
-
-func (me *gMachine) compileLetRec(compbody compilation, let *clsyn.ExprLetIn, argsEnv map[string]int) code {
+func (me *gMachine) compileLet(compbody compilation, let *clsyn.ExprLetIn, argsEnv map[string]int) (instrs code) {
 	n := len(let.Defs)
-	instrs := code{{Op: INSTR_ALLOC, Int: n}}
+	if let.Rec {
+		instrs = code{{Op: INSTR_ALLOC, Int: n}}
+	}
 
 	bodyargsenv := me.envOffsetBy(argsEnv, n)
 	for i, def := range let.Defs {
-		bodyargsenv[def.Name] = n - (i + 1)
+		if bodyargsenv[def.Name] = n - (i + 1); !let.Rec {
+			instrs = append(instrs, me.compileExprLazy(def.Body, me.envOffsetBy(argsEnv, i))...)
+		}
 	}
 
-	for i, def := range let.Defs {
-		instrs = append(instrs, me.compileExpr(def.Body, bodyargsenv)...)
-		instrs = append(instrs, instr{Op: INSTR_UPDATE, Int: n - (i + 1)})
+	if let.Rec {
+		for i, def := range let.Defs {
+			instrs = append(instrs, me.compileExprLazy(def.Body, bodyargsenv)...)
+			instrs = append(instrs, instr{Op: INSTR_UPDATE, Int: n - (i + 1)})
+		}
 	}
 
 	instrs = append(instrs, compbody(let.Body, bodyargsenv)...)
-	return append(instrs, instr{Op: INSTR_SLIDE, Int: n})
+	instrs = append(instrs, instr{Op: INSTR_SLIDE, Int: n})
+	return
 }
 
 func (*gMachine) envOffsetBy(env map[string]int, offsetBy int) (envOffset map[string]int) {

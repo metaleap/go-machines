@@ -42,7 +42,7 @@ func (me *gMachine) step() {
 		addr := me.Globals.LookupOrPanic(me.Code[cur].Name)
 		me.Stack.Push(addr)
 	case INSTR_PUSHINT:
-		addr := me.Heap.Alloc(nodeLitUint(me.Code[cur].Int))
+		addr := me.Heap.Alloc(nodeInt(me.Code[cur].Int))
 		me.Stack.Push(addr)
 	case INSTR_PUSHARG:
 		// if MARK3_REARRANGESTACK {
@@ -78,8 +78,8 @@ func (me *gMachine) step() {
 		me.Stack = me.Stack[pos:]
 		next = code{{Op: INSTR_UNWIND}}
 	case INSTR_PRIM_CMP_EQ, INSTR_PRIM_CMP_NEQ, INSTR_PRIM_CMP_LT, INSTR_PRIM_CMP_LEQ, INSTR_PRIM_CMP_GT, INSTR_PRIM_CMP_GEQ:
-		node1, node2 := me.Heap[me.Stack.Top(0)].(nodeLitUint), me.Heap[me.Stack.Top(1)].(nodeLitUint)
-		var result nodeLitUint
+		node1, node2 := me.Heap[me.Stack.Top(0)].(nodeInt), me.Heap[me.Stack.Top(1)].(nodeInt)
+		var result nodeInt
 		var istrue bool
 		switch me.Code[cur].Op {
 		case INSTR_PRIM_CMP_EQ:
@@ -102,8 +102,8 @@ func (me *gMachine) step() {
 		me.Stack = me.Stack.Dropped(1)
 		me.Stack[me.Stack.Pos(0)] = addr
 	case INSTR_PRIM_AR_ADD, INSTR_PRIM_AR_SUB, INSTR_PRIM_AR_MUL, INSTR_PRIM_AR_DIV:
-		node1, node2 := me.Heap[me.Stack.Top(0)].(nodeLitUint), me.Heap[me.Stack.Top(1)].(nodeLitUint)
-		var result nodeLitUint
+		node1, node2 := me.Heap[me.Stack.Top(0)].(nodeInt), me.Heap[me.Stack.Top(1)].(nodeInt)
+		var result nodeInt
 		switch me.Code[cur].Op {
 		case INSTR_PRIM_AR_ADD:
 			result = node1 + node2
@@ -118,23 +118,25 @@ func (me *gMachine) step() {
 		me.Stack = me.Stack.Dropped(1)
 		me.Stack[me.Stack.Pos(0)] = addr
 	case INSTR_PRIM_AR_NEG:
-		node := me.Heap[me.Stack.Top(0)].(nodeLitUint)
+		node := me.Heap[me.Stack.Top(0)].(nodeInt)
 		addr := me.Heap.Alloc(-node)
 		me.Stack[me.Stack.Pos(0)] = addr
 	case INSTR_PRIM_COND:
-		if node := me.Heap[me.Stack.Top(0)].(nodeLitUint); node == 1 {
-			next = append(me.Code[0].CondThen, next...)
-		} else if node == 0 {
-			next = append(me.Code[0].CondElse, next...)
-		} else {
-			panic("boolean bug")
-		}
+		node := me.Heap[me.Stack.Top(0)].(nodeInt)
+		next = append(code{{Op: INSTR_PUSHARG, Int: 2 - int(node)}}, next...)
+		// if node := me.Heap[me.Stack.Top(0)].(nodeLitUint); node == 1 {
+		// 	next = append(me.Code[0].CondThen, next...)
+		// } else if node == 0 {
+		// 	next = append(me.Code[0].CondElse, next...)
+		// } else {
+		// 	panic("boolean bug")
+		// }
 		me.Stack = me.Stack.Dropped(1)
 	case INSTR_UNWIND:
 		addr := me.Stack.Top(0)
 		node := me.Heap[addr]
 		switch n := node.(type) {
-		case nodeLitUint:
+		case nodeInt:
 			if len(me.Dump) == 0 {
 				next = nil
 			} else {
@@ -151,16 +153,23 @@ func (me *gMachine) step() {
 			next = code{instr{Op: INSTR_UNWIND}} // unwind again
 		case nodeGlobal:
 			if (len(me.Stack) - 1) < n.NumArgs {
-				panic("unwinding with too few arguments")
+				if len(me.Dump) == 0 {
+					panic("unwinding with too few arguments")
+				}
+				restore := me.Dump[len(me.Dump)-1]
+				me.Dump = me.Dump[:len(me.Dump)-1]
+				next = restore.Code
+				me.Stack = restore.Stack.Pushed(me.Stack[0])
+			} else {
+				// if MARK3_REARRANGESTACK {
+				nustack := make(clutil.Stack, 0, n.NumArgs)
+				for i := n.NumArgs; i > 0; i-- {
+					nustack.Push(me.Heap[me.Stack.Top(i)].(nodeAppl).Arg)
+				}
+				me.Stack = append(me.Stack.Dropped(n.NumArgs), nustack...)
+				// }
+				next = n.Code
 			}
-			// if MARK3_REARRANGESTACK {
-			nustack := make(clutil.Stack, 0, n.NumArgs)
-			for i := n.NumArgs; i > 0; i-- {
-				nustack.Push(me.Heap[me.Stack.Top(i)].(nodeAppl).Arg)
-			}
-			me.Stack = append(me.Stack.Dropped(n.NumArgs), nustack...)
-			// }
-			next = n.Code
 		default:
 			panic(n)
 		}
