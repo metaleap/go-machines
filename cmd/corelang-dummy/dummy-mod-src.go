@@ -2,7 +2,6 @@ package main
 
 const srcMod = `
 
-
 pair l r f = f l r
 
 fst p = p k0

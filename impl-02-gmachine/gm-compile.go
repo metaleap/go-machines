@@ -7,9 +7,20 @@ import (
 	"github.com/metaleap/go-corelang/util"
 )
 
-const MARK2_LAZY = true
-
 type compilation func(clsyn.IExpr, map[string]int) code
+
+var primDyadic = map[string]instruction{
+	"+":  INSTR_PRIM_AR_ADD,
+	"-":  INSTR_PRIM_AR_SUB,
+	"*":  INSTR_PRIM_AR_MUL,
+	"/":  INSTR_PRIM_AR_DIV,
+	"==": INSTR_PRIM_CMP_EQ,
+	"!=": INSTR_PRIM_CMP_NEQ,
+	"<":  INSTR_PRIM_CMP_LT,
+	"<=": INSTR_PRIM_CMP_LEQ,
+	">":  INSTR_PRIM_CMP_GT,
+	">=": INSTR_PRIM_CMP_GEQ,
+}
 
 var preCompiledPrims = map[string]nodeGlobal{
 	"+":   {2, code{{Op: INSTR_PUSHARG, Int: 1}, {Op: INSTR_EVAL}, {Op: INSTR_PUSHARG, Int: 1}, {Op: INSTR_EVAL}, {Op: INSTR_PRIM_AR_ADD}, {Op: INSTR_UPDATE, Int: 2}, {Op: INSTR_POP, Int: 2}, {Op: INSTR_UNWIND}}},
@@ -57,18 +68,18 @@ func CompileToMachine(mod *clsyn.SynMod) (clutil.IMachine, []error) {
 func (me *gMachine) compileTopLevelDefBody(bodyexpr clsyn.IExpr, argsEnv map[string]int) (bodycode code, err error) {
 	defer clutil.Catch(&err)
 	numargs, codeexpr := len(argsEnv), me.compileExpr(bodyexpr, argsEnv)
-	if MARK2_LAZY {
-		bodycode = append(codeexpr,
-			instr{Op: INSTR_UPDATE, Int: numargs},
-			instr{Op: INSTR_POP, Int: numargs},
-			instr{Op: INSTR_UNWIND},
-		)
-	} else {
-		bodycode = append(codeexpr,
-			instr{Op: INSTR_SLIDE, Int: 1 + numargs},
-			instr{Op: INSTR_UNWIND},
-		)
-	}
+	// if MARK2_LAZY {
+	bodycode = append(codeexpr,
+		instr{Op: INSTR_UPDATE, Int: numargs},
+		instr{Op: INSTR_POP, Int: numargs},
+		instr{Op: INSTR_UNWIND},
+	)
+	// } else {
+	// 	bodycode = append(codeexpr,
+	// 		instr{Op: INSTR_SLIDE, Int: 1 + numargs},
+	// 		instr{Op: INSTR_UNWIND},
+	// 	)
+	// }
 	return
 }
 

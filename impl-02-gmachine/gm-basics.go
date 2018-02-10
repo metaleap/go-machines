@@ -21,7 +21,7 @@ type dumpItem struct {
 func (me *gMachine) Eval(name string) (val interface{}, stats clutil.Stats, err error) {
 	// defer clutil.Catch(&err)
 	me.Code = code{{Op: INSTR_PUSHGLOBAL, Name: name}, {Op: INSTR_EVAL}}
-	println(me.Heap[me.Globals[name]].(nodeGlobal).Code.String())
+	// println(me.Heap[me.Globals[name]].(nodeGlobal).Code.String())
 	me.eval()
 	stats, val = me.Stats, me.Heap[me.Stack.Top(0)]
 	return
@@ -45,12 +45,12 @@ func (me *gMachine) step() {
 		addr := me.Heap.Alloc(nodeLitUint(me.Code[cur].Int))
 		me.Stack.Push(addr)
 	case INSTR_PUSHARG:
-		if MARK3_REARRANGESTACK {
-			me.Stack.Push(me.Stack.Top(me.Code[cur].Int))
-		} else {
-			addrarg := me.Heap[me.Stack.Top(1+me.Code[cur].Int)].(nodeAppl).Arg
-			me.Stack.Push(addrarg)
-		}
+		// if MARK3_REARRANGESTACK {
+		me.Stack.Push(me.Stack.Top(me.Code[cur].Int))
+		// } else {
+		// 	addrarg := me.Heap[me.Stack.Top(1+me.Code[cur].Int)].(nodeAppl).Arg
+		// 	me.Stack.Push(addrarg)
+		// }
 	case INSTR_MAKEAPPL:
 		addrcallee := me.Stack.Top(0)
 		addrarg := me.Stack.Top(1)
@@ -77,20 +77,11 @@ func (me *gMachine) step() {
 		me.Dump = append(me.Dump, dumpItem{Code: next, Stack: me.Stack[:pos]})
 		me.Stack = me.Stack[pos:]
 		next = code{{Op: INSTR_UNWIND}}
-	case INSTR_PRIM_AR_ADD, INSTR_PRIM_AR_SUB, INSTR_PRIM_AR_MUL, INSTR_PRIM_AR_DIV,
-		INSTR_PRIM_CMP_EQ, INSTR_PRIM_CMP_NEQ, INSTR_PRIM_CMP_LT, INSTR_PRIM_CMP_LEQ, INSTR_PRIM_CMP_GT, INSTR_PRIM_CMP_GEQ:
+	case INSTR_PRIM_CMP_EQ, INSTR_PRIM_CMP_NEQ, INSTR_PRIM_CMP_LT, INSTR_PRIM_CMP_LEQ, INSTR_PRIM_CMP_GT, INSTR_PRIM_CMP_GEQ:
 		node1, node2 := me.Heap[me.Stack.Top(0)].(nodeLitUint), me.Heap[me.Stack.Top(1)].(nodeLitUint)
 		var result nodeLitUint
 		var istrue bool
 		switch me.Code[cur].Op {
-		case INSTR_PRIM_AR_ADD:
-			result = node1 + node2
-		case INSTR_PRIM_AR_SUB:
-			result = node1 - node2
-		case INSTR_PRIM_AR_MUL:
-			result = node1 * node2
-		case INSTR_PRIM_AR_DIV:
-			result = node1 / node2
 		case INSTR_PRIM_CMP_EQ:
 			istrue = (node1 == node2)
 		case INSTR_PRIM_CMP_NEQ:
@@ -106,6 +97,22 @@ func (me *gMachine) step() {
 		}
 		if istrue {
 			result = 1
+		}
+		addr := me.Heap.Alloc(result)
+		me.Stack = me.Stack.Dropped(1)
+		me.Stack[me.Stack.Pos(0)] = addr
+	case INSTR_PRIM_AR_ADD, INSTR_PRIM_AR_SUB, INSTR_PRIM_AR_MUL, INSTR_PRIM_AR_DIV:
+		node1, node2 := me.Heap[me.Stack.Top(0)].(nodeLitUint), me.Heap[me.Stack.Top(1)].(nodeLitUint)
+		var result nodeLitUint
+		switch me.Code[cur].Op {
+		case INSTR_PRIM_AR_ADD:
+			result = node1 + node2
+		case INSTR_PRIM_AR_SUB:
+			result = node1 - node2
+		case INSTR_PRIM_AR_MUL:
+			result = node1 * node2
+		case INSTR_PRIM_AR_DIV:
+			result = node1 / node2
 		}
 		addr := me.Heap.Alloc(result)
 		me.Stack = me.Stack.Dropped(1)
@@ -146,13 +153,13 @@ func (me *gMachine) step() {
 			if (len(me.Stack) - 1) < n.NumArgs {
 				panic("unwinding with too few arguments")
 			}
-			if MARK3_REARRANGESTACK {
-				nustack := make(clutil.Stack, 0, n.NumArgs)
-				for i := n.NumArgs; i > 0; i-- {
-					nustack.Push(me.Heap[me.Stack.Top(i)].(nodeAppl).Arg)
-				}
-				me.Stack = append(me.Stack.Dropped(n.NumArgs), nustack...)
+			// if MARK3_REARRANGESTACK {
+			nustack := make(clutil.Stack, 0, n.NumArgs)
+			for i := n.NumArgs; i > 0; i-- {
+				nustack.Push(me.Heap[me.Stack.Top(i)].(nodeAppl).Arg)
 			}
+			me.Stack = append(me.Stack.Dropped(n.NumArgs), nustack...)
+			// }
 			next = n.Code
 		default:
 			panic(n)

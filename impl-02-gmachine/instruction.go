@@ -4,7 +4,18 @@ import (
 	"strconv"
 )
 
-const MARK3_REARRANGESTACK = true
+type code []instr
+
+func (me code) String() (s string) {
+	s = "["
+	for i, instr := range me {
+		if i > 0 {
+			s += " · "
+		}
+		s += instr.String()
+	}
+	return s + "]"
+}
 
 type instruction int
 
@@ -92,17 +103,4 @@ func (me instr) String() string {
 		return "Cond"
 	}
 	return strconv.Itoa(int(me.Op))
-}
-
-type code []instr
-
-func (me code) String() (s string) {
-	s = "["
-	for i, instr := range me {
-		if i > 0 {
-			s += " · "
-		}
-		s += instr.String()
-	}
-	return s + "]"
 }
