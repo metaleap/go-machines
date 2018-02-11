@@ -18,7 +18,9 @@ infinite n = cons n (infinite n)
 listish = hd (tl (infinite 4))
 
 
-fac n = if (n==0) 1 (n * (fac (n - 1)))
+fac n = if (n==0) 1 (n * (fac (n - 1))) // 'when' instead of 'if' will work (executes approx. ~25-40% more steps)
+
+checkifopish = 3 × (4 ÷ 5)
 
 
 when cond then else =
