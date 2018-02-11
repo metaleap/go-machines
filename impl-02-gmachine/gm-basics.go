@@ -90,9 +90,11 @@ func (me *gMachine) step() {
 		case INSTR_PRIM_CMP_GEQ:
 			istrue = (node1 >= node2)
 		}
-		var result nodeInt
+		var result nodeCtor
 		if istrue {
-			result = 1
+			result.Tag = 2
+		} else {
+			result.Tag = 1
 		}
 		addr := me.Heap.Alloc(result)
 		me.Stack = me.Stack.Dropped(1)
@@ -118,9 +120,9 @@ func (me *gMachine) step() {
 		addr := me.Heap.Alloc(-node)
 		me.Stack[me.Stack.Pos(0)] = addr
 	case INSTR_PRIM_COND:
-		if node := me.Heap[me.Stack.Top(0)].(nodeInt); node == 1 {
+		if node := me.Heap[me.Stack.Top(0)].(nodeCtor); node.Tag == 2 {
 			next = append(me.Code[0].CondThen, next...)
-		} else if node == 0 {
+		} else if node.Tag == 1 {
 			next = append(me.Code[0].CondElse, next...)
 		} else {
 			panic("boolean bug")

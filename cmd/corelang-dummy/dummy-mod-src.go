@@ -21,6 +21,11 @@ listish = hd (tl (infinite 4))
 fac n = if (n==0) 1 (n * (fac (n - 1)))
 
 
+when cond then else =
+    CASE cond OF
+    0 -> 42
+    1 -> else
+    2 -> then
 
 
 test ctor =
