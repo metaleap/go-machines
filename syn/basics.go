@@ -28,7 +28,7 @@ func (me *syn) init(toks lex.Tokens) { me.toks = toks }
 
 func (*syn) isExpr() bool { return false }
 
-func (me *syn) Pos() *lex.TokenMeta { return me.toks[0].Meta() }
+func (me *syn) Pos() *lex.TokenMeta { return &me.toks[0].Meta }
 
 func (me *syn) Toks() lex.Tokens { return me.toks }
 
@@ -54,8 +54,8 @@ func errPos(pos *scanner.Position, msg string, rangeLen int) *Error {
 	return &Error{Pos: *pos, msg: msg, RangeLen: rangeLen}
 }
 
-func errTok(tok lex.IToken, msg string) *Error {
-	return errPos(&tok.Meta().Position, msg, len(tok.String()))
+func errTok(tok *lex.Token, msg string) *Error {
+	return errPos(&tok.Meta.Position, msg, len(tok.String()))
 }
 
 func (me *Error) Error() string { return me.msg }
