@@ -125,11 +125,27 @@ func (me *gMachine) step() {
 			panic("boolean bug")
 		}
 		me.Stack = me.Stack.Dropped(1)
+	case INSTR_CTOR_PACK:
+		arity := me.Code[cur].CtorArity
+		node := nodeCtor{Tag: me.Code[cur].Int, Items: make([]clutil.Addr, arity)}
+		for i := 0; i < arity; i++ {
+			node.Items[i] = me.Stack.Top(i)
+		}
+		me.Stack = me.Stack.Dropped(arity).Pushed(me.Heap.Alloc(node))
+	case INSTR_CASE_JUMP:
+		node := me.Heap[me.Stack.Top(0)].(nodeCtor)
+		next = append(me.Code[cur].CaseJump[node.Tag], next...)
+	case INSTR_CASE_SPLIT:
+		node := me.Heap[me.Stack.Top(0)].(nodeCtor)
+		me.Stack = me.Stack.Dropped(1)
+		for i := len(node.Items) - 1; i > -1; i-- {
+			me.Stack.Push(node.Items[i])
+		}
 	case INSTR_UNWIND:
 		addr := me.Stack.Top(0)
 		node := me.Heap[addr]
 		switch n := node.(type) {
-		case nodeInt:
+		case nodeInt, nodeCtor:
 			if len(me.Dump) == 0 {
 				next = nil
 			} else {

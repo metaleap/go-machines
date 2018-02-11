@@ -45,14 +45,20 @@ const (
 	INSTR_PRIM_CMP_GT
 	INSTR_PRIM_CMP_GEQ
 	INSTR_PRIM_COND
+
+	INSTR_CTOR_PACK
+	INSTR_CASE_JUMP
+	INSTR_CASE_SPLIT
 )
 
 type instr struct {
-	Op       instruction
-	Int      int
-	Name     string
-	CondThen code
-	CondElse code
+	Op        instruction
+	Int       int
+	Name      string
+	CondThen  code
+	CondElse  code
+	CtorArity int
+	CaseJump  []code
 }
 
 func (me instr) String() string {
@@ -101,6 +107,12 @@ func (me instr) String() string {
 		return "GEq"
 	case INSTR_PRIM_COND:
 		return "Cond"
+	case INSTR_CTOR_PACK:
+		return "Ctor" + strconv.Itoa(me.Int) + ":" + strconv.Itoa(me.CtorArity)
+	case INSTR_CASE_JUMP:
+		return "CJmp#" + strconv.Itoa(len(me.CaseJump))
+	case INSTR_CASE_SPLIT:
+		return "CSpl=" + strconv.Itoa(me.Int)
 	}
 	return strconv.Itoa(int(me.Op))
 }

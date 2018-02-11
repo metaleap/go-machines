@@ -19,3 +19,8 @@ type nodeGlobal struct {
 type nodeIndirection struct {
 	Addr clutil.Addr
 }
+
+type nodeCtor struct {
+	Tag   int
+	Items []clutil.Addr
+}

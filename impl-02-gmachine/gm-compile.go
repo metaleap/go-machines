@@ -88,7 +88,7 @@ func (me *gMachine) compileExprStrict(expression clsyn.IExpr, argsEnv map[string
 				return append(me.compileExprStrict(expr.Arg, argsEnv), instr{Op: INSTR_PRIM_AR_NEG})
 			}
 		case *clsyn.ExprCall:
-			if op, _ := callee.Callee.(*clsyn.ExprIdent); op != nil {
+			if op, _ := callee.Callee.(*clsyn.ExprIdent); op != nil && op.OpLike {
 				if primdyadic := primDyadic[op.Name]; primdyadic != 0 {
 					return append(append(
 						me.compileExprStrict(expr.Arg, argsEnv),
