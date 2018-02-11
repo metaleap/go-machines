@@ -2,6 +2,10 @@ package main
 
 const srcMod = `
 
+// https://www.youtube.com/watch?v=hrBq8R_kxI0 8m
+
+// https://www.youtube.com/watch?v=GhERMBT7u4w 21m
+
 pair l r f = f l r
 
 fst p = p k0
