@@ -18,6 +18,16 @@ infinite n = cons n (infinite n)
 listish = hd (tl (infinite 4))
 
 
+test ctor =
+    CASE ctor OF    0 -> 42
+                    1 n -> neg n
+                    2 x y -> x + y
+                    3 x y -> x * y
+
+
+do = test ((3 2) 5 3) // call to test with ctor of (3 2) returns the result of 5*3
+
+
 Ycomb f = LET REC x = f x IN x
 
 

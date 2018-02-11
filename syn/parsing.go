@@ -62,7 +62,7 @@ func parseDefs(tokens lex.Tokens, topLevel bool) (defs []*SynDef, errs []*Error)
 
 func parseDef(tokens lex.Tokens) (*SynDef, lex.Tokens, *Error) {
 	if tokens[0].Kind() != lex.TOKEN_IDENT {
-		return nil, nil, errTok(&tokens[0], "expected identifier instead of "+tokens[0].String())
+		return nil, nil, errTok(&tokens[0], "expected identifier instead of `"+tokens[0].String()+"`")
 	} else if len(tokens) == 1 {
 		return nil, nil, errTok(&tokens[0], tokens[0].Str+": expected argument name(s) or `=` next")
 	} else if len(tokens) == 2 {
@@ -84,7 +84,7 @@ func parseDef(tokens lex.Tokens) (*SynDef, lex.Tokens, *Error) {
 		} else if tkind == lex.TOKEN_IDENT {
 			def.Args = append(def.Args, toks[i].Str)
 		} else {
-			return nil, tail, errTok(&toks[i], def.Name+": expected argument name or `=` instead of "+toks[i].String())
+			return nil, tail, errTok(&toks[i], def.Name+": expected argument name or `=` instead of `"+toks[i].String()+"`")
 		}
 	}
 
@@ -123,7 +123,7 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 				if lamargs[i].Kind() == lex.TOKEN_IDENT {
 					lam.Args = append(lam.Args, lamargs[i].Str)
 				} else {
-					return nil, errTok(&lamargs[i], "expected `->` or identifier for lambda argument instead of "+lamargs[i].String())
+					return nil, errTok(&lamargs[i], "expected `->` or identifier for lambda argument instead of `"+lamargs[i].String()+"`")
 				}
 			}
 			lamexpr, lamerr := parseExpr(lambody)
@@ -284,7 +284,7 @@ func parseKeywordCaseAlts(tokens lex.Tokens) (alts []*SynCaseAlt, errs []*Error)
 
 func parseKeywordCaseAlt(tokens lex.Tokens) (*SynCaseAlt, lex.Tokens, *Error) {
 	if tokens[0].Kind() != lex.TOKEN_UINT {
-		return nil, nil, errTok(&tokens[0], "expected constructor tag instead of "+tokens[0].String())
+		return nil, nil, errTok(&tokens[0], "expected constructor tag instead of `"+tokens[0].String()+"`")
 	} else if len(tokens) == 1 {
 		return nil, nil, errTok(&tokens[0], "expected name(s) or `->` next")
 	} else if len(tokens) == 2 {
@@ -306,7 +306,7 @@ func parseKeywordCaseAlt(tokens lex.Tokens) (*SynCaseAlt, lex.Tokens, *Error) {
 		} else if tkind == lex.TOKEN_IDENT {
 			alt.Binds = append(alt.Binds, toks[i].Str)
 		} else {
-			return nil, nil, errTok(&toks[i], "expected identifier or `->` instead of "+toks[i].String())
+			return nil, nil, errTok(&toks[i], "expected identifier or `->` instead of `"+toks[i].String()+"`")
 		}
 	}
 
