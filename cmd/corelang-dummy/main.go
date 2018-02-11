@@ -29,7 +29,7 @@ func main() {
 	}
 	machine := recompile(mod)
 
-	multiline, repl, pprint := "", bufio.NewScanner(os.Stdin), &corelang.InterpPrettyPrint{}
+	multiline, repl, pprint := "", bufio.NewScanner(os.Stdin), &corelang.SyntaxTreePrinter{}
 	for repl.Scan() {
 		if readln := strings.TrimSpace(repl.Text()); readln != "" {
 			if readln == "…" && multiline != "" {
@@ -58,7 +58,7 @@ func main() {
 					println("not found: " + readln)
 				} else {
 					srcfmt, _ := pprint.Def(mod.Defs[readln])
-					writeLn(srcfmt.(string))
+					writeLn(srcfmt)
 				}
 			case lexAndParse("<input>", readln, mod):
 				machine = recompile(mod)

@@ -9,11 +9,11 @@ import (
 	. "github.com/metaleap/go-corelang/syn"
 )
 
-type InterpPrettyPrint struct {
+type SyntaxTreePrinter struct {
 	curIndent int
 }
 
-func (me *InterpPrettyPrint) Mod(mod *SynMod, args ...interface{}) (interface{}, error) {
+func (me *SyntaxTreePrinter) Mod(mod *SynMod) (string, error) {
 	var buf bytes.Buffer
 	for _, def := range mod.Defs {
 		me.curIndent = 0
@@ -23,7 +23,7 @@ func (me *InterpPrettyPrint) Mod(mod *SynMod, args ...interface{}) (interface{},
 	return buf.String(), nil
 }
 
-func (me *InterpPrettyPrint) def(w *bytes.Buffer, def *SynDef, _ ...interface{}) {
+func (me *SyntaxTreePrinter) def(w *bytes.Buffer, def *SynDef) {
 	w.WriteString(def.Name)
 	for _, defarg := range def.Args {
 		w.WriteRune(' ')
@@ -36,13 +36,13 @@ func (me *InterpPrettyPrint) def(w *bytes.Buffer, def *SynDef, _ ...interface{})
 	me.curIndent--
 }
 
-func (me *InterpPrettyPrint) Def(def *SynDef, args ...interface{}) (interface{}, error) {
+func (me *SyntaxTreePrinter) Def(def *SynDef) (string, error) {
 	var buf bytes.Buffer
-	me.def(&buf, def, args...)
+	me.def(&buf, def)
 	return buf.String(), nil
 }
 
-func (me *InterpPrettyPrint) expr(w *bytes.Buffer, expression IExpr, parensUnlessAtomic bool) {
+func (me *SyntaxTreePrinter) expr(w *bytes.Buffer, expression IExpr, parensUnlessAtomic bool) {
 	if parensUnlessAtomic && !expression.IsAtomic() {
 		w.WriteRune('(')
 	}
@@ -131,7 +131,7 @@ func (me *InterpPrettyPrint) expr(w *bytes.Buffer, expression IExpr, parensUnles
 	return
 }
 
-func (me *InterpPrettyPrint) Expr(expr IExpr) (interface{}, error) {
+func (me *SyntaxTreePrinter) Expr(expr IExpr) (string, error) {
 	var buf bytes.Buffer
 	me.expr(&buf, expr, false)
 	return buf.String(), nil
