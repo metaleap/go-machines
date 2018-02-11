@@ -91,32 +91,8 @@ func (me *gMachine) compileExprStrict(expression clsyn.IExpr, argsEnv env) code 
 		return append(me.compileExprStrict(expr.Scrut, argsEnv), instr{Op: INSTR_CASE_JUMP,
 			CaseJump: me.compileCaseAlts(me.compileExprStrictSplitSlide, expr.Alts, argsEnv)})
 	case *clsyn.ExprCall:
-		if ctor, ctorrevargs := expr.FlattenedIfEffectivelyCtor(); ctor != nil {
-			return me.compileCtorAppl(ctor, ctorrevargs, argsEnv)
-		}
-		switch callee := expr.Callee.(type) {
-		case *clsyn.ExprIdent:
-			if callee.Name == "neg" {
-				return append(me.compileExprStrict(expr.Arg, argsEnv), instr{Op: INSTR_PRIM_AR_NEG})
-			}
-		case *clsyn.ExprCall:
-			if op, _ := callee.Callee.(*clsyn.ExprIdent); op != nil && op.OpLike {
-				if primdyadic := primDyadic[op.Name]; primdyadic != 0 {
-					return append(append(
-						me.compileExprStrict(expr.Arg, argsEnv),
-						me.compileExprStrict(callee.Arg, me.envOffsetBy(argsEnv, 1))...,
-					), instr{Op: primdyadic})
-				}
-			} else if maybeif, _ := callee.Callee.(*clsyn.ExprCall); maybeif != nil {
-				if ifname, _ := maybeif.Callee.(*clsyn.ExprIdent); ifname != nil && ifname.Name == "if" {
-					cond, condthen, condelse := maybeif.Arg, callee.Arg, expr.Arg
-					return append(me.compileExprStrict(cond, argsEnv), instr{
-						Op:       INSTR_PRIM_COND,
-						CondThen: me.compileExprStrict(condthen, argsEnv),
-						CondElse: me.compileExprStrict(condelse, argsEnv),
-					})
-				}
-			}
+		if instrs := me.compileApplMaybe(me.compileExprStrict, expr, argsEnv); len(instrs) > 0 {
+			return instrs
 		}
 	}
 	return append(me.compileExprLazy(expression, argsEnv), instr{Op: INSTR_EVAL})
@@ -139,8 +115,8 @@ func (me *gMachine) compileExprLazy(expression clsyn.IExpr, argsEnv env) code {
 		}
 		return code{{Op: INSTR_PUSHGLOBAL, Name: expr.Name}}
 	case *clsyn.ExprCall:
-		if ctor, ctorrevargs := expr.FlattenedIfEffectivelyCtor(); ctor != nil {
-			return me.compileCtorAppl(ctor, ctorrevargs, argsEnv)
+		if instrs := me.compileApplMaybe(me.compileExprLazy, expr, argsEnv); len(instrs) > 0 {
+			return instrs
 		}
 		return append(append(
 			me.compileExprLazy(expr.Arg, argsEnv),
@@ -153,6 +129,37 @@ func (me *gMachine) compileExprLazy(expression clsyn.IExpr, argsEnv env) code {
 	default:
 		panic(expr)
 	}
+}
+
+func (me *gMachine) compileApplMaybe(comp compilation, expr *clsyn.ExprCall, argsEnv env) code {
+	if ctor, ctorrevargs := expr.FlattenedIfEffectivelyCtor(); ctor != nil {
+		return me.compileCtorAppl(ctor, ctorrevargs, argsEnv)
+	}
+	switch callee := expr.Callee.(type) {
+	case *clsyn.ExprIdent:
+		if callee.Name == "neg" {
+			return append(comp(expr.Arg, argsEnv), instr{Op: INSTR_PRIM_AR_NEG})
+		}
+	case *clsyn.ExprCall:
+		if op, _ := callee.Callee.(*clsyn.ExprIdent); op != nil {
+			if primdyadic := primDyadic[op.Name]; primdyadic != 0 {
+				return append(append(
+					comp(expr.Arg, argsEnv),
+					comp(callee.Arg, me.envOffsetBy(argsEnv, 1))...,
+				), instr{Op: primdyadic})
+			}
+		} else if maybeif, _ := callee.Callee.(*clsyn.ExprCall); maybeif != nil {
+			if ifname, _ := maybeif.Callee.(*clsyn.ExprIdent); ifname != nil && ifname.Name == "if" {
+				cond, condthen, condelse := maybeif.Arg, callee.Arg, expr.Arg
+				return append(comp(cond, argsEnv), instr{
+					Op:       INSTR_PRIM_COND,
+					CondThen: comp(condthen, argsEnv),
+					CondElse: comp(condelse, argsEnv),
+				})
+			}
+		}
+	}
+	return nil
 }
 
 func (me *gMachine) compileCtorAppl(ctor *clsyn.ExprCtor, reverseArgs []clsyn.IExpr, argsEnv env) code {

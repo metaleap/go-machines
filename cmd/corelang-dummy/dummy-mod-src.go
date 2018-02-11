@@ -18,6 +18,11 @@ infinite n = cons n (infinite n)
 listish = hd (tl (infinite 4))
 
 
+fac n = if (n==0) 1 (n * (fac (n - 1)))
+
+
+
+
 test ctor =
     CASE ctor OF    0 -> 42
                     1 n -> neg n
