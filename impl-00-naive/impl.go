@@ -24,6 +24,8 @@ func CompileToMachine(mod *clsyn.SynMod) (clutil.IMachine, []error) {
 	return &naiveMachine{Globals: globals}, nil
 }
 
+func (me *naiveMachine) String(result interface{}) string { return fmt.Sprintf("%v", result) }
+
 func (me *naiveMachine) Eval(name string) (val interface{}, stats clutil.Stats, err error) {
 	defer clutil.Catch(&err)
 	def := me.resolveIdent(name)

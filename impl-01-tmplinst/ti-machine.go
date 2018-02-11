@@ -1,11 +1,13 @@
 package climpl
 
 import (
+	"fmt"
+
 	"github.com/metaleap/go-corelang/syn"
 	"github.com/metaleap/go-corelang/util"
 )
 
-type TiMachine struct {
+type tiMachine struct {
 	Heap  clutil.Heap
 	Stack clutil.Stack
 	Env   clutil.Env
@@ -13,7 +15,7 @@ type TiMachine struct {
 }
 
 func CompileToMachine(mod *clsyn.SynMod) (clutil.IMachine, []error) {
-	me := &TiMachine{
+	me := &tiMachine{
 		Env:  make(clutil.Env, len(mod.Defs)),
 		Heap: clutil.Heap{},
 	}
@@ -24,7 +26,9 @@ func CompileToMachine(mod *clsyn.SynMod) (clutil.IMachine, []error) {
 	return me, nil
 }
 
-func (me *TiMachine) Eval(name string) (val interface{}, stats clutil.Stats, err error) {
+func (me *tiMachine) String(result interface{}) string { return fmt.Sprintf("%v", result) }
+
+func (me *tiMachine) Eval(name string) (val interface{}, stats clutil.Stats, err error) {
 	defer clutil.Catch(&err)
 	addr := me.Env[name]
 	if addr == 0 {
@@ -37,16 +41,16 @@ func (me *TiMachine) Eval(name string) (val interface{}, stats clutil.Stats, err
 	return
 }
 
-func (me *TiMachine) eval() {
+func (me *tiMachine) eval() {
 	for me.Stats.NumSteps, me.Stats.NumAppls = 0, 0; !me.isFinalState(); me.step() {
 	}
 }
 
-func (me *TiMachine) isFinalState() bool {
+func (me *tiMachine) isFinalState() bool {
 	return len(me.Stack) == 1 && isDataNode(me.Heap[me.Stack[0]])
 }
 
-func (me *TiMachine) step() {
+func (me *tiMachine) step() {
 	if me.Stats.NumSteps++; me.Stats.NumSteps > 9999 {
 		panic("infinite loop")
 	}
@@ -77,7 +81,7 @@ func (me *TiMachine) step() {
 	}
 }
 
-func (me *TiMachine) getArgs(name string, count int) (argsaddrs []clutil.Addr) {
+func (me *tiMachine) getArgs(name string, count int) (argsaddrs []clutil.Addr) {
 	pos := me.Stack.Pos(count)
 	if pos < 0 {
 		panic(name + ": not enough arguments given")

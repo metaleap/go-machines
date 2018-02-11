@@ -1,6 +1,7 @@
 package climpl
 
 import (
+	"fmt"
 	"github.com/metaleap/go-corelang/util"
 )
 
@@ -184,4 +185,15 @@ func (me *gMachine) step() {
 		panic(me.Code[cur].Op)
 	}
 	me.Code = next
+}
+
+func (me *gMachine) String(result interface{}) string {
+	if ctor, ok := result.(nodeCtor); ok {
+		s := fmt.Sprintf("{%d", ctor.Tag)
+		for _, addr := range ctor.Items {
+			s += " " + me.String(me.Heap[addr])
+		}
+		return s + "}"
+	}
+	return fmt.Sprintf("%v", result)
 }

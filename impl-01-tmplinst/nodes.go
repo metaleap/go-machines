@@ -24,7 +24,7 @@ func isDataNode(node clutil.INode) (isvalue bool) {
 	return
 }
 
-func (me *TiMachine) instantiate(expression clsyn.IExpr) (resultAddr clutil.Addr) {
+func (me *tiMachine) instantiate(expression clsyn.IExpr) (resultAddr clutil.Addr) {
 	switch expr := expression.(type) {
 	case *clsyn.ExprLitFloat:
 		resultAddr = me.Heap.Alloc(nodeNumFloat(expr.Lit))

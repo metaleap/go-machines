@@ -6,6 +6,7 @@ import (
 
 type IMachine interface {
 	Eval(string) (interface{}, Stats, error)
+	String(interface{}) string
 }
 
 type INode interface {

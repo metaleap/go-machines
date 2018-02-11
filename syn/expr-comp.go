@@ -22,6 +22,7 @@ func (me *ExprCall) FlattenedIfEffectivelyCtor() (ctor *ExprCtor, reverseArgs []
 		switch c := callee.(type) {
 		case *ExprCtor:
 			ctor = c
+			return
 		case *ExprCall:
 			callee, reverseArgs = c.Callee, append(reverseArgs, c.Arg)
 		default:

@@ -52,7 +52,7 @@ func main() {
 					if evalerr != nil {
 						println(evalerr.Error())
 					} else {
-						fmt.Printf("Reduced in %v (%d appls / %d steps) to:\n%v\n", timetaken, stats.NumAppls, stats.NumSteps, val)
+						fmt.Printf("Reduced in %v (%d appls / %d steps) to:\n%s\n", timetaken, stats.NumAppls, stats.NumSteps, machine.String(val))
 					}
 				} else if def := mod.Defs[readln]; def == nil {
 					println("not found: " + readln)
