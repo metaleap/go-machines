@@ -19,7 +19,7 @@ type dumpItem struct {
 }
 
 func (me *gMachine) Eval(name string) (val interface{}, stats clutil.Stats, err error) {
-	// defer clutil.Catch(&err)
+	defer clutil.Catch(&err)
 	me.Code = code{{Op: INSTR_PUSHGLOBAL, Name: name}, {Op: INSTR_EVAL}}
 	// println(me.Heap[me.Globals[name]].(nodeGlobal).Code.String())
 	me.eval()
@@ -45,12 +45,7 @@ func (me *gMachine) step() {
 		addr := me.Heap.Alloc(nodeInt(me.Code[cur].Int))
 		me.Stack.Push(addr)
 	case INSTR_PUSHARG:
-		// if MARK3_REARRANGESTACK {
 		me.Stack.Push(me.Stack.Top(me.Code[cur].Int))
-		// } else {
-		// 	addrarg := me.Heap[me.Stack.Top(1+me.Code[cur].Int)].(nodeAppl).Arg
-		// 	me.Stack.Push(addrarg)
-		// }
 	case INSTR_MAKEAPPL:
 		addrcallee := me.Stack.Top(0)
 		addrarg := me.Stack.Top(1)
@@ -79,7 +74,6 @@ func (me *gMachine) step() {
 		next = code{{Op: INSTR_UNWIND}}
 	case INSTR_PRIM_CMP_EQ, INSTR_PRIM_CMP_NEQ, INSTR_PRIM_CMP_LT, INSTR_PRIM_CMP_LEQ, INSTR_PRIM_CMP_GT, INSTR_PRIM_CMP_GEQ:
 		node1, node2 := me.Heap[me.Stack.Top(0)].(nodeInt), me.Heap[me.Stack.Top(1)].(nodeInt)
-		var result nodeInt
 		var istrue bool
 		switch me.Code[cur].Op {
 		case INSTR_PRIM_CMP_EQ:
@@ -95,6 +89,7 @@ func (me *gMachine) step() {
 		case INSTR_PRIM_CMP_GEQ:
 			istrue = (node1 >= node2)
 		}
+		var result nodeInt
 		if istrue {
 			result = 1
 		}
@@ -159,13 +154,11 @@ func (me *gMachine) step() {
 				next = restore.Code
 				me.Stack = restore.Stack.Pushed(me.Stack[0])
 			} else {
-				// if MARK3_REARRANGESTACK {
 				nustack := make(clutil.Stack, 0, n.NumArgs)
 				for i := n.NumArgs; i > 0; i-- {
 					nustack.Push(me.Heap[me.Stack.Top(i)].(nodeAppl).Arg)
 				}
 				me.Stack = append(me.Stack.Dropped(n.NumArgs), nustack...)
-				// }
 				next = n.Code
 			}
 		default:

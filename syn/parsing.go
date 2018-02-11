@@ -12,7 +12,6 @@ var keywords = map[string]Keyword{}
 
 func init() {
 	RegisterKeyword("LET", parseKeywordLet)
-	RegisterKeyword("LETREC", parseKeywordLet)
 	RegisterKeyword("CASE", parseKeywordCase)
 }
 

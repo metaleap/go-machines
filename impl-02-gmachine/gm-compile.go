@@ -59,7 +59,7 @@ func CompileToMachine(mod *clsyn.SynMod) (clutil.IMachine, []error) {
 		if bodycode, err := me.compileGlobal(global.Body, argsenv); err != nil {
 			errs = append(errs, errors.New(global.Name+": "+err.Error()))
 		} else {
-			me.Globals[global.Name] = me.Heap.Alloc(nodeGlobal{len(argsenv), bodycode})
+			me.Globals[global.Name] = me.Heap.Alloc(nodeGlobal{len(global.Args), bodycode})
 		}
 	}
 	return &me, errs
@@ -67,19 +67,11 @@ func CompileToMachine(mod *clsyn.SynMod) (clutil.IMachine, []error) {
 
 func (me *gMachine) compileGlobal(bodyexpr clsyn.IExpr, argsEnv map[string]int) (bodycode code, err error) {
 	defer clutil.Catch(&err)
-	numargs, codeexpr := len(argsEnv), me.compileExprStrict(bodyexpr, argsEnv)
-	// if MARK2_LAZY {
-	bodycode = append(codeexpr,
-		instr{Op: INSTR_UPDATE, Int: numargs},
-		instr{Op: INSTR_POP, Int: numargs},
+	bodycode = append(me.compileExprStrict(bodyexpr, argsEnv),
+		instr{Op: INSTR_UPDATE, Int: len(argsEnv)},
+		instr{Op: INSTR_POP, Int: len(argsEnv)},
 		instr{Op: INSTR_UNWIND},
 	)
-	// } else {
-	// 	bodycode = append(codeexpr,
-	// 		instr{Op: INSTR_SLIDE, Int: 1 + numargs},
-	// 		instr{Op: INSTR_UNWIND},
-	// 	)
-	// }
 	return
 }
 
