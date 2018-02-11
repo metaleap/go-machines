@@ -97,9 +97,9 @@ func (me *SyntaxTreePrinter) expr(w *bytes.Buffer, expression IExpr, parensUnles
 		me.curIndent--
 	case *ExprCtor:
 		w.WriteRune('(')
-		w.WriteString(strconv.FormatUint(expr.Tag, 10))
+		w.WriteString(strconv.Itoa(expr.Tag))
 		w.WriteRune(' ')
-		w.WriteString(strconv.FormatUint(expr.Arity, 10))
+		w.WriteString(strconv.Itoa(expr.Arity))
 		w.WriteRune(')')
 	case *ExprCaseOf:
 		w.WriteString("CASE ")

@@ -85,7 +85,15 @@ func (me *gMachine) compileExprStrict(expression clsyn.IExpr, argsEnv env) code 
 		return code{{Op: INSTR_PUSHINT, Int: int(expr.Lit)}}
 	case *clsyn.ExprLetIn:
 		return me.compileLet(me.compileExprStrict, expr, argsEnv)
+	case *clsyn.ExprCtor:
+		return me.compileCtorAppl(expr, nil, argsEnv)
+	case *clsyn.ExprCaseOf:
+		return append(me.compileExprStrict(expr.Scrut, argsEnv), instr{Op: INSTR_CASE_JUMP,
+			CaseJump: me.compileCaseAlts(me.compileExprStrictSplitSlide, expr.Alts, argsEnv)})
 	case *clsyn.ExprCall:
+		if ctor, ctorrevargs := expr.FlattenedIfEffectivelyCtor(); ctor != nil {
+			return me.compileCtorAppl(ctor, ctorrevargs, argsEnv)
+		}
 		switch callee := expr.Callee.(type) {
 		case *clsyn.ExprIdent:
 			if callee.Name == "neg" {
@@ -131,16 +139,28 @@ func (me *gMachine) compileExprLazy(expression clsyn.IExpr, argsEnv env) code {
 		}
 		return code{{Op: INSTR_PUSHGLOBAL, Name: expr.Name}}
 	case *clsyn.ExprCall:
+		if ctor, ctorrevargs := expr.FlattenedIfEffectivelyCtor(); ctor != nil {
+			return me.compileCtorAppl(ctor, ctorrevargs, argsEnv)
+		}
 		return append(append(
 			me.compileExprLazy(expr.Arg, argsEnv),
 			me.compileExprLazy(expr.Callee, me.envOffsetBy(argsEnv, 1))...,
 		), instr{Op: INSTR_MAKEAPPL})
 	case *clsyn.ExprLetIn:
 		return me.compileLet(me.compileExprLazy, expr, argsEnv)
-
+	case *clsyn.ExprCtor:
+		return me.compileCtorAppl(expr, nil, argsEnv)
 	default:
 		panic(expr)
 	}
+}
+
+func (me *gMachine) compileCtorAppl(ctor *clsyn.ExprCtor, reverseArgs []clsyn.IExpr, argsEnv env) code {
+	instrs := make(code, 0, len(reverseArgs)+len(reverseArgs))
+	for i, arg := range reverseArgs {
+		instrs = append(instrs, me.compileExprLazy(arg, me.envOffsetBy(argsEnv, i))...)
+	}
+	return append(instrs, instr{Op: INSTR_CTOR_PACK, Int: ctor.Tag, CtorArity: ctor.Arity})
 }
 
 func (me *gMachine) compileLet(compbody compilation, let *clsyn.ExprLetIn, argsEnv env) (instrs code) {
@@ -176,7 +196,7 @@ func (me *gMachine) compileCaseAlts(compn compilationN, caseAlts []*clsyn.SynCas
 		for i, name := range alt.Binds {
 			bodyargsenv[name] = i // = n - (i + 1)
 		}
-		jumpblocks[alt.Tag-1] = compn(n, alt.Body, bodyargsenv)
+		jumpblocks[alt.Tag] = compn(n, alt.Body, bodyargsenv)
 	}
 	return
 }
