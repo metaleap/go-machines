@@ -1,15 +1,12 @@
 package main
 
-const srcMod = `
-
 // https://www.youtube.com/watch?v=hrBq8R_kxI0 8m
-
 // https://www.youtube.com/watch?v=GhERMBT7u4w 21m
 
+const srcMod = `
 pair l r f = f l r
 
 fst p = p k0
-
 snd p = p k1
 
 cons a b cc cn = cc a b

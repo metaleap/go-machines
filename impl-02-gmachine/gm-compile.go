@@ -7,7 +7,11 @@ import (
 	"github.com/metaleap/go-corelang/util"
 )
 
-type compilation func(clsyn.IExpr, map[string]int) code
+type compilation func(clsyn.IExpr, env) code
+
+type compilationN func(int, clsyn.IExpr, env) code
+
+type env map[string]int
 
 var primDyadic = map[string]instruction{
 	"+":  INSTR_PRIM_AR_ADD,
@@ -51,7 +55,7 @@ func CompileToMachine(mod *clsyn.SynMod) (clutil.IMachine, []error) {
 	// }
 
 	for _, global := range mod.Defs {
-		argsenv := make(map[string]int, len(global.Args))
+		argsenv := make(env, len(global.Args))
 		for i, arg := range global.Args {
 			argsenv[arg] = i
 		}
@@ -65,7 +69,7 @@ func CompileToMachine(mod *clsyn.SynMod) (clutil.IMachine, []error) {
 	return &me, errs
 }
 
-func (me *gMachine) compileGlobal(bodyexpr clsyn.IExpr, argsEnv map[string]int) (bodycode code, err error) {
+func (me *gMachine) compileGlobal(bodyexpr clsyn.IExpr, argsEnv env) (bodycode code, err error) {
 	defer clutil.Catch(&err)
 	bodycode = append(me.compileExprStrict(bodyexpr, argsEnv),
 		instr{Op: INSTR_UPDATE, Int: len(argsEnv)},
@@ -75,7 +79,7 @@ func (me *gMachine) compileGlobal(bodyexpr clsyn.IExpr, argsEnv map[string]int) 
 	return
 }
 
-func (me *gMachine) compileExprStrict(expression clsyn.IExpr, argsEnv map[string]int) code {
+func (me *gMachine) compileExprStrict(expression clsyn.IExpr, argsEnv env) code {
 	switch expr := expression.(type) {
 	case *clsyn.ExprLitUInt:
 		return code{{Op: INSTR_PUSHINT, Int: int(expr.Lit)}}
@@ -110,7 +114,14 @@ func (me *gMachine) compileExprStrict(expression clsyn.IExpr, argsEnv map[string
 	return append(me.compileExprLazy(expression, argsEnv), instr{Op: INSTR_EVAL})
 }
 
-func (me *gMachine) compileExprLazy(expression clsyn.IExpr, argsEnv map[string]int) code {
+func (me *gMachine) compileExprStrictSplitSlide(offset int, expression clsyn.IExpr, argsEnv env) code {
+	// does not `offset` the given `argsEnv` though, which is assumed to already be properly `envOffsetBy`
+	return append(append(code{{Op: INSTR_CASE_SPLIT, Int: offset}},
+		me.compileExprStrict(expression, argsEnv)...,
+	), instr{Op: INSTR_SLIDE, Int: offset})
+}
+
+func (me *gMachine) compileExprLazy(expression clsyn.IExpr, argsEnv env) code {
 	switch expr := expression.(type) {
 	case *clsyn.ExprLitUInt:
 		return code{{Op: INSTR_PUSHINT, Int: int(expr.Lit)}}
@@ -126,12 +137,13 @@ func (me *gMachine) compileExprLazy(expression clsyn.IExpr, argsEnv map[string]i
 		), instr{Op: INSTR_MAKEAPPL})
 	case *clsyn.ExprLetIn:
 		return me.compileLet(me.compileExprLazy, expr, argsEnv)
+
 	default:
 		panic(expr)
 	}
 }
 
-func (me *gMachine) compileLet(compbody compilation, let *clsyn.ExprLetIn, argsEnv map[string]int) (instrs code) {
+func (me *gMachine) compileLet(compbody compilation, let *clsyn.ExprLetIn, argsEnv env) (instrs code) {
 	n := len(let.Defs)
 	if let.Rec {
 		instrs = code{{Op: INSTR_ALLOC, Int: n}}
@@ -156,9 +168,22 @@ func (me *gMachine) compileLet(compbody compilation, let *clsyn.ExprLetIn, argsE
 	return
 }
 
-func (*gMachine) envOffsetBy(env map[string]int, offsetBy int) (envOffset map[string]int) {
-	envOffset = make(map[string]int, len(env))
-	for k, v := range env {
+func (me *gMachine) compileCaseAlts(compn compilationN, caseAlts []*clsyn.SynCaseAlt, argsEnv env) (jumpblocks []code) {
+	jumpblocks = make([]code, len(caseAlts))
+	for _, alt := range caseAlts {
+		n := len(alt.Binds)
+		bodyargsenv := me.envOffsetBy(argsEnv, n)
+		for i, name := range alt.Binds {
+			bodyargsenv[name] = i // = n - (i + 1)
+		}
+		jumpblocks[alt.Tag-1] = compn(n, alt.Body, bodyargsenv)
+	}
+	return
+}
+
+func (*gMachine) envOffsetBy(argsEnv env, offsetBy int) (envOffset env) {
+	envOffset = make(env, len(argsEnv))
+	for k, v := range argsEnv {
 		envOffset[k] = v + offsetBy
 	}
 	return

@@ -138,7 +138,7 @@ func (me *gMachine) step() {
 	case INSTR_CASE_SPLIT:
 		node := me.Heap[me.Stack.Top(0)].(nodeCtor)
 		me.Stack = me.Stack.Dropped(1)
-		for i := len(node.Items) - 1; i > -1; i-- {
+		for i := /*len(node.Items)*/ me.Code[cur].Int - 1; i > -1; i-- {
 			me.Stack.Push(node.Items[i])
 		}
 	case INSTR_UNWIND:
