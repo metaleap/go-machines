@@ -192,11 +192,11 @@ func (me *gMachine) step() {
 
 func (me *gMachine) String(result interface{}) string {
 	if ctor, ok := result.(nodeCtor); ok {
-		s := fmt.Sprintf("{%d", ctor.Tag)
+		s := fmt.Sprintf("‹%d", ctor.Tag)
 		for _, addr := range ctor.Items {
 			s += " " + me.String(me.Heap[addr])
 		}
-		return s + "}"
+		return s + "›"
 	}
-	return fmt.Sprintf("%v", result)
+	return fmt.Sprintf("%#v", result)
 }

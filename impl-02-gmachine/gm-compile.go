@@ -2,7 +2,10 @@ package climpl
 
 import (
 	"errors"
+	"strconv"
+	"time"
 
+	// "github.com/metaleap/go-corelang"
 	"github.com/metaleap/go-corelang/syn"
 	"github.com/metaleap/go-corelang/util"
 )
@@ -88,13 +91,13 @@ func (me *gMachine) compileExprStrict_SchemeE(expression clsyn.IExpr, argsEnv en
 	case *clsyn.ExprLetIn:
 		return me.compileLet(me.compileExprStrict_SchemeE, expr, argsEnv)
 	case *clsyn.ExprCtor:
-		return me.compileCtorAppl(expr, nil, argsEnv)
+		return me.compileCtorAppl(me.compileExprStrict_SchemeE, expr, nil, argsEnv)
 	case *clsyn.ExprCaseOf:
 		return append(me.compileExprStrict_SchemeE(expr.Scrut, argsEnv), instr{Op: INSTR_CASE_JUMP,
 			CaseJump: me.compileCaseAlts_SchemeD(me.compileExprStrictSplitSlide_SchemeA, expr.Alts, argsEnv)})
 	case *clsyn.ExprCall:
 		if ctor, ctorrevargs := expr.FlattenedIfEffectivelyCtor(); ctor != nil {
-			return me.compileCtorAppl(ctor, ctorrevargs, argsEnv)
+			return me.compileCtorAppl(me.compileExprStrict_SchemeE, ctor, ctorrevargs, argsEnv)
 		}
 		switch callee := expr.Callee.(type) {
 		case *clsyn.ExprIdent:
@@ -142,7 +145,7 @@ func (me *gMachine) compileExprLazy_SchemeC(expression clsyn.IExpr, argsEnv env)
 		return code{{Op: INSTR_PUSHGLOBAL, Name: expr.Name}}
 	case *clsyn.ExprCall:
 		if ctor, ctorrevargs := expr.FlattenedIfEffectivelyCtor(); ctor != nil {
-			return me.compileCtorAppl(ctor, ctorrevargs, argsEnv)
+			return me.compileCtorAppl(me.compileExprLazy_SchemeC, ctor, ctorrevargs, argsEnv)
 		}
 		return append(append(
 			me.compileExprLazy_SchemeC(expr.Arg, argsEnv),
@@ -151,16 +154,51 @@ func (me *gMachine) compileExprLazy_SchemeC(expression clsyn.IExpr, argsEnv env)
 	case *clsyn.ExprLetIn:
 		return me.compileLet(me.compileExprLazy_SchemeC, expr, argsEnv)
 	case *clsyn.ExprCtor:
-		return me.compileCtorAppl(expr, nil, argsEnv)
+		return me.compileCtorAppl(me.compileExprLazy_SchemeC, expr, nil, argsEnv)
+	case *clsyn.ExprCaseOf:
+		dynname := "#case" + strconv.FormatInt(time.Now().UnixNano(), 16)
+		dynglobaldef, dynglobalcall := expr.ExtractIntoDef(dynname, true, clsyn.LookupEnvFrom(nil, me.Globals, nil, nil))
+		// println("DEF:")
+		// src, _ := (&corelang.SyntaxTreePrinter{}).Def(dynglobaldef)
+		// println(src)
+		// println("CALL:")
+		// src, _ = (&corelang.SyntaxTreePrinter{}).Expr(dynglobalcall)
+		// println(src)
+		if dynglobalnode, err := me.compileGlobal_SchemeSC(dynglobaldef); err != nil {
+			panic(err)
+		} else {
+			me.Globals[dynglobaldef.Name] = me.Heap.Alloc(dynglobalnode)
+		}
+		return me.compileExprLazy_SchemeC(dynglobalcall, argsEnv)
 	default:
 		panic(expr)
 	}
 }
 
-func (me *gMachine) compileCtorAppl(ctor *clsyn.ExprCtor, reverseArgs []clsyn.IExpr, argsEnv env) code {
+func (me *gMachine) compileCtorAppl(comp compilation, ctor *clsyn.ExprCtor, reverseArgs []clsyn.IExpr, argsEnv env) code {
+	if len(reverseArgs) != ctor.Arity {
+		dynglobalname := "#ctor#" + strconv.Itoa(ctor.Tag) + "#" + strconv.Itoa(ctor.Arity)
+		dynglobaladdr := me.Globals[dynglobalname]
+		if dynglobaladdr == 0 {
+			dynglobaldef := ctor.ExtractIntoDef(dynglobalname, true)
+			if dynglobalnode, err := me.compileGlobal_SchemeSC(dynglobaldef); err != nil {
+				panic(err)
+			} else {
+				me.Globals[dynglobalname] = me.Heap.Alloc(dynglobalnode)
+			}
+			// println("\n\nDEF:\n\n")
+			// src, _ := (&corelang.SyntaxTreePrinter{}).Def(dynglobaldef)
+			// println(src)
+		}
+		dynglobalcall := clsyn.Call(clsyn.Id(dynglobalname), reverseArgs...)
+		// println("\n\nCALL:\n\n")
+		// src, _ := (&corelang.SyntaxTreePrinter{}).Expr(dynglobalcall)
+		// println(src)
+		return comp(dynglobalcall, argsEnv)
+	}
 	instrs := make(code, 0, len(reverseArgs)+len(reverseArgs))
 	for i, arg := range reverseArgs {
-		instrs = append(instrs, me.compileExprLazy_SchemeC(arg, me.envOffsetBy(argsEnv, i))...)
+		instrs = append(instrs, comp(arg, me.envOffsetBy(argsEnv, i))...)
 	}
 	return append(instrs, instr{Op: INSTR_CTOR_PACK, Int: ctor.Tag, CtorArity: ctor.Arity})
 }

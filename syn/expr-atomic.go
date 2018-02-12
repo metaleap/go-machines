@@ -7,13 +7,6 @@ func Lu(lit uint64, origBase int) *ExprLitUInt { return &ExprLitUInt{Lit: lit, B
 func Lr(lit rune) *ExprLitRune                 { return &ExprLitRune{Lit: lit} }
 func Lt(lit string) *ExprLitText               { return &ExprLitText{Lit: lit} }
 
-type ExprIdent struct {
-	exprAtomic
-	Name   string
-	OpLike bool
-	OpLone bool
-}
-
 type ExprLitFloat struct {
 	exprAtomic
 	Lit float64
@@ -33,4 +26,11 @@ type ExprLitRune struct {
 type ExprLitText struct {
 	exprAtomic
 	Lit string
+}
+
+type ExprIdent struct {
+	exprAtomic
+	Name   string
+	OpLike bool
+	OpLone bool
 }

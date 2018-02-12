@@ -9,6 +9,7 @@ import (
 type ISyn interface {
 	init(lex.Tokens)
 	isExpr() bool
+	FreeVars(map[string]bool, ...map[string]bool)
 	Pos() *lex.TokenMeta
 	Toks() lex.Tokens
 }

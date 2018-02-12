@@ -4,6 +4,27 @@ package main
 // https://www.youtube.com/watch?v=GhERMBT7u4w 21m
 
 const srcMod = `
+
+page136 x =
+    LET foo = CASE x OF 0 -> 42
+                        1 -> 111
+                        2 -> 222
+    IN (2 2) foo (1 0)
+
+p136 = page136 (2 0)
+
+
+page137_1 x = (99 3) 123 x
+
+p137_1 = (page137_1 456) 789
+
+
+page137_2 incompletector = incompletector 654
+
+p137_2 = (page137_2 ((99 3) 321)) 987
+
+
+
 pair l r f = f l r
 
 fst p = p k0
@@ -18,10 +39,9 @@ infinite n = cons n (infinite n)
 listish = hd (tl (infinite 4))
 
 
-fac n = if (n==0) 1 (n * (fac (n - 1))) // 'when' instead of 'if' will work (executes approx. ~25-40% more steps)
+fac n = when (n==0) 1 (n * (fac (n - 1))) // 'when' instead of 'if' executes approx. ~25-40% more steps & appls
 
-checkifopish = 3 × (4 ÷ 5)
-
+checkIfLexedOpish = 3 × (4 ÷ 5)
 
 when cond then else =
     CASE cond OF
@@ -30,14 +50,17 @@ when cond then else =
     2 -> then
 
 
+
 test ctor =
     CASE ctor OF    0 -> 42
                     1 n -> neg n
                     2 x y -> x + y
                     3 x y -> x * y
 
-
 do = test ((3 2) 5 3) // call to test with ctor of (3 2) returns the result of 5*3
+
+
+
 
 
 Ycomb f = LET REC x = f x IN x
