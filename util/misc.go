@@ -11,6 +11,8 @@ import (
 type Stats struct {
 	NumSteps int
 	NumAppls int
+	MaxStack int
+	HeapSize int
 }
 
 func Catch(err *error) {

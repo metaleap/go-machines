@@ -39,7 +39,7 @@ infinite n = cons n (infinite n)
 listish = hd (tl (infinite 4))
 
 
-fac n = when (n==0) 1 (n * (fac (n - 1))) // 'when' instead of 'if' executes approx. ~25-40% more steps & appls
+fac n = if (n==0) 1 (n * (fac (n - 1))) // 'when' instead of 'if' executes approx. ~25-40% more steps & appls
 
 checkIfLexedOpish = 3 × (4 ÷ 5)
 

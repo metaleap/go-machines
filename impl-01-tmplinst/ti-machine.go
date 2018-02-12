@@ -8,8 +8,8 @@ import (
 )
 
 type tiMachine struct {
-	Heap  clutil.Heap
-	Stack clutil.Stack
+	Heap  clutil.HeapM
+	Stack clutil.StackA
 	Env   clutil.Env
 	Stats clutil.Stats
 }
@@ -17,7 +17,7 @@ type tiMachine struct {
 func CompileToMachine(mod *clsyn.SynMod) (clutil.IMachine, []error) {
 	me := &tiMachine{
 		Env:  make(clutil.Env, len(mod.Defs)),
-		Heap: clutil.Heap{},
+		Heap: clutil.HeapM{},
 	}
 	for _, def := range mod.Defs {
 		addr, ndef := me.Heap.NextAddr(), nodeDef(*def)
@@ -34,7 +34,7 @@ func (me *tiMachine) Eval(name string) (val interface{}, stats clutil.Stats, err
 	if addr == 0 {
 		panic("undefined: " + name)
 	} else {
-		me.Stack = clutil.Stack{addr}
+		me.Stack = clutil.StackA{addr}
 		me.eval()
 		val, stats = me.Heap[me.Stack[0]], me.Stats
 	}

@@ -48,9 +48,8 @@ var primsPrecompiledForLazy = map[string]nodeGlobal{
 
 func CompileToMachine(mod *clsyn.SynMod) (clutil.IMachine, []error) {
 	errs, me := []error{}, gMachine{
-		Heap:    clutil.Heap{},
+		Heap:    make(clutil.HeapA, 1, 1024*1024),
 		Globals: make(clutil.Env, len(mod.Defs)),
-		Stack:   make(clutil.Stack, 0, 128),
 	}
 
 	for primname, primnode := range primsPrecompiledForLazy {

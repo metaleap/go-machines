@@ -7,30 +7,35 @@ import (
 )
 
 type gMachine struct {
-	Stack   clutil.Stack // push-to and pop-from its end
-	Heap    clutil.Heap  // no GC here, forever growing
-	Globals clutil.Env
-	Code    code // evaluated l2r
-	Dump    []dumpItem
-	Stats   clutil.Stats
+	Heap      clutil.HeapA // no GC here, forever growing
+	Globals   clutil.Env
+	Code      code          // evaluated l2r
+	StackA    clutil.StackA // push-to and pop-from its end
+	StackDump []dumpedState
+	StackInts clutil.StackI
+	Stats     clutil.Stats
 }
 
-type dumpItem struct {
+type dumpedState struct {
 	Code  code
-	Stack clutil.Stack
+	Stack clutil.StackA
 }
 
 func (me *gMachine) Eval(name string) (val interface{}, stats clutil.Stats, err error) {
 	defer clutil.Catch(&err)
+	me.StackA, me.StackDump, me.StackInts = make(clutil.StackA, 0, 64), make([]dumpedState, 0, 16), make(clutil.StackI, 0, 64)
 	me.Code = code{{Op: INSTR_PUSHGLOBAL, Name: name}, {Op: INSTR_EVAL}}
 	// println(me.Heap[me.Globals[name]].(nodeGlobal).Code.String())
 	me.eval()
-	stats, val = me.Stats, me.Heap[me.Stack.Top(0)]
+	stats, val = me.Stats, me.Heap[me.StackA.Top(0)]
 	return
 }
 
 func (me *gMachine) eval() {
-	for me.Stats.NumSteps, me.Stats.NumAppls = 0, 0; len(me.Code) != 0; me.step() {
+	for me.Stats.NumSteps, me.Stats.NumAppls, me.Stats.MaxStack = 0, 0, 0; len(me.Code) != 0; me.step() {
+		if me.Stats.HeapSize = len(me.Heap); me.Stats.MaxStack < len(me.StackA) {
+			me.Stats.MaxStack = len(me.StackA)
+		}
 	}
 }
 
@@ -42,40 +47,40 @@ func (me *gMachine) step() {
 	switch me.Code[cur].Op {
 	case INSTR_PUSHGLOBAL:
 		addr := me.Globals.LookupOrPanic(me.Code[cur].Name)
-		me.Stack.Push(addr)
+		me.StackA.Push(addr)
 	case INSTR_PUSHINT:
 		addr := me.Heap.Alloc(nodeInt(me.Code[cur].Int))
-		me.Stack.Push(addr)
+		me.StackA.Push(addr)
 	case INSTR_PUSHARG:
-		me.Stack.Push(me.Stack.Top(me.Code[cur].Int))
+		me.StackA.Push(me.StackA.Top(me.Code[cur].Int))
 	case INSTR_MAKEAPPL:
-		addrcallee := me.Stack.Top(0)
-		addrarg := me.Stack.Top(1)
+		addrcallee := me.StackA.Top(0)
+		addrarg := me.StackA.Top(1)
 		addr := me.Heap.Alloc(nodeAppl{Callee: addrcallee, Arg: addrarg})
-		me.Stack[me.Stack.Pos(1)] = addr
-		me.Stack = me.Stack.Dropped(1)
+		me.StackA[me.StackA.Pos(1)] = addr
+		me.StackA = me.StackA.Dropped(1)
 	case INSTR_SLIDE:
-		keep := me.Stack.Top(0)
-		me.Stack = me.Stack.Dropped(me.Code[cur].Int)
-		me.Stack[me.Stack.Pos(0)] = keep
+		keep := me.StackA.Top(0)
+		me.StackA = me.StackA.Dropped(me.Code[cur].Int)
+		me.StackA[me.StackA.Pos(0)] = keep
 	case INSTR_UPDATE:
-		pointee := me.Stack.Top(0)
+		pointee := me.StackA.Top(0)
 		addrptr := me.Heap.Alloc(nodeIndirection{Addr: pointee})
-		me.Stack = me.Stack.Dropped(1)
-		me.Stack[me.Stack.Pos(me.Code[cur].Int)] = addrptr
+		me.StackA = me.StackA.Dropped(1)
+		me.StackA[me.StackA.Pos(me.Code[cur].Int)] = addrptr
 	case INSTR_POP:
-		me.Stack = me.Stack.Dropped(me.Code[cur].Int)
+		me.StackA = me.StackA.Dropped(me.Code[cur].Int)
 	case INSTR_ALLOC:
 		for i := 0; i < me.Code[cur].Int; i++ {
-			me.Stack.Push(me.Heap.Alloc(nodeIndirection{}))
+			me.StackA.Push(me.Heap.Alloc(nodeIndirection{}))
 		}
 	case INSTR_EVAL:
-		pos := me.Stack.Pos(0)
-		me.Dump = append(me.Dump, dumpItem{Code: next, Stack: me.Stack[:pos]})
-		me.Stack = me.Stack[pos:]
+		pos := me.StackA.Pos(0)
+		me.StackDump = append(me.StackDump, dumpedState{Code: next, Stack: me.StackA[:pos]})
+		me.StackA = me.StackA[pos:]
 		next = code{{Op: INSTR_UNWIND}}
 	case INSTR_PRIM_CMP_EQ, INSTR_PRIM_CMP_NEQ, INSTR_PRIM_CMP_LT, INSTR_PRIM_CMP_LEQ, INSTR_PRIM_CMP_GT, INSTR_PRIM_CMP_GEQ:
-		node1, node2 := me.Heap[me.Stack.Top(0)].(nodeInt), me.Heap[me.Stack.Top(1)].(nodeInt)
+		node1, node2 := me.Heap[me.StackA.Top(0)].(nodeInt), me.Heap[me.StackA.Top(1)].(nodeInt)
 		var istrue bool
 		switch me.Code[cur].Op {
 		case INSTR_PRIM_CMP_EQ:
@@ -98,10 +103,10 @@ func (me *gMachine) step() {
 			result.Tag = 1
 		}
 		addr := me.Heap.Alloc(result)
-		me.Stack = me.Stack.Dropped(1)
-		me.Stack[me.Stack.Pos(0)] = addr
+		me.StackA = me.StackA.Dropped(1)
+		me.StackA[me.StackA.Pos(0)] = addr
 	case INSTR_PRIM_AR_ADD, INSTR_PRIM_AR_SUB, INSTR_PRIM_AR_MUL, INSTR_PRIM_AR_DIV:
-		node1, node2 := me.Heap[me.Stack.Top(0)].(nodeInt), me.Heap[me.Stack.Top(1)].(nodeInt)
+		node1, node2 := me.Heap[me.StackA.Top(0)].(nodeInt), me.Heap[me.StackA.Top(1)].(nodeInt)
 		var result nodeInt
 		switch me.Code[cur].Op {
 		case INSTR_PRIM_AR_ADD:
@@ -114,71 +119,71 @@ func (me *gMachine) step() {
 			result = node1 / node2
 		}
 		addr := me.Heap.Alloc(result)
-		me.Stack = me.Stack.Dropped(1)
-		me.Stack[me.Stack.Pos(0)] = addr
+		me.StackA = me.StackA.Dropped(1)
+		me.StackA[me.StackA.Pos(0)] = addr
 	case INSTR_PRIM_AR_NEG:
-		node := me.Heap[me.Stack.Top(0)].(nodeInt)
+		node := me.Heap[me.StackA.Top(0)].(nodeInt)
 		addr := me.Heap.Alloc(-node)
-		me.Stack[me.Stack.Pos(0)] = addr
+		me.StackA[me.StackA.Pos(0)] = addr
 	case INSTR_PRIM_COND:
-		if node := me.Heap[me.Stack.Top(0)].(nodeCtor); node.Tag == 2 {
+		if node := me.Heap[me.StackA.Top(0)].(nodeCtor); node.Tag == 2 {
 			next = append(me.Code[0].CondThen, next...)
 		} else if node.Tag == 1 {
 			next = append(me.Code[0].CondElse, next...)
 		} else {
 			panic("boolean bug")
 		}
-		me.Stack = me.Stack.Dropped(1)
+		me.StackA = me.StackA.Dropped(1)
 	case INSTR_CTOR_PACK:
 		arity := me.Code[cur].CtorArity
 		node := nodeCtor{Tag: me.Code[cur].Int, Items: make([]clutil.Addr, arity)}
 		for i := 0; i < arity; i++ {
-			node.Items[i] = me.Stack.Top(i)
+			node.Items[i] = me.StackA.Top(i)
 		}
-		me.Stack = me.Stack.Dropped(arity).Pushed(me.Heap.Alloc(node))
+		me.StackA = me.StackA.Dropped(arity).Pushed(me.Heap.Alloc(node))
 	case INSTR_CASE_JUMP:
-		node := me.Heap[me.Stack.Top(0)].(nodeCtor)
+		node := me.Heap[me.StackA.Top(0)].(nodeCtor)
 		next = append(me.Code[cur].CaseJump[node.Tag], next...)
 	case INSTR_CASE_SPLIT:
-		node := me.Heap[me.Stack.Top(0)].(nodeCtor)
-		me.Stack = me.Stack.Dropped(1)
+		node := me.Heap[me.StackA.Top(0)].(nodeCtor)
+		me.StackA = me.StackA.Dropped(1)
 		for i := /*len(node.Items)*/ me.Code[cur].Int - 1; i > -1; i-- {
-			me.Stack.Push(node.Items[i])
+			me.StackA.Push(node.Items[i])
 		}
 	case INSTR_UNWIND:
-		addr := me.Stack.Top(0)
+		addr := me.StackA.Top(0)
 		node := me.Heap[addr]
 		switch n := node.(type) {
 		case nodeInt, nodeCtor:
-			if len(me.Dump) == 0 {
+			if len(me.StackDump) == 0 {
 				next = nil
 			} else {
-				restore := me.Dump[len(me.Dump)-1]
-				next, me.Dump, me.Stack =
-					restore.Code, me.Dump[:len(me.Dump)-1], append(restore.Stack, addr)
+				restore := me.StackDump[len(me.StackDump)-1]
+				next, me.StackDump, me.StackA =
+					restore.Code, me.StackDump[:len(me.StackDump)-1], append(restore.Stack, addr)
 			}
 		case nodeIndirection:
-			me.Stack[me.Stack.Pos(0)] = n.Addr
+			me.StackA[me.StackA.Pos(0)] = n.Addr
 			next = code{instr{Op: INSTR_UNWIND}} // unwind again
 		case nodeAppl:
 			me.Stats.NumAppls++
-			me.Stack.Push(n.Callee)
+			me.StackA.Push(n.Callee)
 			next = code{instr{Op: INSTR_UNWIND}} // unwind again
 		case nodeGlobal:
-			if (len(me.Stack) - 1) < n.NumArgs {
-				if len(me.Dump) == 0 {
+			if (len(me.StackA) - 1) < n.NumArgs {
+				if len(me.StackDump) == 0 {
 					panic("unwinding with too few arguments")
 				}
-				restore := me.Dump[len(me.Dump)-1]
-				me.Dump = me.Dump[:len(me.Dump)-1]
+				restore := me.StackDump[len(me.StackDump)-1]
+				me.StackDump = me.StackDump[:len(me.StackDump)-1]
 				next = restore.Code
-				me.Stack = restore.Stack.Pushed(me.Stack[0])
+				me.StackA = restore.Stack.Pushed(me.StackA[0])
 			} else {
-				nustack := make(clutil.Stack, 0, n.NumArgs)
+				nustack := make(clutil.StackA, 0, n.NumArgs)
 				for i := n.NumArgs; i > 0; i-- {
-					nustack.Push(me.Heap[me.Stack.Top(i)].(nodeAppl).Arg)
+					nustack.Push(me.Heap[me.StackA.Top(i)].(nodeAppl).Arg)
 				}
-				me.Stack = append(me.Stack.Dropped(n.NumArgs), nustack...)
+				me.StackA = append(me.StackA.Dropped(n.NumArgs), nustack...)
 				next = n.Code
 			}
 		default:

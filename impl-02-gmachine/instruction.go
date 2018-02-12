@@ -49,6 +49,9 @@ const (
 	INSTR_CTOR_PACK
 	INSTR_CASE_JUMP
 	INSTR_CASE_SPLIT
+
+	INSTR_PUSHVAL_INT
+	INSTR_MAKEINT
 )
 
 type instr struct {
@@ -113,6 +116,10 @@ func (me instr) String() string {
 		return "CJmp#" + strconv.Itoa(len(me.CaseJump))
 	case INSTR_CASE_SPLIT:
 		return "CSpl=" + strconv.Itoa(me.Int)
+	case INSTR_PUSHVAL_INT:
+		return "PushI=" + strconv.Itoa(me.Int)
+	case INSTR_MAKEINT:
+		return "MkI"
 	}
 	return strconv.Itoa(int(me.Op))
 }
