@@ -6,6 +6,8 @@ import (
 	"github.com/metaleap/go-corelang/util"
 )
 
+const MARK7 = false // dont set to true! compilation part of "mark 7" section (page 143ff) still completely missing
+
 type gMachine struct {
 	Heap      clutil.HeapA // no GC here, forever growing
 	Globals   clutil.Env
@@ -22,7 +24,7 @@ type dumpedState struct {
 }
 
 func (me *gMachine) Eval(name string) (val interface{}, stats clutil.Stats, err error) {
-	defer clutil.Catch(&err)
+	// defer clutil.Catch(&err)
 	me.StackA, me.StackDump, me.StackInts = make(clutil.StackA, 0, 64), make([]dumpedState, 0, 16), make(clutil.StackI, 0, 64)
 	me.Code = code{{Op: INSTR_PUSHGLOBAL, Name: name}, {Op: INSTR_EVAL}}
 	// println(me.Heap[me.Globals[name]].(nodeGlobal).Code.String())
@@ -80,60 +82,120 @@ func (me *gMachine) step() {
 		me.StackA = me.StackA[pos:]
 		next = code{{Op: INSTR_UNWIND}}
 	case INSTR_PRIM_CMP_EQ, INSTR_PRIM_CMP_NEQ, INSTR_PRIM_CMP_LT, INSTR_PRIM_CMP_LEQ, INSTR_PRIM_CMP_GT, INSTR_PRIM_CMP_GEQ:
-		node1, node2 := me.Heap[me.StackA.Top(0)].(nodeInt), me.Heap[me.StackA.Top(1)].(nodeInt)
-		var istrue bool
-		switch me.Code[cur].Op {
-		case INSTR_PRIM_CMP_EQ:
-			istrue = (node1 == node2)
-		case INSTR_PRIM_CMP_NEQ:
-			istrue = (node1 != node2)
-		case INSTR_PRIM_CMP_LT:
-			istrue = (node1 < node2)
-		case INSTR_PRIM_CMP_LEQ:
-			istrue = (node1 <= node2)
-		case INSTR_PRIM_CMP_GT:
-			istrue = (node1 > node2)
-		case INSTR_PRIM_CMP_GEQ:
-			istrue = (node1 >= node2)
-		}
-		var result nodeCtor
-		if istrue {
-			result.Tag = 2
+		if MARK7 {
+			num1, num2 := me.StackInts.Top(0), me.StackInts.Top(1)
+			var istrue bool
+			switch me.Code[cur].Op {
+			case INSTR_PRIM_CMP_EQ:
+				istrue = (num1 == num2)
+			case INSTR_PRIM_CMP_NEQ:
+				istrue = (num1 != num2)
+			case INSTR_PRIM_CMP_LT:
+				istrue = (num1 < num2)
+			case INSTR_PRIM_CMP_LEQ:
+				istrue = (num1 <= num2)
+			case INSTR_PRIM_CMP_GT:
+				istrue = (num1 > num2)
+			case INSTR_PRIM_CMP_GEQ:
+				istrue = (num1 >= num2)
+			}
+			var result int
+			if istrue {
+				result = 2
+			} else {
+				result = 1
+			}
+			me.StackInts = me.StackInts.Dropped(1)
+			me.StackInts[me.StackInts.Pos(0)] = result
 		} else {
-			result.Tag = 1
+			node1, node2 := me.Heap[me.StackA.Top(0)].(nodeInt), me.Heap[me.StackA.Top(1)].(nodeInt)
+			var istrue bool
+			switch me.Code[cur].Op {
+			case INSTR_PRIM_CMP_EQ:
+				istrue = (node1 == node2)
+			case INSTR_PRIM_CMP_NEQ:
+				istrue = (node1 != node2)
+			case INSTR_PRIM_CMP_LT:
+				istrue = (node1 < node2)
+			case INSTR_PRIM_CMP_LEQ:
+				istrue = (node1 <= node2)
+			case INSTR_PRIM_CMP_GT:
+				istrue = (node1 > node2)
+			case INSTR_PRIM_CMP_GEQ:
+				istrue = (node1 >= node2)
+			}
+			var result nodeCtor
+			if istrue {
+				result.Tag = 2
+			} else {
+				result.Tag = 1
+			}
+			addr := me.Heap.Alloc(result)
+			me.StackA = me.StackA.Dropped(1)
+			me.StackA[me.StackA.Pos(0)] = addr
 		}
-		addr := me.Heap.Alloc(result)
-		me.StackA = me.StackA.Dropped(1)
-		me.StackA[me.StackA.Pos(0)] = addr
 	case INSTR_PRIM_AR_ADD, INSTR_PRIM_AR_SUB, INSTR_PRIM_AR_MUL, INSTR_PRIM_AR_DIV:
-		node1, node2 := me.Heap[me.StackA.Top(0)].(nodeInt), me.Heap[me.StackA.Top(1)].(nodeInt)
-		var result nodeInt
-		switch me.Code[cur].Op {
-		case INSTR_PRIM_AR_ADD:
-			result = node1 + node2
-		case INSTR_PRIM_AR_SUB:
-			result = node1 - node2
-		case INSTR_PRIM_AR_MUL:
-			result = node1 * node2
-		case INSTR_PRIM_AR_DIV:
-			result = node1 / node2
-		}
-		addr := me.Heap.Alloc(result)
-		me.StackA = me.StackA.Dropped(1)
-		me.StackA[me.StackA.Pos(0)] = addr
-	case INSTR_PRIM_AR_NEG:
-		node := me.Heap[me.StackA.Top(0)].(nodeInt)
-		addr := me.Heap.Alloc(-node)
-		me.StackA[me.StackA.Pos(0)] = addr
-	case INSTR_PRIM_COND:
-		if node := me.Heap[me.StackA.Top(0)].(nodeCtor); node.Tag == 2 {
-			next = append(me.Code[0].CondThen, next...)
-		} else if node.Tag == 1 {
-			next = append(me.Code[0].CondElse, next...)
+		if MARK7 {
+			num1, num2 := me.StackInts.Top(0), me.StackInts.Top(1)
+			var result int
+			switch me.Code[cur].Op {
+			case INSTR_PRIM_AR_ADD:
+				result = num1 + num2
+			case INSTR_PRIM_AR_SUB:
+				result = num1 - num2
+			case INSTR_PRIM_AR_MUL:
+				result = num1 * num2
+			case INSTR_PRIM_AR_DIV:
+				result = num1 / num2
+			}
+			me.StackInts = me.StackInts.Dropped(1)
+			me.StackInts[me.StackInts.Pos(0)] = result
 		} else {
-			panic("boolean bug")
+			node1, node2 := me.Heap[me.StackA.Top(0)].(nodeInt), me.Heap[me.StackA.Top(1)].(nodeInt)
+			var result nodeInt
+			switch me.Code[cur].Op {
+			case INSTR_PRIM_AR_ADD:
+				result = node1 + node2
+			case INSTR_PRIM_AR_SUB:
+				result = node1 - node2
+			case INSTR_PRIM_AR_MUL:
+				result = node1 * node2
+			case INSTR_PRIM_AR_DIV:
+				result = node1 / node2
+			}
+			addr := me.Heap.Alloc(result)
+			me.StackA = me.StackA.Dropped(1)
+			me.StackA[me.StackA.Pos(0)] = addr
 		}
-		me.StackA = me.StackA.Dropped(1)
+	case INSTR_PRIM_AR_NEG:
+		if MARK7 {
+			me.StackInts[me.StackInts.Pos(0)] = -me.StackInts[me.StackInts.Pos(0)]
+		} else {
+			node := me.Heap[me.StackA.Top(0)].(nodeInt)
+			addr := me.Heap.Alloc(-node)
+			me.StackA[me.StackA.Pos(0)] = addr
+		}
+	case INSTR_PRIM_COND:
+		if MARK7 {
+			bnum := me.StackInts.Top(0)
+			me.StackInts = me.StackInts.Dropped(1)
+			if bnum == 2 {
+				next = append(me.Code[cur].CondThen, next...)
+			} else if bnum == 1 {
+				next = append(me.Code[cur].CondElse, next...)
+			} else {
+				panic(bnum)
+			}
+		} else {
+			if node := me.Heap[me.StackA.Top(0)].(nodeCtor); node.Tag == 2 {
+				next = append(me.Code[cur].CondThen, next...)
+			} else if node.Tag == 1 {
+				next = append(me.Code[cur].CondElse, next...)
+			} else {
+				panic(node.Tag)
+			}
+			me.StackA = me.StackA.Dropped(1)
+		}
 	case INSTR_CTOR_PACK:
 		arity := me.Code[cur].CtorArity
 		node := nodeCtor{Tag: me.Code[cur].Int, Items: make([]clutil.Addr, arity)}
@@ -149,6 +211,23 @@ func (me *gMachine) step() {
 		me.StackA = me.StackA.Dropped(1)
 		for i := /*len(node.Items)*/ me.Code[cur].Int - 1; i > -1; i-- {
 			me.StackA.Push(node.Items[i])
+		}
+	case INSTR_MARK7_PUSHINTVAL:
+		me.StackInts.Push(me.Code[cur].Int)
+	case INSTR_MARK7_MAKENODEBOOL:
+		me.StackA.Push(me.Heap.Alloc(nodeCtor{Tag: me.StackInts.Top(0)}))
+		me.StackInts = me.StackInts.Dropped(1)
+	case INSTR_MARK7_MAKENODEINT:
+		me.StackA.Push(me.Heap.Alloc(nodeInt(me.StackInts.Top(0))))
+		me.StackInts = me.StackInts.Dropped(1)
+	case INSTR_MARK7_PUSHNODEINT:
+		addr := me.StackA.Top(0)
+		me.StackA = me.StackA.Dropped(1)
+		switch node := me.Heap[addr].(type) {
+		case nodeCtor:
+			me.StackInts.Push(node.Tag)
+		case nodeInt:
+			me.StackInts.Push(int(node))
 		}
 	case INSTR_UNWIND:
 		addr := me.StackA.Top(0)
