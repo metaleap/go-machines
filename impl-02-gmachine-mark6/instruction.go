@@ -21,6 +21,7 @@ type instruction int
 
 const (
 	_ instruction = iota
+
 	INSTR_UNWIND
 	INSTR_PUSHGLOBAL
 	INSTR_PUSHINT
@@ -54,6 +55,8 @@ const (
 	INSTR_MARK7_PUSHNODEINT
 	INSTR_MARK7_MAKENODEINT
 	INSTR_MARK7_MAKENODEBOOL
+
+	INSTR_MIN_INVALID
 )
 
 type instr struct {

@@ -61,9 +61,39 @@ func init() {
 
 func CompileToMachine(mod *SynMod) (util.IMachine, []error) {
 	errs, me := []error{}, gMachine{
-		Heap:    make(util.HeapA, 1, 1024*1024),
-		Globals: make(util.Env, len(mod.Defs)),
+		Heap:      make(util.HeapA, 1, 1024*1024),
+		Globals:   make(util.Env, len(mod.Defs)),
+		JumpTable: make([]stepInstr, INSTR_MIN_INVALID),
 	}
+	me.JumpTable[INSTR_UNWIND] = me.step_INSTR_UNWIND
+	me.JumpTable[INSTR_PUSHGLOBAL] = me.step_INSTR_PUSHGLOBAL
+	me.JumpTable[INSTR_PUSHINT] = me.step_INSTR_PUSHINT
+	me.JumpTable[INSTR_PUSHARG] = me.step_INSTR_PUSHARG
+	me.JumpTable[INSTR_MAKEAPPL] = me.step_INSTR_MAKEAPPL
+	me.JumpTable[INSTR_SLIDE] = me.step_INSTR_SLIDE
+	me.JumpTable[INSTR_UPDATE] = me.step_INSTR_UPDATE
+	me.JumpTable[INSTR_POP] = me.step_INSTR_POP
+	me.JumpTable[INSTR_ALLOC] = me.step_INSTR_ALLOC
+	me.JumpTable[INSTR_EVAL] = me.step_INSTR_EVAL
+	me.JumpTable[INSTR_PRIM_AR_ADD] = me.step_INSTR_PRIM_AR
+	me.JumpTable[INSTR_PRIM_AR_SUB] = me.step_INSTR_PRIM_AR
+	me.JumpTable[INSTR_PRIM_AR_MUL] = me.step_INSTR_PRIM_AR
+	me.JumpTable[INSTR_PRIM_AR_DIV] = me.step_INSTR_PRIM_AR
+	me.JumpTable[INSTR_PRIM_AR_NEG] = me.step_INSTR_PRIM_AR_NEG
+	me.JumpTable[INSTR_PRIM_CMP_EQ] = me.step_INSTR_PRIM_CMP
+	me.JumpTable[INSTR_PRIM_CMP_NEQ] = me.step_INSTR_PRIM_CMP
+	me.JumpTable[INSTR_PRIM_CMP_LT] = me.step_INSTR_PRIM_CMP
+	me.JumpTable[INSTR_PRIM_CMP_LEQ] = me.step_INSTR_PRIM_CMP
+	me.JumpTable[INSTR_PRIM_CMP_GT] = me.step_INSTR_PRIM_CMP
+	me.JumpTable[INSTR_PRIM_CMP_GEQ] = me.step_INSTR_PRIM_CMP
+	me.JumpTable[INSTR_PRIM_COND] = me.step_INSTR_PRIM_COND
+	me.JumpTable[INSTR_CTOR_PACK] = me.step_INSTR_CTOR_PACK
+	me.JumpTable[INSTR_CASE_JUMP] = me.step_INSTR_CASE_JUMP
+	me.JumpTable[INSTR_CASE_SPLIT] = me.step_INSTR_CASE_SPLIT
+	me.JumpTable[INSTR_MARK7_PUSHINTVAL] = me.step_INSTR_MARK7_PUSHINTVAL
+	me.JumpTable[INSTR_MARK7_PUSHNODEINT] = me.step_INSTR_MARK7_PUSHNODEINT
+	me.JumpTable[INSTR_MARK7_MAKENODEINT] = me.step_INSTR_MARK7_MAKENODEINT
+	me.JumpTable[INSTR_MARK7_MAKENODEBOOL] = me.step_INSTR_MARK7_MAKENODEBOOL
 
 	for primname, primnode := range primsPrecompiledForLazy {
 		me.Globals[primname] = me.Heap.Alloc(primnode)
