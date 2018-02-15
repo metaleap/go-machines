@@ -6,7 +6,7 @@ import (
 	"github.com/metaleap/go-corelang/util"
 )
 
-const MARK7 = false // dont set to true! compilation part of "mark 7" section (page 143ff) still completely missing. moving on to TIM and STG first, for now
+const MARK7 = false // dont set true yet. compilation part of "mark 7" section (p143ff) still missing the updates to the R scheme (p147)
 
 type gMachine struct {
 	Heap      clutil.HeapA // no GC here, forever growing
@@ -27,7 +27,7 @@ func (me *gMachine) Eval(name string) (val interface{}, stats clutil.Stats, err 
 	defer clutil.Catch(&err)
 	me.StackA, me.StackDump, me.StackInts = make(clutil.StackA, 0, 64), make([]dumpedState, 0, 16), make(clutil.StackI, 0, 64)
 	me.Code = code{{Op: INSTR_PUSHGLOBAL, Name: name}, {Op: INSTR_EVAL}}
-	// println(me.Heap[me.Globals[name]].(nodeGlobal).Code.String())
+	println(me.Heap[me.Globals[name]].(nodeGlobal).Code.String())
 	me.eval()
 	stats, val = me.Stats, me.Heap[me.StackA.Top(0)]
 	return
