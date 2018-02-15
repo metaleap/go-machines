@@ -6,13 +6,13 @@ import (
 	"time"
 
 	// "github.com/metaleap/go-corelang"
-	"github.com/metaleap/go-corelang/syn"
-	"github.com/metaleap/go-corelang/util"
+	. "github.com/metaleap/go-corelang/syn"
+	util "github.com/metaleap/go-corelang/util"
 )
 
-type compilation func(clsyn.IExpr, env) code
+type compilation func(IExpr, env) code
 
-type compilationN func(int, clsyn.IExpr, env) code
+type compilationN func(int, IExpr, env) code
 
 type env map[string]int
 
@@ -46,10 +46,23 @@ var primsPrecompiledForLazy = map[string]nodeGlobal{
 	"if": {3, code{{Op: INSTR_PUSHARG}, {Op: INSTR_EVAL}, {Op: INSTR_PRIM_COND, CondThen: code{{Op: INSTR_PUSHARG, Int: 1}}, CondElse: code{{Op: INSTR_PUSHARG, Int: 2}}}, {Op: INSTR_UPDATE, Int: 3}, {Op: INSTR_POP, Int: 3}, {Op: INSTR_UNWIND}}},
 }
 
-func CompileToMachine(mod *clsyn.SynMod) (clutil.IMachine, []error) {
+var primsMark7Globals = map[string]*SynDef{
+	"negate": {TopLevel: true, Name: "neg", Args: []string{"x"}, Body: Ap(Id("neg"), Id("x"))},
+	"if":     {TopLevel: true, Name: "if", Args: []string{"c", "t", "f"}, Body: Ap(Ap(Ap(Id("if"), Id("c")), Id("t")), Id("f"))},
+	"True":   {TopLevel: true, Name: "True", Body: Ct(2, 0)},
+	"False":  {TopLevel: true, Name: "False", Body: Ct(1, 0)},
+}
+
+func init() {
+	for _, opname := range []string{"+", "-", "*", "/", "==", "!=", "<", "<=", ">", ">="} {
+		primsMark7Globals[opname] = &SynDef{TopLevel: true, Name: opname, Args: []string{"x", "y"}, Body: Ap(Ap(Id(opname), Id("x")), Id("y"))}
+	}
+}
+
+func CompileToMachine(mod *SynMod) (util.IMachine, []error) {
 	errs, me := []error{}, gMachine{
-		Heap:    make(clutil.HeapA, 1, 1024*1024),
-		Globals: make(clutil.Env, len(mod.Defs)),
+		Heap:    make(util.HeapA, 1, 1024*1024),
+		Globals: make(util.Env, len(mod.Defs)),
 	}
 
 	for primname, primnode := range primsPrecompiledForLazy {
@@ -65,8 +78,8 @@ func CompileToMachine(mod *clsyn.SynMod) (clutil.IMachine, []error) {
 	return &me, errs
 }
 
-func (me *gMachine) compileGlobal_SchemeSC(global *clsyn.SynDef) (node nodeGlobal, err error) {
-	defer clutil.Catch(&err)
+func (me *gMachine) compileGlobal_SchemeSC(global *SynDef) (node nodeGlobal, err error) {
+	defer util.Catch(&err)
 	argsenv := make(env, len(global.Args))
 	for i, arg := range global.Args {
 		argsenv[arg] = i
@@ -75,7 +88,7 @@ func (me *gMachine) compileGlobal_SchemeSC(global *clsyn.SynDef) (node nodeGloba
 	return
 }
 
-func (me *gMachine) compileGlobalBody_SchemeR(bodyexpr clsyn.IExpr, argsEnv env) code {
+func (me *gMachine) compileGlobalBody_SchemeR(bodyexpr IExpr, argsEnv env) code {
 	return append(me.compileExprStrict_SchemeE(bodyexpr, argsEnv),
 		instr{Op: INSTR_UPDATE, Int: len(argsEnv)},
 		instr{Op: INSTR_POP, Int: len(argsEnv)},
@@ -83,80 +96,82 @@ func (me *gMachine) compileGlobalBody_SchemeR(bodyexpr clsyn.IExpr, argsEnv env)
 	)
 }
 
-func (me *gMachine) compileExprStrict_SchemeE(expression clsyn.IExpr, argsEnv env) code {
+func (me *gMachine) compileExprStrict_SchemeE(expression IExpr, argsEnv env) code {
 	switch expr := expression.(type) {
-	case *clsyn.ExprLitUInt:
+	case *ExprLitUInt:
 		return code{{Op: INSTR_PUSHINT, Int: int(expr.Lit)}}
-	case *clsyn.ExprLetIn:
-		return me.compileLet(me.compileExprStrict_SchemeE, expr, argsEnv)
-	case *clsyn.ExprCtor:
-		return me.compileCtorAppl(me.compileExprStrict_SchemeE, expr, nil, argsEnv)
-	case *clsyn.ExprCaseOf:
+	case *ExprLetIn:
+		return me.compileLet(me.compileExprStrict_SchemeE, expr, argsEnv, INSTR_SLIDE)
+	case *ExprCtor:
+		comp := me.compileExprLazy_SchemeC
+		if !MARK7 {
+			comp = me.compileExprStrict_SchemeE
+		}
+		return me.compileCtorAppl(comp, expr, nil, argsEnv, MARK7)
+	case *ExprCaseOf:
 		return append(me.compileExprStrict_SchemeE(expr.Scrut, argsEnv), instr{Op: INSTR_CASE_JUMP,
 			CaseJump: me.compileCaseAlts_SchemeD(me.compileExprStrictSplitSlide_SchemeA, expr.Alts, argsEnv)})
-	case *clsyn.ExprCall:
+	case *ExprCall:
 		if ctor, ctorrevargs := expr.FlattenedIfEffectivelyCtor(); ctor != nil {
-			return me.compileCtorAppl(me.compileExprStrict_SchemeE, ctor, ctorrevargs, argsEnv)
+			comp := me.compileExprLazy_SchemeC
+			if !MARK7 {
+				comp = me.compileExprStrict_SchemeE
+			}
+			return me.compileCtorAppl(comp, ctor, ctorrevargs, argsEnv, MARK7)
 		}
-		switch callee := expr.Callee.(type) {
-		case *clsyn.ExprIdent:
-			if callee.Name == "neg" {
-				return append(me.compileExprStrict_SchemeE(expr.Arg, argsEnv), instr{Op: INSTR_PRIM_AR_NEG})
-			}
-		case *clsyn.ExprCall:
-			if op, _ := callee.Callee.(*clsyn.ExprIdent); op != nil {
-				if primdyadic := primDyadicsForStrict[op.Name]; primdyadic != 0 {
-					return append(append(
-						me.compileExprStrict_SchemeE(expr.Arg, argsEnv),
-						me.compileExprStrict_SchemeE(callee.Arg, me.envOffsetBy(argsEnv, 1))...,
-					), instr{Op: primdyadic})
-				}
-			} else if maybeif, _ := callee.Callee.(*clsyn.ExprCall); maybeif != nil {
-				if ifname, _ := maybeif.Callee.(*clsyn.ExprIdent); ifname != nil && ifname.Name == "if" {
-					cond, condthen, condelse := maybeif.Arg, callee.Arg, expr.Arg
-					return append(me.compileExprStrict_SchemeE(cond, argsEnv), instr{
-						Op:       INSTR_PRIM_COND,
-						CondThen: me.compileExprStrict_SchemeE(condthen, argsEnv),
-						CondElse: me.compileExprStrict_SchemeE(condelse, argsEnv),
-					})
-				}
-			}
+
+		if instrs := me.compilePrimsMaybe(me.compileExprStrict_SchemeE, expr, argsEnv, 1, MARK7); len(instrs) > 0 {
+			return instrs
 		}
 	}
 	return append(me.compileExprLazy_SchemeC(expression, argsEnv), instr{Op: INSTR_EVAL})
 }
 
-func (me *gMachine) compileExprStrictSplitSlide_SchemeA(offset int, expression clsyn.IExpr, argsEnv env) code {
+func (me *gMachine) compileExprStrictSplitSlide_SchemeA(offset int, expression IExpr, argsEnv env) code {
 	// does not `offset` the given `argsEnv`, expected to be passed already-`envOffsetBy`
 	return append(append(code{{Op: INSTR_CASE_SPLIT, Int: offset}},
 		me.compileExprStrict_SchemeE(expression, argsEnv)...,
 	), instr{Op: INSTR_SLIDE, Int: offset})
 }
 
-func (me *gMachine) compileExprLazy_SchemeC(expression clsyn.IExpr, argsEnv env) code {
+func (me *gMachine) compileExprStrictMark7_SchemeB(expression IExpr, argsEnv env) code {
 	switch expr := expression.(type) {
-	case *clsyn.ExprLitUInt:
+	case *ExprLitUInt:
+		return code{{Op: INSTR_MARK7_PUSHINTVAL, Int: int(expr.Lit)}}
+	case *ExprLetIn:
+		return me.compileLet(me.compileExprStrictMark7_SchemeB, expr, argsEnv, INSTR_POP)
+	case *ExprCall:
+		if instrs := me.compilePrimsMaybe(me.compileExprStrictMark7_SchemeB, expr, argsEnv, 0, false); len(instrs) > 0 {
+			return instrs
+		}
+	}
+	return append(me.compileExprStrict_SchemeE(expression, argsEnv), instr{Op: INSTR_MARK7_PUSHNODEINT})
+}
+
+func (me *gMachine) compileExprLazy_SchemeC(expression IExpr, argsEnv env) code {
+	switch expr := expression.(type) {
+	case *ExprLitUInt:
 		return code{{Op: INSTR_PUSHINT, Int: int(expr.Lit)}}
-	case *clsyn.ExprIdent:
+	case *ExprIdent:
 		if i, islocal := argsEnv[expr.Name]; islocal {
 			return code{{Op: INSTR_PUSHARG, Int: i}}
 		}
 		return code{{Op: INSTR_PUSHGLOBAL, Name: expr.Name}}
-	case *clsyn.ExprCall:
+	case *ExprCall:
 		if ctor, ctorrevargs := expr.FlattenedIfEffectivelyCtor(); ctor != nil {
-			return me.compileCtorAppl(me.compileExprLazy_SchemeC, ctor, ctorrevargs, argsEnv)
+			return me.compileCtorAppl(me.compileExprLazy_SchemeC, ctor, ctorrevargs, argsEnv, false)
 		}
 		return append(append(
 			me.compileExprLazy_SchemeC(expr.Arg, argsEnv),
 			me.compileExprLazy_SchemeC(expr.Callee, me.envOffsetBy(argsEnv, 1))...,
 		), instr{Op: INSTR_MAKEAPPL})
-	case *clsyn.ExprLetIn:
-		return me.compileLet(me.compileExprLazy_SchemeC, expr, argsEnv)
-	case *clsyn.ExprCtor:
-		return me.compileCtorAppl(me.compileExprLazy_SchemeC, expr, nil, argsEnv)
-	case *clsyn.ExprCaseOf:
+	case *ExprLetIn:
+		return me.compileLet(me.compileExprLazy_SchemeC, expr, argsEnv, INSTR_SLIDE)
+	case *ExprCtor:
+		return me.compileCtorAppl(me.compileExprLazy_SchemeC, expr, nil, argsEnv, false)
+	case *ExprCaseOf:
 		dynname := "#case" + strconv.FormatInt(time.Now().UnixNano(), 16)
-		dynglobaldef, dynglobalcall := expr.ExtractIntoDef(dynname, true, clsyn.LookupEnvFrom(nil, me.Globals, nil, nil))
+		dynglobaldef, dynglobalcall := expr.ExtractIntoDef(dynname, true, LookupEnvFrom(nil, me.Globals, nil, nil))
 		// println("DEF:")
 		// src, _ := (&corelang.SyntaxTreePrinter{}).Def(dynglobaldef)
 		// println(src)
@@ -174,8 +189,8 @@ func (me *gMachine) compileExprLazy_SchemeC(expression clsyn.IExpr, argsEnv env)
 	}
 }
 
-func (me *gMachine) compileCtorAppl(comp compilation, ctor *clsyn.ExprCtor, reverseArgs []clsyn.IExpr, argsEnv env) code {
-	if len(reverseArgs) != ctor.Arity {
+func (me *gMachine) compileCtorAppl(comp compilation, ctor *ExprCtor, reverseArgs []IExpr, argsEnv env, fromMark7E bool) code {
+	if (!fromMark7E) && len(reverseArgs) != ctor.Arity {
 		dynglobalname := "#ctor#" + strconv.Itoa(ctor.Tag) + "#" + strconv.Itoa(ctor.Arity)
 		dynglobaladdr := me.Globals[dynglobalname]
 		if dynglobaladdr == 0 {
@@ -189,7 +204,7 @@ func (me *gMachine) compileCtorAppl(comp compilation, ctor *clsyn.ExprCtor, reve
 			// src, _ := (&corelang.SyntaxTreePrinter{}).Def(dynglobaldef)
 			// println(src)
 		}
-		dynglobalcall := clsyn.Call(clsyn.Id(dynglobalname), reverseArgs...)
+		dynglobalcall := Call(Id(dynglobalname), reverseArgs...)
 		// println("\n\nCALL:\n\n")
 		// src, _ := (&corelang.SyntaxTreePrinter{}).Expr(dynglobalcall)
 		// println(src)
@@ -197,12 +212,16 @@ func (me *gMachine) compileCtorAppl(comp compilation, ctor *clsyn.ExprCtor, reve
 	}
 	instrs := make(code, 0, len(reverseArgs)+len(reverseArgs))
 	for i, arg := range reverseArgs {
-		instrs = append(instrs, comp(arg, me.envOffsetBy(argsEnv, i))...)
+		argsenv := argsEnv
+		if !fromMark7E {
+			argsenv = me.envOffsetBy(argsEnv, i)
+		}
+		instrs = append(instrs, comp(arg, argsenv)...)
 	}
 	return append(instrs, instr{Op: INSTR_CTOR_PACK, Int: ctor.Tag, CtorArity: ctor.Arity})
 }
 
-func (me *gMachine) compileLet(compbody compilation, let *clsyn.ExprLetIn, argsEnv env) (instrs code) {
+func (me *gMachine) compileLet(compbody compilation, let *ExprLetIn, argsEnv env, finalOp instruction) (instrs code) {
 	n := len(let.Defs)
 	if let.Rec {
 		instrs = code{{Op: INSTR_ALLOC, Int: n}}
@@ -223,11 +242,11 @@ func (me *gMachine) compileLet(compbody compilation, let *clsyn.ExprLetIn, argsE
 	}
 
 	instrs = append(instrs, compbody(let.Body, bodyargsenv)...)
-	instrs = append(instrs, instr{Op: INSTR_SLIDE, Int: n})
+	instrs = append(instrs, instr{Op: finalOp, Int: n})
 	return
 }
 
-func (me *gMachine) compileCaseAlts_SchemeD(compn compilationN, caseAlts []*clsyn.SynCaseAlt, argsEnv env) (jumpblocks []code) {
+func (me *gMachine) compileCaseAlts_SchemeD(compn compilationN, caseAlts []*SynCaseAlt, argsEnv env) (jumpblocks []code) {
 	jumpblocks = make([]code, len(caseAlts))
 	for _, alt := range caseAlts {
 		n := len(alt.Binds)
@@ -238,6 +257,48 @@ func (me *gMachine) compileCaseAlts_SchemeD(compn compilationN, caseAlts []*clsy
 		jumpblocks[alt.Tag] = compn(n, alt.Body, bodyargsenv)
 	}
 	return
+}
+
+func (me *gMachine) compilePrimsMaybe(comp compilation, expr *ExprCall, argsEnv env, dyadicOffset int, mark7WrapInB bool) code {
+	switch callee := expr.Callee.(type) {
+	case *ExprIdent:
+		if callee.Name == "neg" {
+			if mark7WrapInB {
+				return append(me.compileExprStrictMark7_SchemeB(expr, argsEnv), instr{Op: INSTR_MARK7_MAKENODEINT})
+			}
+			return append(comp(expr.Arg, argsEnv), instr{Op: INSTR_PRIM_AR_NEG})
+		}
+	case *ExprCall:
+		if maybeop, _ := callee.Callee.(*ExprIdent); maybeop != nil {
+			if primdyadic := primDyadicsForStrict[maybeop.Name]; primdyadic != 0 {
+				if mark7WrapInB {
+					finalop := INSTR_MARK7_MAKENODEINT
+					if primdyadic != INSTR_PRIM_AR_ADD && primdyadic != INSTR_PRIM_AR_SUB && primdyadic != INSTR_PRIM_AR_MUL && primdyadic != INSTR_PRIM_AR_DIV {
+						finalop = INSTR_MARK7_MAKENODEBOOL
+					}
+					return append(me.compileExprStrictMark7_SchemeB(expr, argsEnv), instr{Op: finalop})
+				}
+				return append(append(
+					comp(expr.Arg, argsEnv),
+					comp(callee.Arg, me.envOffsetBy(argsEnv, dyadicOffset))...,
+				), instr{Op: primdyadic})
+			}
+		} else if maybeif, _ := callee.Callee.(*ExprCall); maybeif != nil {
+			if ifname, _ := maybeif.Callee.(*ExprIdent); ifname != nil && ifname.Name == "if" {
+				cond, condthen, condelse := maybeif.Arg, callee.Arg, expr.Arg
+				compcond := comp
+				if mark7WrapInB {
+					compcond = me.compileExprStrictMark7_SchemeB
+				}
+				return append(compcond(cond, argsEnv), instr{
+					Op:       INSTR_PRIM_COND,
+					CondThen: comp(condthen, argsEnv),
+					CondElse: comp(condelse, argsEnv),
+				})
+			}
+		}
+	}
+	return nil
 }
 
 func (*gMachine) envOffsetBy(argsEnv env, offsetBy int) (envOffset env) {
