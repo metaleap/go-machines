@@ -115,6 +115,9 @@ func (me *gMachine) compileGlobal_SchemeSC(global *SynDef) (node nodeGlobal, err
 		argsenv[arg] = i
 	}
 	node = nodeGlobal{len(global.Args), me.compileGlobalBody_SchemeR(global.Body, argsenv)}
+	if global.Name == "fac" {
+		println(node.Code.String())
+	}
 	return
 }
 
@@ -302,9 +305,9 @@ func (me *gMachine) compilePrimsMaybe(comp compilation, expr *ExprCall, argsEnv 
 		if maybeop, _ := callee.Callee.(*ExprIdent); maybeop != nil {
 			if primdyadic := primDyadicsForStrict[maybeop.Name]; primdyadic != 0 {
 				if mark7WrapInB {
-					finalop := INSTR_MARK7_MAKENODEINT
-					if primdyadic != INSTR_PRIM_AR_ADD && primdyadic != INSTR_PRIM_AR_SUB && primdyadic != INSTR_PRIM_AR_MUL && primdyadic != INSTR_PRIM_AR_DIV {
-						finalop = INSTR_MARK7_MAKENODEBOOL
+					finalop := INSTR_MARK7_MAKENODEBOOL
+					if primdyadic == INSTR_PRIM_AR_ADD || primdyadic == INSTR_PRIM_AR_SUB || primdyadic == INSTR_PRIM_AR_MUL || primdyadic == INSTR_PRIM_AR_DIV {
+						finalop = INSTR_MARK7_MAKENODEINT
 					}
 					return append(me.compileExprStrictMark7_SchemeB(expr, argsEnv), instr{Op: finalop})
 				}

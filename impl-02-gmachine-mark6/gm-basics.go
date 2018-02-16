@@ -30,74 +30,72 @@ func (me *gMachine) Eval(name string) (val interface{}, stats clutil.Stats, err 
 	defer clutil.Catch(&err)
 	me.StackA, me.StackDump, me.StackInts = make(clutil.StackA, 0, 64), make([]dumpedState, 0, 16), make(clutil.StackI, 0, 64)
 	me.Code = code{{Op: INSTR_PUSHGLOBAL, Name: name}, {Op: INSTR_EVAL}}
-	println(me.Heap[me.Globals[name]].(nodeGlobal).Code.String())
+	// println(me.Heap[me.Globals[name]].(nodeGlobal).Code.String())
 	me.eval()
 	stats, val = me.Stats, me.Heap[me.StackA.Top(0)]
 	return
 }
 
 func (me *gMachine) eval() {
-	for me.Stats.NumSteps, me.Stats.NumAppls, me.Stats.MaxStack = 0, 0, 0; len(me.Code) != 0; me.step() {
-		if me.Stats.HeapSize = len(me.Heap); me.Stats.MaxStack < len(me.StackA) {
+	for me.Stats.NumSteps, me.Stats.NumAppls, me.Stats.MaxStack = 0, 0, 0; len(me.Code) != 0; me.Stats.HeapSize = len(me.Heap) {
+		me.Stats.NumSteps++
+		next := me.Code[1:]
+
+		switch me.Code[0].Op {
+		case INSTR_EVAL:
+			me.step_INSTR_EVAL(&next)
+		case INSTR_UNWIND:
+			me.step_INSTR_UNWIND(&next)
+		case INSTR_PUSHGLOBAL:
+			me.step_INSTR_PUSHGLOBAL(nil)
+		case INSTR_PUSHINT:
+			me.step_INSTR_PUSHINT(nil)
+		case INSTR_PUSHARG:
+			me.step_INSTR_PUSHARG(nil)
+		case INSTR_MAKEAPPL:
+			me.step_INSTR_MAKEAPPL(nil)
+		case INSTR_UPDATE:
+			me.step_INSTR_UPDATE(nil)
+		case INSTR_POP:
+			me.step_INSTR_POP(nil)
+		case INSTR_SLIDE:
+			me.step_INSTR_SLIDE(nil)
+		case INSTR_ALLOC:
+			me.step_INSTR_ALLOC(nil)
+		case INSTR_PRIM_CMP_EQ, INSTR_PRIM_CMP_NEQ, INSTR_PRIM_CMP_LT, INSTR_PRIM_CMP_LEQ, INSTR_PRIM_CMP_GT, INSTR_PRIM_CMP_GEQ:
+			me.step_INSTR_PRIM_CMP(nil)
+		case INSTR_PRIM_AR_ADD, INSTR_PRIM_AR_SUB, INSTR_PRIM_AR_MUL, INSTR_PRIM_AR_DIV:
+			me.step_INSTR_PRIM_AR(nil)
+		case INSTR_PRIM_AR_NEG:
+			me.step_INSTR_PRIM_AR_NEG(nil)
+		case INSTR_PRIM_COND:
+			me.step_INSTR_PRIM_COND(&next)
+		case INSTR_CTOR_PACK:
+			me.step_INSTR_CTOR_PACK(nil)
+		case INSTR_CASE_JUMP:
+			me.step_INSTR_CASE_JUMP(&next)
+		case INSTR_CASE_SPLIT:
+			me.step_INSTR_CASE_SPLIT(nil)
+		case INSTR_MARK7_PUSHINTVAL:
+			me.step_INSTR_MARK7_PUSHINTVAL(nil)
+		case INSTR_MARK7_MAKENODEBOOL:
+			me.step_INSTR_MARK7_MAKENODEBOOL(nil)
+		case INSTR_MARK7_MAKENODEINT:
+			me.step_INSTR_MARK7_MAKENODEINT(nil)
+		case INSTR_MARK7_PUSHNODEINT:
+			me.step_INSTR_MARK7_PUSHNODEINT(nil)
+		default:
+			panic(me.Code[0].Op)
+		}
+		me.Code = next
+
+		if me.Stats.MaxStack < len(me.StackA) {
 			me.Stats.MaxStack = len(me.StackA)
 		}
 	}
 }
 
-func (me *gMachine) step() {
-	me.Stats.NumSteps++
-	next := me.Code[1:]
-
-	switch me.Code[0].Op {
-	case INSTR_EVAL:
-		me.step_INSTR_EVAL(&next)
-	case INSTR_UNWIND:
-		me.step_INSTR_UNWIND(&next)
-	case INSTR_PUSHGLOBAL:
-		me.step_INSTR_PUSHGLOBAL(nil)
-	case INSTR_PUSHINT:
-		me.step_INSTR_PUSHINT(nil)
-	case INSTR_PUSHARG:
-		me.step_INSTR_PUSHARG(nil)
-	case INSTR_MAKEAPPL:
-		me.step_INSTR_MAKEAPPL(nil)
-	case INSTR_UPDATE:
-		me.step_INSTR_UPDATE(nil)
-	case INSTR_POP:
-		me.step_INSTR_POP(nil)
-	case INSTR_SLIDE:
-		me.step_INSTR_SLIDE(nil)
-	case INSTR_ALLOC:
-		me.step_INSTR_ALLOC(nil)
-	case INSTR_PRIM_CMP_EQ, INSTR_PRIM_CMP_NEQ, INSTR_PRIM_CMP_LT, INSTR_PRIM_CMP_LEQ, INSTR_PRIM_CMP_GT, INSTR_PRIM_CMP_GEQ:
-		me.step_INSTR_PRIM_CMP(nil)
-	case INSTR_PRIM_AR_ADD, INSTR_PRIM_AR_SUB, INSTR_PRIM_AR_MUL, INSTR_PRIM_AR_DIV:
-		me.step_INSTR_PRIM_AR(nil)
-	case INSTR_PRIM_AR_NEG:
-		me.step_INSTR_PRIM_AR_NEG(nil)
-	case INSTR_PRIM_COND:
-		me.step_INSTR_PRIM_COND(&next)
-	case INSTR_CTOR_PACK:
-		me.step_INSTR_CTOR_PACK(nil)
-	case INSTR_CASE_JUMP:
-		me.step_INSTR_CASE_JUMP(&next)
-	case INSTR_CASE_SPLIT:
-		me.step_INSTR_CASE_SPLIT(nil)
-	case INSTR_MARK7_PUSHINTVAL:
-		me.step_INSTR_MARK7_PUSHINTVAL(nil)
-	case INSTR_MARK7_MAKENODEBOOL:
-		me.step_INSTR_MARK7_MAKENODEBOOL(nil)
-	case INSTR_MARK7_MAKENODEINT:
-		me.step_INSTR_MARK7_MAKENODEINT(nil)
-	case INSTR_MARK7_PUSHNODEINT:
-		me.step_INSTR_MARK7_PUSHNODEINT(nil)
-	default:
-		panic(me.Code[0].Op)
-	}
-	me.Code = next
-}
-
-func (me *gMachine) stepOddlySlowerThanAboveOneSoUnusedButHadToTry() {
+func (me *gMachine) _step_old_oddlySlowerThanSwitchBlockSoUnusedButHadToTry() {
 	// reminder to self for future proto VMs, the earlier big-uber-switch with direct-code per case (instead of method dispatch) was simply fastest, contrary to commonly held wisdom about a method-jumptable being preferable to dozens of cmp ops in the switch!
 	me.Stats.NumSteps++
 	next := me.Code[1:]
