@@ -6,7 +6,7 @@ import (
 	"github.com/metaleap/go-corelang/util"
 )
 
-const MARK7 = true // not a big gain in practice for this unoptimized prototype and its toy examples, still intrinsically a sane (and for real-world likely crucial) approach to have separate val stacks (in addition to addr stack)
+const _MARK7 = true // not a big gain in practice for this unoptimized prototype and its toy examples, still intrinsically a sane (and for real-world likely crucial) approach to have separate val stacks (in addition to addr stack)
 
 type gMachine struct {
 	Heap      clutil.HeapA // no GC here, forever growing
@@ -112,7 +112,7 @@ func (me *gMachine) eval() {
 				panic(n)
 			}
 		case INSTR_PRIM_CMP_EQ, INSTR_PRIM_CMP_NEQ, INSTR_PRIM_CMP_LT, INSTR_PRIM_CMP_LEQ, INSTR_PRIM_CMP_GT, INSTR_PRIM_CMP_GEQ:
-			if MARK7 {
+			if _MARK7 {
 				num1, num2 := me.StackInts.Top0(), me.StackInts.Top1()
 				var istrue bool
 				switch me.Code[0].Op {
@@ -165,7 +165,7 @@ func (me *gMachine) eval() {
 				me.StackA[me.StackA.Pos0()] = addr
 			}
 		case INSTR_PRIM_AR_ADD, INSTR_PRIM_AR_SUB, INSTR_PRIM_AR_MUL, INSTR_PRIM_AR_DIV:
-			if MARK7 {
+			if _MARK7 {
 				num1, num2 := me.StackInts.Top0(), me.StackInts.Top1()
 				var result int
 				switch me.Code[0].Op {
@@ -198,7 +198,7 @@ func (me *gMachine) eval() {
 				me.StackA[me.StackA.Pos0()] = addr
 			}
 		case INSTR_PRIM_AR_NEG:
-			if MARK7 {
+			if _MARK7 {
 				me.StackInts[me.StackInts.Pos0()] = -me.StackInts[me.StackInts.Pos0()]
 			} else {
 				node := me.Heap[me.StackA.Top0()].(nodeInt)
@@ -206,7 +206,7 @@ func (me *gMachine) eval() {
 				me.StackA[me.StackA.Pos0()] = addr
 			}
 		case INSTR_PRIM_COND:
-			if MARK7 {
+			if _MARK7 {
 				bnum := me.StackInts.Top0()
 				me.StackInts = me.StackInts.Dropped(1)
 				if bnum == 2 {

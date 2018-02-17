@@ -64,7 +64,7 @@ func CompileToMachine(mod *SynMod) (util.IMachine, []error) {
 		Globals: make(util.Env, len(mod.Defs)),
 	}
 
-	if MARK7 {
+	if _MARK7 {
 		for name, def := range primsMark7Globals {
 			if node, err := me.compileGlobal_SchemeSC(def); err != nil {
 				errs = append(errs, err)
@@ -93,7 +93,7 @@ func (me *gMachine) compileGlobal_SchemeSC(global *SynDef) (node nodeGlobal, err
 	for i, arg := range global.Args {
 		argsenv[arg] = i
 	}
-	if MARK7 {
+	if _MARK7 {
 		node = nodeGlobal{len(global.Args), me.compileExprMark7_SchemeR(len(global.Args))(global.Body, argsenv)}
 	} else {
 		node = nodeGlobal{len(global.Args), me.compileGlobalBody_SchemeR(global.Body, argsenv)}
@@ -141,23 +141,23 @@ func (me *gMachine) compileExprStrict_SchemeE(expression IExpr, argsEnv env) cod
 		return me.compileLet(me.compileExprStrict_SchemeE, expr, argsEnv, INSTR_SLIDE)
 	case *ExprCtor:
 		comp := me.compileExprStrict_SchemeE
-		if MARK7 {
+		if _MARK7 {
 			comp = me.compileExprLazy_SchemeC
 		}
-		return me.compileCtorAppl(comp, expr, nil, argsEnv, MARK7)
+		return me.compileCtorAppl(comp, expr, nil, argsEnv, _MARK7)
 	case *ExprCaseOf:
 		return append(me.compileExprStrict_SchemeE(expr.Scrut, argsEnv), instr{Op: INSTR_CASE_JUMP,
 			CaseJump: me.compileCaseAlts_SchemeD(me.compileExprStrictSplitSlide_SchemeA, expr.Alts, argsEnv)})
 	case *ExprCall:
 		if ctor, ctorrevargs := expr.FlattenedIfEffectivelyCtor(); ctor != nil {
 			comp := me.compileExprStrict_SchemeE
-			if MARK7 {
+			if _MARK7 {
 				comp = me.compileExprLazy_SchemeC
 			}
-			return me.compileCtorAppl(comp, ctor, ctorrevargs, argsEnv, MARK7)
+			return me.compileCtorAppl(comp, ctor, ctorrevargs, argsEnv, _MARK7)
 		}
 
-		if instrs := me.compilePrimsMaybe(me.compileExprStrict_SchemeE, expr, argsEnv, 1, MARK7); len(instrs) > 0 {
+		if instrs := me.compilePrimsMaybe(me.compileExprStrict_SchemeE, expr, argsEnv, 1, _MARK7); len(instrs) > 0 {
 			return instrs
 		}
 	}
