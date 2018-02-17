@@ -5,8 +5,8 @@ import (
 )
 
 type IMachine interface {
-	Eval(string) (interface{}, Stats, error)
-	String(interface{}) string
+	Eval(argLessDefName string) (result interface{}, stats Stats, err error)
+	String(result interface{}) string
 }
 
 type INode interface {

@@ -9,7 +9,7 @@ func (me *ExprCaseOf) ExtractIntoDef(name string, topLevel bool, lookupEnv map[s
 }
 
 func (me *exprComp) extractIntoDef(this IExpr, name string, topLevel bool, lookupEnv map[string]bool) (*SynDef, IExpr) {
-	i, free, def := 0, make(map[string]bool), SynDef{Name: name, TopLevel: topLevel, Body: this}
+	i, free, def := 0, make(map[string]bool, 8), SynDef{Name: name, TopLevel: topLevel, Body: this}
 	this.FreeVars(free, lookupEnv)
 	def.toks, def.Args = me.toks, make([]string, len(free))
 	for name := range free {

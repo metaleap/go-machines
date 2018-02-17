@@ -17,11 +17,11 @@ func (me *ExprCall) FreeVars(freeVarNames map[string]bool, lookupEnvs ...map[str
 }
 
 func (me *ExprLambda) FreeVars(freeVarNames map[string]bool, lookupEnvs ...map[string]bool) {
-	me.Body.FreeVars(freeVarNames, append(lookupEnvs, LookupEnvFrom(nil, nil, nil, me.Args))...)
+	me.Body.FreeVars(freeVarNames, append(lookupEnvs, NewLookupEnv(nil, nil, nil, me.Args))...)
 }
 
 func (me *ExprLetIn) FreeVars(freeVarNames map[string]bool, lookupEnvs ...map[string]bool) {
-	defsenv := LookupEnvFrom(me.Defs, nil, nil, nil)
+	defsenv := NewLookupEnv(me.Defs, nil, nil, nil)
 	combined := append(lookupEnvs, defsenv)
 	for _, def := range me.Defs {
 		if me.Rec {
@@ -36,6 +36,6 @@ func (me *ExprLetIn) FreeVars(freeVarNames map[string]bool, lookupEnvs ...map[st
 func (me *ExprCaseOf) FreeVars(freeVarNames map[string]bool, lookupEnvs ...map[string]bool) {
 	me.Scrut.FreeVars(freeVarNames, lookupEnvs...)
 	for _, alt := range me.Alts {
-		alt.Body.FreeVars(freeVarNames, append(lookupEnvs, LookupEnvFrom(nil, nil, nil, alt.Binds))...)
+		alt.Body.FreeVars(freeVarNames, append(lookupEnvs, NewLookupEnv(nil, nil, nil, alt.Binds))...)
 	}
 }
