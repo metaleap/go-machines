@@ -108,7 +108,7 @@ func (me *SyntaxTreePrinter) expr(w *bytes.Buffer, expression IExpr, parensUnles
 		me.curIndent++
 		w.WriteString(strings.Repeat("  ", me.curIndent))
 		for _, alt := range expr.Alts {
-			w.WriteString(strconv.FormatUint(alt.Tag, 10))
+			w.WriteString(strconv.Itoa(alt.Tag))
 			for _, bind := range alt.Binds {
 				w.WriteRune(' ')
 				w.WriteString(bind)

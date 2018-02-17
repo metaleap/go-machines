@@ -65,6 +65,16 @@ func CompileToMachine(mod *SynMod) (util.IMachine, []error) {
 		Globals: make(util.Env, len(mod.Defs)),
 	}
 
+	if MARK7 {
+		for name, def := range primsMark7Globals {
+			if node, err := me.compileGlobal_SchemeSC(def); err != nil {
+				errs = append(errs, err)
+			} else {
+				primsPrecompiledForLazy[name] = node
+			}
+		}
+	}
+
 	for primname, primnode := range primsPrecompiledForLazy {
 		me.Globals[primname] = me.Heap.Alloc(primnode)
 	}
@@ -84,19 +94,35 @@ func (me *gMachine) compileGlobal_SchemeSC(global *SynDef) (node nodeGlobal, err
 	for i, arg := range global.Args {
 		argsenv[arg] = i
 	}
-	node = nodeGlobal{len(global.Args), me.compileGlobalBody_SchemeR(global.Body, argsenv)}
+	node = nodeGlobal{len(global.Args), me.compileExprMark7_SchemeR(len(global.Args))(global.Body, argsenv)}
 	if global.Name == "fac" {
 		println(node.Code.String())
 	}
 	return
 }
 
-func (me *gMachine) compileGlobalBody_SchemeR(bodyexpr IExpr, argsEnv env) code {
-	return append(me.compileExprStrict_SchemeE(bodyexpr, argsEnv),
-		instr{Op: INSTR_UPDATE, Int: len(argsEnv)},
-		instr{Op: INSTR_POP, Int: len(argsEnv)},
-		instr{Op: INSTR_UNWIND},
-	)
+func (me *gMachine) compileExprMark7_SchemeR(d int) compilation {
+	return func(expr IExpr, argsenv env) code {
+		return me.compileExprMark7_SchemeR_(expr, argsenv, d)
+	}
+}
+
+func (me *gMachine) compileExprMark7_SchemeR_(expression IExpr, argsEnv env, d int) code {
+	switch expr := expression.(type) {
+	case *ExprLetIn:
+		return me.compileLet(me.compileExprMark7_SchemeR(d+len(expr.Defs)), expr, argsEnv, 0)
+	case *ExprCall:
+		if callee, _ := expr.Callee.(*ExprCall); callee != nil {
+			if ifcode := me.compilePrimIfMaybe(me.compileExprMark7_SchemeR(d), expr, callee, argsEnv, true); len(ifcode) > 0 {
+				return ifcode
+			}
+		}
+	case *ExprCaseOf:
+		return append(me.compileExprStrict_SchemeE(expr.Scrut, argsEnv),
+			instr{Op: INSTR_CASE_JUMP, CaseJump: me.compileCaseAlts_SchemeD(me.compileExprStrictSplit_SchemeR(d), expr.Alts, argsEnv)})
+	}
+	return append(me.compileExprStrict_SchemeE(expression, argsEnv),
+		instr{Op: INSTR_UPDATE, Int: d}, instr{Op: INSTR_POP, Int: d}, instr{Op: INSTR_UNWIND})
 }
 
 func (me *gMachine) compileExprStrict_SchemeE(expression IExpr, argsEnv env) code {
@@ -106,9 +132,9 @@ func (me *gMachine) compileExprStrict_SchemeE(expression IExpr, argsEnv env) cod
 	case *ExprLetIn:
 		return me.compileLet(me.compileExprStrict_SchemeE, expr, argsEnv, INSTR_SLIDE)
 	case *ExprCtor:
-		comp := me.compileExprLazy_SchemeC
-		if !MARK7 {
-			comp = me.compileExprStrict_SchemeE
+		comp := me.compileExprStrict_SchemeE
+		if MARK7 {
+			comp = me.compileExprLazy_SchemeC
 		}
 		return me.compileCtorAppl(comp, expr, nil, argsEnv, MARK7)
 	case *ExprCaseOf:
@@ -116,9 +142,9 @@ func (me *gMachine) compileExprStrict_SchemeE(expression IExpr, argsEnv env) cod
 			CaseJump: me.compileCaseAlts_SchemeD(me.compileExprStrictSplitSlide_SchemeA, expr.Alts, argsEnv)})
 	case *ExprCall:
 		if ctor, ctorrevargs := expr.FlattenedIfEffectivelyCtor(); ctor != nil {
-			comp := me.compileExprLazy_SchemeC
-			if !MARK7 {
-				comp = me.compileExprStrict_SchemeE
+			comp := me.compileExprStrict_SchemeE
+			if MARK7 {
+				comp = me.compileExprLazy_SchemeC
 			}
 			return me.compileCtorAppl(comp, ctor, ctorrevargs, argsEnv, MARK7)
 		}
@@ -130,11 +156,19 @@ func (me *gMachine) compileExprStrict_SchemeE(expression IExpr, argsEnv env) cod
 	return append(me.compileExprLazy_SchemeC(expression, argsEnv), instr{Op: INSTR_EVAL})
 }
 
-func (me *gMachine) compileExprStrictSplitSlide_SchemeA(offset int, expression IExpr, argsEnv env) code {
-	// does not `offset` the given `argsEnv`, expected to be passed already-`envOffsetBy`
-	return append(append(code{{Op: INSTR_CASE_SPLIT, Int: offset}},
-		me.compileExprStrict_SchemeE(expression, argsEnv)...,
-	), instr{Op: INSTR_SLIDE, Int: offset})
+func (me *gMachine) compileExprStrictSplitSlide_SchemeA(offset int, expr IExpr, argsEnv env) code {
+	return append(me.compileExprStrictSplit(me.compileExprStrict_SchemeE, expr, argsEnv, offset),
+		instr{Op: INSTR_SLIDE, Int: offset})
+}
+
+func (me *gMachine) compileExprStrictSplit_SchemeR(d int) compilationN {
+	return func(offset int, expr IExpr, argsEnv env) code {
+		return me.compileExprStrictSplit(me.compileExprMark7_SchemeR(d), expr, argsEnv, offset)
+	}
+}
+
+func (me *gMachine) compileExprStrictSplit(comp compilation, expr IExpr, argsEnv env, offset int) code {
+	return append(code{{Op: INSTR_CASE_SPLIT, Int: offset}}, comp(expr, argsEnv)...)
 }
 
 func (me *gMachine) compileExprStrictMark7_SchemeB(expression IExpr, argsEnv env) code {
@@ -175,12 +209,6 @@ func (me *gMachine) compileExprLazy_SchemeC(expression IExpr, argsEnv env) code 
 	case *ExprCaseOf:
 		dynname := "#case" + strconv.FormatInt(time.Now().UnixNano(), 16)
 		dynglobaldef, dynglobalcall := expr.ExtractIntoDef(dynname, true, NewLookupEnv(nil, me.Globals, nil, nil))
-		// println("DEF:")
-		// src, _ := (&corelang.SyntaxTreePrinter{}).Def(dynglobaldef)
-		// println(src)
-		// println("CALL:")
-		// src, _ = (&corelang.SyntaxTreePrinter{}).Expr(dynglobalcall)
-		// println(src)
 		if dynglobalnode, err := me.compileGlobal_SchemeSC(dynglobaldef); err != nil {
 			panic(err)
 		} else {
@@ -193,7 +221,7 @@ func (me *gMachine) compileExprLazy_SchemeC(expression IExpr, argsEnv env) code 
 }
 
 func (me *gMachine) compileCtorAppl(comp compilation, ctor *ExprCtor, reverseArgs []IExpr, argsEnv env, fromMark7E bool) code {
-	if (!fromMark7E) && len(reverseArgs) != ctor.Arity {
+	if len(reverseArgs) != ctor.Arity {
 		dynglobalname := "#ctor#" + strconv.Itoa(ctor.Tag) + "#" + strconv.Itoa(ctor.Arity)
 		dynglobaladdr := me.Globals[dynglobalname]
 		if dynglobaladdr == 0 {
@@ -203,17 +231,11 @@ func (me *gMachine) compileCtorAppl(comp compilation, ctor *ExprCtor, reverseArg
 			} else {
 				me.Globals[dynglobalname] = me.Heap.Alloc(dynglobalnode)
 			}
-			// println("\n\nDEF:\n\n")
-			// src, _ := (&corelang.SyntaxTreePrinter{}).Def(dynglobaldef)
-			// println(src)
 		}
 		dynglobalcall := Call(Id(dynglobalname), reverseArgs...)
-		// println("\n\nCALL:\n\n")
-		// src, _ := (&corelang.SyntaxTreePrinter{}).Expr(dynglobalcall)
-		// println(src)
 		return comp(dynglobalcall, argsEnv)
 	}
-	instrs := make(code, 0, len(reverseArgs)*2)
+	instrs := make(code, 0, len(reverseArgs)*3) // arbitrary extra cap, exact need not known
 	for i, arg := range reverseArgs {
 		argsenv := argsEnv
 		if !fromMark7E {
@@ -244,22 +266,42 @@ func (me *gMachine) compileLet(compbody compilation, let *ExprLetIn, argsEnv env
 		}
 	}
 
-	instrs = append(instrs, compbody(let.Body, bodyargsenv)...)
-	instrs = append(instrs, instr{Op: finalOp, Int: n})
+	if instrs = append(instrs, compbody(let.Body, bodyargsenv)...); finalOp > 0 {
+		instrs = append(instrs, instr{Op: finalOp, Int: n})
+	}
 	return
 }
 
 func (me *gMachine) compileCaseAlts_SchemeD(compn compilationN, caseAlts []*SynCaseAlt, argsEnv env) (jumpblocks []code) {
-	jumpblocks = make([]code, len(caseAlts))
-	for _, alt := range caseAlts {
-		n := len(alt.Binds)
-		bodyargsenv := me.envOffsetBy(argsEnv, n)
-		for i, name := range alt.Binds {
-			bodyargsenv[name] = i // = n - (i + 1)
+	var tagmax int
+	for i := 0; i < len(caseAlts); i++ {
+		if caseAlts[i].Tag > tagmax {
+			tagmax = caseAlts[i].Tag
 		}
-		jumpblocks[alt.Tag] = compn(n, alt.Body, bodyargsenv)
+	}
+	jumpblocks = make([]code, tagmax+1)
+	for _, alt := range caseAlts {
+		jumpblocks[alt.Tag] = me.compileCaseAlt_SchemeA(compn, alt, argsEnv)
 	}
 	return
+}
+
+func (me *gMachine) compileCaseAlt_SchemeA(compn compilationN, alt *SynCaseAlt, argsEnv env) code {
+	n := len(alt.Binds)
+	bodyargsenv := me.envOffsetBy(argsEnv, n)
+	for i, name := range alt.Binds {
+		bodyargsenv[name] = i // = n - (i + 1)
+	}
+	return compn(n, alt.Body, bodyargsenv)
+}
+
+func (me *gMachine) compileCaseAlt_SchemeAR(compn compilationN, alt *SynCaseAlt, argsEnv env, d int) code {
+	n := len(alt.Binds)
+	bodyargsenv := me.envOffsetBy(argsEnv, n)
+	for i, name := range alt.Binds {
+		bodyargsenv[name] = i // = n - (i + 1)
+	}
+	return compn(n, alt.Body, bodyargsenv)
 }
 
 func (me *gMachine) compilePrimsMaybe(comp compilation, expr *ExprCall, argsEnv env, dyadicOffset int, mark7WrapInB bool) code {
@@ -288,20 +330,38 @@ func (me *gMachine) compilePrimsMaybe(comp compilation, expr *ExprCall, argsEnv 
 			}
 		} else if maybeif, _ := callee.Callee.(*ExprCall); maybeif != nil {
 			if ifname, _ := maybeif.Callee.(*ExprIdent); ifname != nil && ifname.Name == "if" {
-				cond, condthen, condelse := maybeif.Arg, callee.Arg, expr.Arg
-				compcond := comp
+				compcond, cond, condthen, condelse := comp, maybeif.Arg, callee.Arg, expr.Arg
 				if mark7WrapInB {
 					compcond = me.compileExprStrictMark7_SchemeB
 				}
-				return append(compcond(cond, argsEnv), instr{
-					Op:       INSTR_PRIM_COND,
-					CondThen: comp(condthen, argsEnv),
-					CondElse: comp(condelse, argsEnv),
-				})
+				return me.compilePrimIf(comp, compcond, cond, condthen, condelse, argsEnv)
 			}
+		} else if ifcode := me.compilePrimIfMaybe(comp, expr, callee, argsEnv, mark7WrapInB); len(ifcode) > 0 {
+			return ifcode
 		}
 	}
 	return nil
+}
+
+func (me *gMachine) compilePrimIfMaybe(comp compilation, expr *ExprCall, exprCallee *ExprCall, argsEnv env, mark7WrapInB bool) code {
+	if maybeif, _ := exprCallee.Callee.(*ExprCall); maybeif != nil {
+		if ifname, _ := maybeif.Callee.(*ExprIdent); ifname != nil && ifname.Name == "if" {
+			compcond, cond, condthen, condelse := comp, maybeif.Arg, exprCallee.Arg, expr.Arg
+			if mark7WrapInB {
+				compcond = me.compileExprStrictMark7_SchemeB
+			}
+			return me.compilePrimIf(comp, compcond, cond, condthen, condelse, argsEnv)
+		}
+	}
+	return nil
+}
+
+func (me *gMachine) compilePrimIf(comp compilation, compcond compilation, cond IExpr, condthen IExpr, condelse IExpr, argsEnv env) code {
+	return append(compcond(cond, argsEnv), instr{
+		Op:       INSTR_PRIM_COND,
+		CondThen: comp(condthen, argsEnv),
+		CondElse: comp(condelse, argsEnv),
+	})
 }
 
 func (*gMachine) envOffsetBy(argsEnv env, offsetBy int) (envOffset env) {

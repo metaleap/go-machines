@@ -296,7 +296,7 @@ func parseKeywordCaseAlt(tokens lex.Tokens) (*SynCaseAlt, lex.Tokens, *Error) {
 		return nil, nil, errTok(&tokens[0], "incomplete `CASE` alternative (possibly mal-indentation)")
 	}
 
-	i, alt := 0, &SynCaseAlt{Tag: tokens[0].Uint}
+	i, alt := 0, &SynCaseAlt{Tag: int(tokens[0].Uint)}
 	alt.init(toks)
 
 	// binds up until `->`

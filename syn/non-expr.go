@@ -14,7 +14,7 @@ type SynDef struct {
 
 type SynCaseAlt struct {
 	syn
-	Tag   uint64
+	Tag   int
 	Binds []string
 	Body  IExpr
 }

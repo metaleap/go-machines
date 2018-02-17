@@ -26,7 +26,7 @@ type dumpedState struct {
 }
 
 func (me *gMachine) Eval(name string) (val interface{}, stats clutil.Stats, err error) {
-	defer clutil.Catch(&err)
+	// defer clutil.Catch(&err)
 	me.StackA, me.StackDump, me.StackInts = make(clutil.StackA, 0, 64), make([]dumpedState, 0, 16), make(clutil.StackI, 0, 64)
 	me.Code = code{{Op: INSTR_PUSHGLOBAL, Name: name}, {Op: INSTR_EVAL}}
 	// println(me.Heap[me.Globals[name]].(nodeGlobal).Code.String())

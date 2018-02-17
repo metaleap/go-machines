@@ -6,8 +6,7 @@ package main
 const srcMod = `
 
 page136 x =
-    LET foo = CASE x OF 0 -> 42
-                        1 -> 111
+    LET foo = CASE x OF 1 -> 111
                         2 -> 222
     IN (2 2) foo (1 0)
 
@@ -39,21 +38,19 @@ infinite n = cons n (infinite n)
 listish = hd (tl (infinite 4))
 
 
-fac n = if (n==0) 1 (n * (fac (n - 1))) // 'when' instead of 'if' executes approx. ~25-40% more steps & appls
+fac n = if (n==0) 1 (n * (fac (n - 1))) // 'when' instead of 'if' executes approx. ~20-30% more steps & appls
 
 checkIfLexedOpish = 3 × (4 ÷ 5)
 
 when cond then else =
     CASE cond OF
-    0 -> 42
     1 -> else
     2 -> then
 
 
 
 test ctor =
-    CASE ctor OF    0 -> 42
-                    1 n -> neg n
+    CASE ctor OF    1 n -> neg n
                     2 x y -> x + y
                     3 x y -> x * y
 
