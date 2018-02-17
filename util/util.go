@@ -31,6 +31,14 @@ func (me StackA) Dropped(n int) StackA {
 	return me[:len(me)-n]
 }
 
+func (me StackA) Pos0() int {
+	return len(me) - 1
+}
+
+func (me StackA) Pos1() int {
+	return len(me) - 2
+}
+
 func (me StackA) Pos(i int) int {
 	return len(me) - (1 + i)
 }
@@ -43,6 +51,14 @@ func (me StackA) Pushed(addr Addr) StackA {
 	return append(me, addr)
 }
 
+func (me StackA) Top0() Addr {
+	return me[len(me)-1]
+}
+
+func (me StackA) Top1() Addr {
+	return me[len(me)-2]
+}
+
 func (me StackA) Top(i int) Addr {
 	return me[len(me)-(1+i)]
 }
@@ -51,6 +67,14 @@ type StackI []int
 
 func (me StackI) Dropped(n int) StackI {
 	return me[:len(me)-n]
+}
+
+func (me StackI) Pos0() int {
+	return len(me) - 1
+}
+
+func (me StackI) Pos1() int {
+	return len(me) - 2
 }
 
 func (me StackI) Pos(i int) int {
@@ -63,6 +87,14 @@ func (me *StackI) Push(i int) {
 
 func (me StackI) Pushed(i int) StackI {
 	return append(me, i)
+}
+
+func (me StackI) Top0() int {
+	return me[len(me)-1]
+}
+
+func (me StackI) Top1() int {
+	return me[len(me)-2]
 }
 
 func (me StackI) Top(i int) int {

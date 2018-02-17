@@ -8,7 +8,7 @@ const srcMod = `
 page136 x =
     LET foo = CASE x OF 1 -> 111
                         2 -> 222
-    IN (2 2) foo (1 0)
+    IN (2 2) (123 0) foo
 
 p136 = page136 (2 0)
 
@@ -38,7 +38,7 @@ infinite n = cons n (infinite n)
 listish = hd (tl (infinite 4))
 
 
-fac n = if (n==0) 1 (n * (fac (n - 1))) // 'when' instead of 'if' executes approx. ~20-30% more steps & appls
+fac n = when (n==0) 1 (n * (fac (n - 1))) // 'when' instead of 'if' executes approx. ~20-30% more steps & appls
 
 checkIfLexedOpish = 3 × (4 ÷ 5)
 

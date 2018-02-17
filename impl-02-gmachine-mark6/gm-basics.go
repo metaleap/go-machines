@@ -6,7 +6,7 @@ import (
 	"github.com/metaleap/go-corelang/util"
 )
 
-const MARK7 = false // dont set true yet. compilation part of "mark 7" section (p143ff) still missing the updates to the R scheme (p147)
+const MARK7 = false // buggy for the p136 and p137_* scenarios
 
 type gMachine struct {
 	Heap      clutil.HeapA // no GC here, forever growing
@@ -31,7 +31,7 @@ func (me *gMachine) Eval(name string) (val interface{}, stats clutil.Stats, err 
 	me.Code = code{{Op: INSTR_PUSHGLOBAL, Name: name}, {Op: INSTR_EVAL}}
 	// println(me.Heap[me.Globals[name]].(nodeGlobal).Code.String())
 	me.eval()
-	stats, val = me.Stats, me.Heap[me.StackA.Top(0)]
+	stats, val = me.Stats, me.Heap[me.StackA.Top0()]
 	return
 }
 
@@ -49,33 +49,33 @@ func (me *gMachine) eval() {
 		case INSTR_PUSHARG:
 			me.StackA.Push(me.StackA.Top(me.Code[0].Int))
 		case INSTR_MAKEAPPL:
-			addrcallee := me.StackA.Top(0)
-			addrarg := me.StackA.Top(1)
+			addrcallee := me.StackA.Top0()
+			addrarg := me.StackA.Top1()
 			addr := me.Heap.Alloc(nodeAppl{Callee: addrcallee, Arg: addrarg})
-			me.StackA[me.StackA.Pos(1)] = addr
+			me.StackA[me.StackA.Pos1()] = addr
 			me.StackA = me.StackA.Dropped(1)
 		case INSTR_UPDATE:
-			pointee := me.StackA.Top(0)
+			pointee := me.StackA.Top0()
 			addrptr := me.Heap.Alloc(nodeIndirection{Addr: pointee})
 			me.StackA = me.StackA.Dropped(1)
 			me.StackA[me.StackA.Pos(me.Code[0].Int)] = addrptr
 		case INSTR_POP:
 			me.StackA = me.StackA.Dropped(me.Code[0].Int)
 		case INSTR_SLIDE:
-			keep := me.StackA.Top(0)
+			keep := me.StackA.Top0()
 			me.StackA = me.StackA.Dropped(me.Code[0].Int)
-			me.StackA[me.StackA.Pos(0)] = keep
+			me.StackA[me.StackA.Pos0()] = keep
 		case INSTR_ALLOC:
 			for i := 0; i < me.Code[0].Int; i++ {
 				me.StackA.Push(me.Heap.Alloc(nodeIndirection{}))
 			}
 		case INSTR_EVAL:
-			pos := me.StackA.Pos(0)
+			pos := me.StackA.Pos0()
 			me.StackDump = append(me.StackDump, dumpedState{Code: next, Stack: me.StackA[:pos]})
 			me.StackA = me.StackA[pos:]
 			next = code{{Op: INSTR_UNWIND}}
 		case INSTR_UNWIND:
-			addr := me.StackA.Top(0)
+			addr := me.StackA.Top0()
 			node := me.Heap[addr]
 			switch n := node.(type) {
 			case nodeInt, nodeCtor:
@@ -87,7 +87,7 @@ func (me *gMachine) eval() {
 						restore.Code, me.StackDump[:len(me.StackDump)-1], append(restore.Stack, addr)
 				}
 			case nodeIndirection:
-				me.StackA[me.StackA.Pos(0)] = n.Addr
+				me.StackA[me.StackA.Pos0()] = n.Addr
 				next = code{instr{Op: INSTR_UNWIND}} // unwind again
 			case nodeAppl:
 				me.Stats.NumAppls++
@@ -115,7 +115,7 @@ func (me *gMachine) eval() {
 			}
 		case INSTR_PRIM_CMP_EQ, INSTR_PRIM_CMP_NEQ, INSTR_PRIM_CMP_LT, INSTR_PRIM_CMP_LEQ, INSTR_PRIM_CMP_GT, INSTR_PRIM_CMP_GEQ:
 			if MARK7 {
-				num1, num2 := me.StackInts.Top(0), me.StackInts.Top(1)
+				num1, num2 := me.StackInts.Top0(), me.StackInts.Top1()
 				var istrue bool
 				switch me.Code[0].Op {
 				case INSTR_PRIM_CMP_EQ:
@@ -138,9 +138,9 @@ func (me *gMachine) eval() {
 					result = 1
 				}
 				me.StackInts = me.StackInts.Dropped(1)
-				me.StackInts[me.StackInts.Pos(0)] = result
+				me.StackInts[me.StackInts.Pos0()] = result
 			} else {
-				node1, node2 := me.Heap[me.StackA.Top(0)].(nodeInt), me.Heap[me.StackA.Top(1)].(nodeInt)
+				node1, node2 := me.Heap[me.StackA.Top0()].(nodeInt), me.Heap[me.StackA.Top1()].(nodeInt)
 				var istrue bool
 				switch me.Code[0].Op {
 				case INSTR_PRIM_CMP_EQ:
@@ -164,11 +164,11 @@ func (me *gMachine) eval() {
 				}
 				addr := me.Heap.Alloc(result)
 				me.StackA = me.StackA.Dropped(1)
-				me.StackA[me.StackA.Pos(0)] = addr
+				me.StackA[me.StackA.Pos0()] = addr
 			}
 		case INSTR_PRIM_AR_ADD, INSTR_PRIM_AR_SUB, INSTR_PRIM_AR_MUL, INSTR_PRIM_AR_DIV:
 			if MARK7 {
-				num1, num2 := me.StackInts.Top(0), me.StackInts.Top(1)
+				num1, num2 := me.StackInts.Top0(), me.StackInts.Top1()
 				var result int
 				switch me.Code[0].Op {
 				case INSTR_PRIM_AR_ADD:
@@ -181,9 +181,9 @@ func (me *gMachine) eval() {
 					result = num1 / num2
 				}
 				me.StackInts = me.StackInts.Dropped(1)
-				me.StackInts[me.StackInts.Pos(0)] = result
+				me.StackInts[me.StackInts.Pos0()] = result
 			} else {
-				node1, node2 := me.Heap[me.StackA.Top(0)].(nodeInt), me.Heap[me.StackA.Top(1)].(nodeInt)
+				node1, node2 := me.Heap[me.StackA.Top0()].(nodeInt), me.Heap[me.StackA.Top1()].(nodeInt)
 				var result nodeInt
 				switch me.Code[0].Op {
 				case INSTR_PRIM_AR_ADD:
@@ -197,19 +197,19 @@ func (me *gMachine) eval() {
 				}
 				addr := me.Heap.Alloc(result)
 				me.StackA = me.StackA.Dropped(1)
-				me.StackA[me.StackA.Pos(0)] = addr
+				me.StackA[me.StackA.Pos0()] = addr
 			}
 		case INSTR_PRIM_AR_NEG:
 			if MARK7 {
-				me.StackInts[me.StackInts.Pos(0)] = -me.StackInts[me.StackInts.Pos(0)]
+				me.StackInts[me.StackInts.Pos0()] = -me.StackInts[me.StackInts.Pos0()]
 			} else {
-				node := me.Heap[me.StackA.Top(0)].(nodeInt)
+				node := me.Heap[me.StackA.Top0()].(nodeInt)
 				addr := me.Heap.Alloc(-node)
-				me.StackA[me.StackA.Pos(0)] = addr
+				me.StackA[me.StackA.Pos0()] = addr
 			}
 		case INSTR_PRIM_COND:
 			if MARK7 {
-				bnum := me.StackInts.Top(0)
+				bnum := me.StackInts.Top0()
 				me.StackInts = me.StackInts.Dropped(1)
 				if bnum == 2 {
 					next = append(me.Code[0].CondThen, next...)
@@ -219,7 +219,7 @@ func (me *gMachine) eval() {
 					panic(bnum)
 				}
 			} else {
-				if node := me.Heap[me.StackA.Top(0)].(nodeCtor); node.Tag == 2 {
+				if node := me.Heap[me.StackA.Top0()].(nodeCtor); node.Tag == 2 {
 					next = append(me.Code[0].CondThen, next...)
 				} else if node.Tag == 1 {
 					next = append(me.Code[0].CondElse, next...)
@@ -236,10 +236,10 @@ func (me *gMachine) eval() {
 			}
 			me.StackA = me.StackA.Dropped(arity).Pushed(me.Heap.Alloc(node))
 		case INSTR_CASE_JUMP:
-			node := me.Heap[me.StackA.Top(0)].(nodeCtor)
+			node := me.Heap[me.StackA.Top0()].(nodeCtor)
 			next = append(me.Code[0].CaseJump[node.Tag], next...)
 		case INSTR_CASE_SPLIT:
-			node := me.Heap[me.StackA.Top(0)].(nodeCtor)
+			node := me.Heap[me.StackA.Top0()].(nodeCtor)
 			me.StackA = me.StackA.Dropped(1)
 			for i := /*len(node.Items)*/ me.Code[0].Int - 1; i > -1; i-- {
 				me.StackA.Push(node.Items[i])
@@ -247,13 +247,13 @@ func (me *gMachine) eval() {
 		case INSTR_MARK7_PUSHINTVAL:
 			me.StackInts.Push(me.Code[0].Int)
 		case INSTR_MARK7_MAKENODEBOOL:
-			me.StackA.Push(me.Heap.Alloc(nodeCtor{Tag: me.StackInts.Top(0)}))
+			me.StackA.Push(me.Heap.Alloc(nodeCtor{Tag: me.StackInts.Top0()}))
 			me.StackInts = me.StackInts.Dropped(1)
 		case INSTR_MARK7_MAKENODEINT:
-			me.StackA.Push(me.Heap.Alloc(nodeInt(me.StackInts.Top(0))))
+			me.StackA.Push(me.Heap.Alloc(nodeInt(me.StackInts.Top0())))
 			me.StackInts = me.StackInts.Dropped(1)
 		case INSTR_MARK7_PUSHNODEINT:
-			addr := me.StackA.Top(0)
+			addr := me.StackA.Top0()
 			me.StackA = me.StackA.Dropped(1)
 			switch node := me.Heap[addr].(type) {
 			case nodeCtor:
