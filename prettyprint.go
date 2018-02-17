@@ -13,14 +13,14 @@ type SyntaxTreePrinter struct {
 	curIndent int
 }
 
-func (me *SyntaxTreePrinter) Mod(mod *SynMod) (string, error) {
+func (me *SyntaxTreePrinter) Mod(mod *SynMod) string {
 	var buf bytes.Buffer
 	for _, def := range mod.Defs {
 		me.curIndent = 0
 		me.def(&buf, def)
 		buf.WriteString("\n\n")
 	}
-	return buf.String(), nil
+	return buf.String()
 }
 
 func (me *SyntaxTreePrinter) def(w *bytes.Buffer, def *SynDef) {
@@ -36,10 +36,10 @@ func (me *SyntaxTreePrinter) def(w *bytes.Buffer, def *SynDef) {
 	me.curIndent--
 }
 
-func (me *SyntaxTreePrinter) Def(def *SynDef) (string, error) {
+func (me *SyntaxTreePrinter) Def(def *SynDef) string {
 	var buf bytes.Buffer
 	me.def(&buf, def)
-	return buf.String(), nil
+	return buf.String()
 }
 
 func (me *SyntaxTreePrinter) expr(w *bytes.Buffer, expression IExpr, parensUnlessAtomic bool) {
@@ -131,8 +131,8 @@ func (me *SyntaxTreePrinter) expr(w *bytes.Buffer, expression IExpr, parensUnles
 	return
 }
 
-func (me *SyntaxTreePrinter) Expr(expr IExpr) (string, error) {
+func (me *SyntaxTreePrinter) Expr(expr IExpr) string {
 	var buf bytes.Buffer
 	me.expr(&buf, expr, false)
-	return buf.String(), nil
+	return buf.String()
 }

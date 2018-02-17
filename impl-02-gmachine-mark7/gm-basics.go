@@ -266,9 +266,11 @@ func (me *gMachine) eval() {
 			panic(me.Code[0].Op)
 		}
 
-		me.Code = next
-		if me.Stats.MaxStack < len(me.StackA) {
+		if me.Code = next; me.Stats.MaxStack < len(me.StackA) {
 			me.Stats.MaxStack = len(me.StackA)
+		}
+		if me.Stats.NumSteps > 999999 {
+			panic("exceeded 1 million steps: probable infinite loop, stopping evaluation")
 		}
 	}
 	me.Stats.HeapSize = len(me.Heap)

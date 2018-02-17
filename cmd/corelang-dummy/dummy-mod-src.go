@@ -78,36 +78,13 @@ main1 k = LET REC
         fun = k0 k k
     IN (pp 567) fun
 
-main2 = LET REC f = f x IN f
-
 
 // random noisy rubbish..
 
 foo=bar
 
 
-hello = LET
-        h = "Hello"
-        IN k0 h "disc\"arded"
-
-
-world =
-  LET d = "ditched"
-      w = "World"
-  IN k1 (k0 d "ditched") w
-
-
-
-helloOrWorld h0w1 =
-  LET foo = h0w1
-      h = hello
-      w = world
-  IN CASE foo OF
-    0 -> h
-    1 -> w
-
 
 checkIfLexedOpish = 3 × (4 ÷ 5)
 
-moo = "bar"
 `

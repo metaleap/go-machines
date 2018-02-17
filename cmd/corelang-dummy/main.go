@@ -17,15 +17,24 @@ import (
 func writeLn(s string) { _, _ = os.Stdout.WriteString(s + "\n") }
 
 func main() {
-	mod := &clsyn.SynMod{Defs: corelang.PreludeDefs}
-	if !lexAndParse("from-const-srcMod-in.dummy-mod-src.go", srcMod, mod) {
+	fname, mod := "from `srcMod` in `dummy-mod-src.go`", &clsyn.SynMod{Defs: corelang.PreludeDefs}
+	if !lexAndParse(fname, srcMod, mod) {
 		return
 	}
 
-	writeLn("module lexed and parsed, globals are:")
+	writeLn("module " + fname + " lexed and parsed, globals are:\n")
 	for defname := range mod.Defs {
-		writeLn("\t" + defname)
+		_, _ = os.Stdout.WriteString(" · " + defname)
 	}
+	writeLn("\n\n➜ enter any name to pretty-print the (parsed) AST")
+	writeLn("\n➜ define new globals via `name = expr`, `name x y z = expr` etc (any amount of args is fine)")
+	writeLn("\n➜ the following globals have no args:")
+	for _, def := range mod.Defs {
+		if len(def.Args) == 0 {
+			_, _ = os.Stdout.WriteString(" · " + def.Name)
+		}
+	}
+	writeLn("\n…and can be evaluated easily using `!<name>` or `?<name>`\n")
 	machine := recompile(mod)
 
 	multiline, repl, pprint := "", bufio.NewScanner(os.Stdin), &corelang.SyntaxTreePrinter{}
@@ -44,7 +53,7 @@ func main() {
 					for defname := range mod.Defs {
 						writeLn(defname)
 					}
-				} else if strings.HasPrefix(readln, "!") {
+				} else if readln[0] == '!' || readln[0] == '?' {
 					defname, starttime := readln[1:], time.Now()
 					val, stats, evalerr := machine.Eval(defname)
 					timetaken := time.Now().Sub(starttime)
@@ -56,8 +65,7 @@ func main() {
 				} else if def := mod.Defs[readln]; def == nil {
 					println("not found: " + readln)
 				} else {
-					srcfmt, _ := pprint.Def(mod.Defs[readln])
-					writeLn(srcfmt)
+					writeLn(pprint.Def(mod.Defs[readln]))
 				}
 			case lexAndParse("<input>", readln, mod):
 				machine = recompile(mod)
