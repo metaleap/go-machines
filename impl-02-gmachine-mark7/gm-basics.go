@@ -7,7 +7,7 @@ import (
 	"github.com/metaleap/go-corelang/util"
 )
 
-const MARK7 = false // still buggy for the p136 scenario
+const MARK7 = true // not a big gain in practice for this unoptimized prototype and its toy examples, still intrinsically a sane (and for real-world likely crucial) approach to have separate val stacks (in addition to addr stack)
 
 type gMachine struct {
 	Heap      clutil.HeapA // no GC here, forever growing
@@ -18,8 +18,6 @@ type gMachine struct {
 	StackInts clutil.StackI
 	Stats     clutil.Stats
 }
-
-type stepInstr func(*code)
 
 type dumpedState struct {
 	Code  code

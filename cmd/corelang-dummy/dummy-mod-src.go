@@ -6,11 +6,15 @@ package main
 const srcMod = `
 
 page136 x =
-    LET foo = CASE x OF 123 -> 111
-                        456 -> 222
-    IN (2 2) (123 0) foo
+    LET foo = CASE x OF 12 -> 111
+                        34 -> 222
+    IN (2 2) foo ((234 1) 77)
 
-p136 = page136 (456 0)
+z x = CASE x OF 12 -> 444
+                34 -> 555
+zz= (1234567890 1) (z (12 0))
+
+p136 = page136 (34 0)
 
 
 page137_1 x = (99 5) 123 x 333
@@ -24,7 +28,7 @@ p137_1 =
 
 page137_2 incompletector = incompletector 654
 
-p137_2 = (page137_2 ((99 3) 321)) 987
+p137_2 = (page137_2 ((88 3) 321)) 987
 
 
 
@@ -41,15 +45,16 @@ abort = abort
 infinite n = cons n (infinite n)
 listish = hd (tl (infinite 4))
 
-
-fac n = when (n==0) 1 (n * (fac (n - 1))) // 'when' instead of 'if' executes approx. ~20-30% more steps & appls
-
-checkIfLexedOpish = 3 × (4 ÷ 5)
-
 when cond then else =
     CASE cond OF
     1 -> else
     2 -> then
+
+
+fac n =                         // using 'when' instead of 'if' here works equivalently: but executes ~20-30% more steps and ~20-30% more calls; plus tends to take ~2x as long
+    if (n==0)
+    /*then*/ 1
+    /*else*/ (n * (fac (n - 1)))
 
 
 
@@ -101,6 +106,8 @@ helloOrWorld h0w1 =
     0 -> h
     1 -> w
 
+
+checkIfLexedOpish = 3 × (4 ÷ 5)
 
 moo = "bar"
 `

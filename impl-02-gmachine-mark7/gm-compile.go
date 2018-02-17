@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"time"
 
-	// "github.com/metaleap/go-corelang"
 	. "github.com/metaleap/go-corelang/syn"
 	util "github.com/metaleap/go-corelang/util"
 )
@@ -241,16 +240,18 @@ func (me *gMachine) compileCtorAppl(comp compilation, ctor *ExprCtor, reverseArg
 				me.Globals[dynglobalname] = me.Heap.Alloc(dynglobalnode)
 			}
 		}
-		dynglobalcall := Call(Id(dynglobalname), reverseArgs...)
+		var dynglobalcall IExpr = Id(dynglobalname)
+		if len(reverseArgs) > 0 {
+			dynglobalcall = Call(dynglobalcall, reverseArgs...)
+		}
 		return comp(dynglobalcall, argsEnv)
 	}
 	instrs := make(code, 0, len(reverseArgs)*3) // arbitrary extra cap, exact need not known
 	for i, arg := range reverseArgs {
-		argsenv := argsEnv
-		// if !fromMark7E {
-		argsenv = me.envOffsetBy(argsEnv, i)
-		// }
-		instrs = append(instrs, comp(arg, argsenv)...)
+		instrs = append(instrs, comp(arg, me.envOffsetBy(argsEnv, i))...)
+		if fromMark7E {
+			instrs = append(instrs, instr{Op: INSTR_EVAL})
+		}
 	}
 	return append(instrs, instr{Op: INSTR_CTOR_PACK, Int: ctor.Tag, CtorArity: ctor.Arity})
 }
@@ -296,15 +297,6 @@ func (me *gMachine) compileCaseAlts_SchemeD(compn compilationN, caseAlts []*SynC
 }
 
 func (me *gMachine) compileCaseAlt_SchemeA(compn compilationN, alt *SynCaseAlt, argsEnv env) code {
-	n := len(alt.Binds)
-	bodyargsenv := me.envOffsetBy(argsEnv, n)
-	for i, name := range alt.Binds {
-		bodyargsenv[name] = i // = n - (i + 1)
-	}
-	return compn(n, alt.Body, bodyargsenv)
-}
-
-func (me *gMachine) compileCaseAlt_SchemeAR(compn compilationN, alt *SynCaseAlt, argsEnv env, d int) code {
 	n := len(alt.Binds)
 	bodyargsenv := me.envOffsetBy(argsEnv, n)
 	for i, name := range alt.Binds {

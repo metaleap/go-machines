@@ -9,7 +9,7 @@ import (
 
 	"github.com/metaleap/go-corelang"
 	// "github.com/metaleap/go-corelang/impl-01-tmplinst-buggy"
-	"github.com/metaleap/go-corelang/impl-02-gmachine-mark6"
+	"github.com/metaleap/go-corelang/impl-02-gmachine-mark7"
 	"github.com/metaleap/go-corelang/syn"
 	"github.com/metaleap/go-corelang/util"
 )
