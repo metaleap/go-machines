@@ -6,9 +6,9 @@ A minimal (aka. lacking higher-level syntactic sugars) Functional Language named
 
 Lexing + parsing is from scratch, not 'by the book'. But the book was followed closely to fully implement these graph-reduction machines:
 
-- **Template Instantiation Machine:** simpler compilation, sub-optimal execution
-    > _has a bug or 2 left in it for more intricate definitions/expressions: moved on to the cooler stuff before they could be addressed_
-- **G-Machine:** trickier compilation, better execution
+- **Template Instantiation Machine:** evaluation by graph-building and traversal/reduction, no compilation phase
+    > _incomplete, lacking arithmetic, conditionals, and constructors, but the prelude defs work: moved on to the cooler stuff before completion_
+- **G-Machine:** somewhat involved compilation to (essentially) byte-code, better execution
 
 Machines still to be implemented:
 

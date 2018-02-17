@@ -52,7 +52,7 @@ when cond then else =
 
 
 fac n =                         // using 'when' instead of 'if' here works equivalently: but executes ~20-30% more steps and ~20-30% more calls; plus tends to take ~2x as long
-    if (n==0)
+    when (n==0)
     /*then*/ 1
     /*else*/ (n * (fac (n - 1)))
 
