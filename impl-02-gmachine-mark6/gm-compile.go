@@ -247,9 +247,9 @@ func (me *gMachine) compileCtorAppl(comp compilation, ctor *ExprCtor, reverseArg
 	instrs := make(code, 0, len(reverseArgs)*3) // arbitrary extra cap, exact need not known
 	for i, arg := range reverseArgs {
 		argsenv := argsEnv
-		if !fromMark7E {
-			argsenv = me.envOffsetBy(argsEnv, i)
-		}
+		// if !fromMark7E {
+		argsenv = me.envOffsetBy(argsEnv, i)
+		// }
 		instrs = append(instrs, comp(arg, argsenv)...)
 	}
 	return append(instrs, instr{Op: INSTR_CTOR_PACK, Int: ctor.Tag, CtorArity: ctor.Arity})

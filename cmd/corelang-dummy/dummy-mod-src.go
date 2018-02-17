@@ -6,16 +6,20 @@ package main
 const srcMod = `
 
 page136 x =
-    LET foo = CASE x OF 1 -> 111
-                        2 -> 222
+    LET foo = CASE x OF 123 -> 111
+                        456 -> 222
     IN (2 2) (123 0) foo
 
-p136 = page136 (2 0)
+p136 = page136 (456 0)
 
 
-page137_1 x = (99 3) 123 x
+page137_1 x = (99 5) 123 x 333
 
-p137_1 = (page137_1 456) 789
+p137_1 =
+    LET REC
+        p = page137_1
+        oo = p 456 666
+    IN oo 789
 
 
 page137_2 incompletector = incompletector 654

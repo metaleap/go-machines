@@ -2,11 +2,12 @@ package climpl
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/metaleap/go-corelang/util"
 )
 
-const MARK7 = false // buggy for the p136 and p137_* scenarios
+const MARK7 = false // still buggy for the p136 scenario
 
 type gMachine struct {
 	Heap      clutil.HeapA // no GC here, forever growing
@@ -26,7 +27,7 @@ type dumpedState struct {
 }
 
 func (me *gMachine) Eval(name string) (val interface{}, stats clutil.Stats, err error) {
-	// defer clutil.Catch(&err)
+	defer clutil.Catch(&err)
 	me.StackA, me.StackDump, me.StackInts = make(clutil.StackA, 0, 64), make([]dumpedState, 0, 16), make(clutil.StackI, 0, 64)
 	me.Code = code{{Op: INSTR_PUSHGLOBAL, Name: name}, {Op: INSTR_EVAL}}
 	// println(me.Heap[me.Globals[name]].(nodeGlobal).Code.String())
@@ -237,6 +238,9 @@ func (me *gMachine) eval() {
 			me.StackA = me.StackA.Dropped(arity).Pushed(me.Heap.Alloc(node))
 		case INSTR_CASE_JUMP:
 			node := me.Heap[me.StackA.Top0()].(nodeCtor)
+			if node.Tag >= len(me.Code[0].CaseJump) || len(me.Code[0].CaseJump[node.Tag]) == 0 {
+				panic("unhandled case for ‹" + strconv.Itoa(node.Tag) + "," + strconv.Itoa(len(node.Items)) + "›")
+			}
 			next = append(me.Code[0].CaseJump[node.Tag], next...)
 		case INSTR_CASE_SPLIT:
 			node := me.Heap[me.StackA.Top0()].(nodeCtor)
