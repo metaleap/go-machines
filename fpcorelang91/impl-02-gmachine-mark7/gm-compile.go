@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	. "github.com/metaleap/go-machines/syn"
-	util "github.com/metaleap/go-machines/util"
+	. "github.com/metaleap/go-machines/fpcorelang91/syn"
+	util "github.com/metaleap/go-machines/fpcorelang91/util"
 )
 
 type compilation func(IExpr, env) code

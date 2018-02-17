@@ -1,7 +1,7 @@
 package climpl
 
 import (
-	"github.com/metaleap/go-machines/util"
+	"github.com/metaleap/go-machines/fpcorelang91/util"
 )
 
 type nodeInt int

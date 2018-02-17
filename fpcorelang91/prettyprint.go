@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	. "github.com/metaleap/go-machines/syn"
+	. "github.com/metaleap/go-machines/fpcorelang91/syn"
 )
 
 type SyntaxTreePrinter struct {
