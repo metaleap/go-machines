@@ -94,11 +94,20 @@ func (me *gMachine) compileGlobal_SchemeSC(global *SynDef) (node nodeGlobal, err
 	for i, arg := range global.Args {
 		argsenv[arg] = i
 	}
-	node = nodeGlobal{len(global.Args), me.compileExprMark7_SchemeR(len(global.Args))(global.Body, argsenv)}
-	if global.Name == "fac" {
-		println(node.Code.String())
+	if MARK7 {
+		node = nodeGlobal{len(global.Args), me.compileExprMark7_SchemeR(len(global.Args))(global.Body, argsenv)}
+	} else {
+		node = nodeGlobal{len(global.Args), me.compileGlobalBody_SchemeR(global.Body, argsenv)}
 	}
 	return
+}
+
+func (me *gMachine) compileGlobalBody_SchemeR(bodyexpr IExpr, argsEnv env) code {
+	return append(me.compileExprStrict_SchemeE(bodyexpr, argsEnv),
+		instr{Op: INSTR_UPDATE, Int: len(argsEnv)},
+		instr{Op: INSTR_POP, Int: len(argsEnv)},
+		instr{Op: INSTR_UNWIND},
+	)
 }
 
 func (me *gMachine) compileExprMark7_SchemeR(d int) compilation {
