@@ -3,8 +3,8 @@ package climpl
 import (
 	"fmt"
 
-	"github.com/metaleap/go-corelang/syn"
-	"github.com/metaleap/go-corelang/util"
+	"github.com/metaleap/go-machines/syn"
+	"github.com/metaleap/go-machines/util"
 )
 
 type tiMachine struct {

@@ -1,8 +1,8 @@
 package climpl
 
 import (
-	"github.com/metaleap/go-corelang/syn"
-	"github.com/metaleap/go-corelang/util"
+	"github.com/metaleap/go-machines/syn"
+	"github.com/metaleap/go-machines/util"
 )
 
 type nodeAp struct {

@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/metaleap/go-corelang"
-	// "github.com/metaleap/go-corelang/impl-01-tmplinst-buggy"
-	"github.com/metaleap/go-corelang/impl-02-gmachine-mark7"
-	"github.com/metaleap/go-corelang/syn"
-	"github.com/metaleap/go-corelang/util"
+	"github.com/metaleap/go-machines"
+	// "github.com/metaleap/go-machines/impl-01-tmplinst-buggy"
+	"github.com/metaleap/go-machines/impl-02-gmachine-mark7"
+	"github.com/metaleap/go-machines/syn"
+	"github.com/metaleap/go-machines/util"
 )
 
 func writeLn(s string) { _, _ = os.Stdout.WriteString(s + "\n") }
