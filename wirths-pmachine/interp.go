@@ -1,5 +1,25 @@
 package main
 
+type opCode int
+
+const (
+	_ opCode = iota
+	OP_LIT
+	OP_EXEC
+	OP_LOAD
+	OP_STORE
+	OP_CALL
+	OP_INCR
+	OP_JUMP
+	OP_JUMPCOND
+)
+
+type instr struct {
+	Op opCode
+	A  int
+	L  int
+}
+
 type execOpCode = int
 
 const (
@@ -20,9 +40,9 @@ const (
 )
 
 type interp struct {
-	p    int      // program register (aka (next-)instruction pointer)
-	b    int      // base register
-	t    int      // top-stack register
+	p    int      // 'program register' (aka (next-)instruction pointer)
+	b    int      // 'base register'
+	t    int      // 'top-stack register' (aka stack pointer)
 	st   [512]int // stack
 	code []instr
 }
@@ -36,7 +56,7 @@ func (me *interp) base(l int) (b int) {
 
 func (me *interp) run() int {
 	me.t, me.b, me.p = 0, 1, 0
-	me.st[0], me.st[1], me.st[2], me.st[3] = 0, 0, 0, 0
+	me.st[1], me.st[2], me.st[3] = 0, 0, 0
 
 	for i, running := 0, true; running; running = me.p != 0 {
 		i = me.p
