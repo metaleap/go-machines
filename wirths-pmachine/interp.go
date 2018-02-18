@@ -24,72 +24,85 @@ type interp struct {
 	b    int      // base register
 	t    int      // top-stack register
 	st   [512]int // stack
-	Code []instr
+	code []instr
 }
 
 func (me *interp) base(l int) (b int) {
-	b = me.b
-	for l > 0 {
+	for b = me.b; l > 0; l-- {
 		b = me.st[b]
-		l--
 	}
 	return
 }
 
-func (me *interp) Run() {
+func (me *interp) run() {
 	me.t, me.b, me.p = 0, 1, 0
 	me.st[1], me.st[2], me.st[3] = 0, 0, 0
-	var i int
-	for {
+
+	for i, running := 0, true; running; running = me.p != 0 {
 		i = me.p
 		me.p++
-		switch me.Code[i].Op {
+
+		switch me.code[i].Op {
 		case OP_LIT:
 			me.t++
-			me.st[me.t] = me.Code[i].A
+			me.st[me.t] = me.code[i].A
+
 		case OP_INCR:
-			me.t = me.t + me.Code[i].A
+			me.t = me.t + me.code[i].A
+
 		case OP_JUMP:
-			me.p = me.Code[i].A
+			me.p = me.code[i].A
+
 		case OP_JUMPCOND:
 			if me.st[me.t] == 0 {
-				me.p = me.Code[i].A
+				me.p = me.code[i].A
 			}
 			me.t--
+
 		case OP_LOAD:
 			me.t++
-			me.st[me.t] = me.st[me.base(me.Code[i].L)+me.Code[i].A]
+			me.st[me.t] = me.st[me.base(me.code[i].L)+me.code[i].A]
+
 		case OP_STORE:
-			me.st[me.base(me.Code[i].L)+me.Code[i].A] = me.st[me.t]
+			me.st[me.base(me.code[i].L)+me.code[i].A] = me.st[me.t]
 			me.t--
+
 		case OP_CALL:
-			me.st[me.t+1] = me.base(me.Code[i].L)
+			me.st[me.t+1] = me.base(me.code[i].L)
 			me.st[me.t+2] = me.b
 			me.st[me.t+3] = me.p
 			me.b = me.t + 1
-			me.p = me.Code[i].A
+			me.p = me.code[i].A
+
 		case OP_EXEC:
-			switch me.Code[i].A {
+			switch me.code[i].A {
 			case EXEC_RET:
 				me.t = me.b - 1
 				me.p = me.st[me.t+3]
 				me.b = me.st[me.t+2]
+
 			case EXEC_NEG:
 				me.st[me.t] = -me.st[me.t]
+
 			case EXEC_AR_ADD:
 				me.t--
 				me.st[me.t] = me.st[me.t] + me.st[me.t+1]
+
 			case EXEC_AR_SUB:
 				me.t--
 				me.st[me.t] = me.st[me.t] - me.st[me.t+1]
+
 			case EXEC_AR_MUL:
 				me.t--
 				me.st[me.t] = me.st[me.t] * me.st[me.t+1]
+
 			case EXEC_AR_DIV:
 				me.t--
 				me.st[me.t] = me.st[me.t] / me.st[me.t+1]
+
 			case EXEC_ODD:
 				me.st[me.t] = me.st[me.t] & 1
+
 			case EXEC_CMP_EQ:
 				me.t--
 				if me.st[me.t] == me.st[me.t+1] {
@@ -97,6 +110,7 @@ func (me *interp) Run() {
 				} else {
 					me.st[me.t] = 0
 				}
+
 			case EXEC_CMP_NEQ:
 				me.t--
 				if me.st[me.t] != me.st[me.t+1] {
@@ -104,6 +118,7 @@ func (me *interp) Run() {
 				} else {
 					me.st[me.t] = 0
 				}
+
 			case EXEC_CMP_LT:
 				me.t--
 				if me.st[me.t] < me.st[me.t+1] {
@@ -111,6 +126,7 @@ func (me *interp) Run() {
 				} else {
 					me.st[me.t] = 0
 				}
+
 			case EXEC_CMP_GEQ:
 				me.t--
 				if me.st[me.t] >= me.st[me.t+1] {
@@ -118,6 +134,7 @@ func (me *interp) Run() {
 				} else {
 					me.st[me.t] = 0
 				}
+
 			case EXEC_CMP_GT:
 				me.t--
 				if me.st[me.t] > me.st[me.t+1] {
@@ -125,6 +142,7 @@ func (me *interp) Run() {
 				} else {
 					me.st[me.t] = 0
 				}
+
 			case EXEC_CMP_LEQ:
 				me.t--
 				if me.st[me.t] <= me.st[me.t+1] {
@@ -133,9 +151,6 @@ func (me *interp) Run() {
 					me.st[me.t] = 0
 				}
 			}
-		}
-		if me.p == 0 {
-			break
 		}
 	}
 }

@@ -46,7 +46,7 @@ func main() {
 
 func (me *interp) simpleDemo(descr string, expectedResult string, programCode []instr) {
 	println("Calcing " + descr + ".. — should be: " + expectedResult)
-	me.Code = programCode
-	me.Run()
+	me.code = programCode
+	me.run()
 	println(me.st[me.t])
 }
