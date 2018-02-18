@@ -1,5 +1,3 @@
-{original copied from https://en.wikipedia.org/wiki/P-code_machine#Example_machine}
-
 const
     amax=2047;      {maximum address}
     levmax=3;       {maximum depth of block nesting}

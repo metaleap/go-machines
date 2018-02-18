@@ -1,0 +1,1 @@
+https://en.wikipedia.org/wiki/P-code_machine#Example_machine
