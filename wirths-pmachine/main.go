@@ -21,5 +21,14 @@ type instr struct {
 }
 
 func main() {
-	println("https://en.wikipedia.org/wiki/P-code_machine#Example_machine")
+	machine := interp{}
+	machine.Code = []instr{
+		{Op: OP_LIT, A: 1234},
+		{Op: OP_LIT, A: 5678},
+		{Op: OP_EXEC, A: EXEC_AR_MUL},
+		{Op: OP_JUMP, A: 0},
+	}
+	println("Calcing 1234×5678..")
+	machine.Run()
+	println(machine.st[machine.t])
 }
