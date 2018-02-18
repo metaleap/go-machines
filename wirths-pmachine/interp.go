@@ -10,7 +10,7 @@ const (
 	EXEC_AR_MUL
 	EXEC_AR_DIV
 	EXEC_ODD
-	_
+	EXEC_DBG
 	EXEC_CMP_EQ
 	EXEC_CMP_NEQ
 	EXEC_CMP_LT
@@ -36,7 +36,7 @@ func (me *interp) base(l int) (b int) {
 
 func (me *interp) run() int {
 	me.t, me.b, me.p = 0, 1, 0
-	me.st[1], me.st[2], me.st[3] = 0, 0, 0
+	me.st[0], me.st[1], me.st[2], me.st[3] = 0, 0, 0, 0
 
 	for i, running := 0, true; running; running = me.p != 0 {
 		i = me.p
@@ -150,6 +150,12 @@ func (me *interp) run() int {
 				} else {
 					me.st[me.t] = 0
 				}
+
+			case EXEC_DBG:
+				print("·b")
+				print(me.b)
+				print("·t")
+				println(me.t)
 			}
 		}
 	}
