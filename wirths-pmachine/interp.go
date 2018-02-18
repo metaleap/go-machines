@@ -58,7 +58,8 @@ func (me *interp) run() int {
 	me.t, me.b, me.p = 0, 1, 0
 	me.st[1], me.st[2], me.st[3] = 0, 0, 0
 
-	for i, running := 0, true; running; running = me.p != 0 {
+	for i, numsteps, running := 0, 0, true; running && numsteps < 999; running = me.p != 0 {
+		numsteps++
 		i = me.p
 		me.p++
 
@@ -100,6 +101,7 @@ func (me *interp) run() int {
 				me.t = me.b - 1
 				me.p = me.st[me.t+3]
 				me.b = me.st[me.t+2]
+				println(me.p)
 
 			case EXEC_NEG:
 				me.st[me.t] = -me.st[me.t]
@@ -172,10 +174,10 @@ func (me *interp) run() int {
 				}
 
 			case EXEC_DBG:
-				print("·b")
-				print(me.b)
-				print("·t")
-				println(me.t)
+				print("t")
+				print(me.t)
+				print("=")
+				println(me.st[me.t])
 			}
 		}
 	}

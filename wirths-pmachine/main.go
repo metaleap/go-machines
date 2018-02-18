@@ -31,11 +31,13 @@ func main() {
 		opExit,
 	})
 
+	var result int
+	var timetaken time.Duration
 	readln, write := bufio.NewScanner(os.Stdin), os.Stdout.WriteString
-	write("\n\nEnter one of the following function names, followed by 1 space and 1 number:\n")
-	write("· negodd — negates the number if it is odd\n")
-	write("· negeven — negates the number if it is even\n")
-	write("· fac — computes the number's (max. 63 on 64-bit) factorial\n\n")
+	write("\n\nEnter one of the following function names,\nfollowed by 1 space and 1 number:\n")
+	write("· negodd ‹num›\n  — negates the number if it is odd\n")
+	write("· negeven ‹num›\n  — negates the number if it is even\n")
+	write("· fac ‹max 63 on 64-bit›\n  — looping factorial\n\n")
 	for readln.Scan() {
 		if ln := strings.TrimSpace(readln.Text()); ln != "" {
 			isnodd, isnev, isfac := strings.HasPrefix(ln, "negodd"), strings.HasPrefix(ln, "negeven"), strings.HasPrefix(ln, "fac")
@@ -44,11 +46,7 @@ func main() {
 				if err != nil {
 					println(err.Error())
 				} else {
-					arg := int(num)
-
-					var result int
-					var timetaken time.Duration
-					if isnodd {
+					if arg := int(num); isnodd {
 						result, timetaken = machine.runNegIf(1, arg)
 					} else if isnev {
 						result, timetaken = machine.runNegIf(0, arg)
@@ -104,11 +102,9 @@ var codeNegIfOdd = []instr{
 }
 
 func (me *interp) runFac(num int) (result int, timeTaken time.Duration) {
-	me.code = codeFactorialLoop // codeFacRecursionFail
+	me.code = codeFactorialLoop
 	me.code[1].A = num
 	me.code[2].A = len(me.code) - 1
-	// me.code[0].A = num
-	// me.code[3].A = len(me.code) - 2
 
 	timestarted := time.Now()
 	result = me.run()
@@ -131,23 +127,4 @@ var codeFactorialLoop = []instr{ // r := 1; for n>0 { r=r*n ; n = n-1 }
 	{Op: OP_JUMP, A: 2},           // t2
 
 	opExit,
-}
-
-var codeFactorialRecurse = []instr{ // 	(n==0) ? 1 : (n * fac(n-1))
-	{Op: OP_LIT},
-	{Op: OP_CALL, A: 3, L: 1},
-	opExit,
-
-	{Op: OP_JUMPCOND},
-
-	{Op: OP_LOAD},                 // n
-	{Op: OP_LIT, A: 1},            // 1
-	{Op: OP_EXEC, A: EXEC_AR_SUB}, // n-1
-	{Op: OP_LOAD, L: 1},           // n
-	{Op: OP_CALL, A: 3, L: 1},     // fac(n-1)
-	{Op: OP_EXEC, A: EXEC_AR_MUL}, // n*fac(n-1)
-	{Op: OP_EXEC, A: EXEC_RET},
-
-	{Op: OP_LIT, A: 1},
-	{Op: OP_EXEC, A: EXEC_RET},
 }
