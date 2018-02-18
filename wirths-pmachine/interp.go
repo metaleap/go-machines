@@ -34,7 +34,7 @@ func (me *interp) base(l int) (b int) {
 	return
 }
 
-func (me *interp) run() {
+func (me *interp) run() int {
 	me.t, me.b, me.p = 0, 1, 0
 	me.st[1], me.st[2], me.st[3] = 0, 0, 0
 
@@ -153,4 +153,5 @@ func (me *interp) run() {
 			}
 		}
 	}
+	return me.st[me.t]
 }
