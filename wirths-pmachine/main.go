@@ -22,13 +22,31 @@ type instr struct {
 
 func main() {
 	machine := interp{}
-	machine.Code = []instr{
-		{Op: OP_LIT, A: 1234},
-		{Op: OP_LIT, A: 5678},
+
+	machine.simpleDemo("(123×456)÷789", "71", []instr{
+		{Op: OP_LIT, A: 123},
+		{Op: OP_LIT, A: 456},
+		{Op: OP_EXEC, A: EXEC_AR_MUL},
+		{Op: OP_LIT, A: 789},
+		{Op: OP_EXEC, A: EXEC_AR_DIV},
+		{Op: OP_JUMP, A: 0},
+	})
+
+	machine.simpleDemo("987×(654+321)", "962325", []instr{
+		{Op: OP_LIT, A: 987},
+		{Op: OP_LIT, A: 654},
+		{Op: OP_LIT, A: 321},
+		{Op: OP_EXEC, A: EXEC_AR_ADD},
 		{Op: OP_EXEC, A: EXEC_AR_MUL},
 		{Op: OP_JUMP, A: 0},
-	}
-	println("Calcing 1234×5678..")
-	machine.Run()
-	println(machine.st[machine.t])
+	})
+
+	println("entering REPL..")
+}
+
+func (me *interp) simpleDemo(descr string, expectedResult string, programCode []instr) {
+	println("Calcing " + descr + ".. — should be: " + expectedResult)
+	me.Code = programCode
+	me.Run()
+	println(me.st[me.t])
 }
