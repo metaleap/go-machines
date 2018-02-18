@@ -40,10 +40,10 @@ const (
 )
 
 type interp struct {
-	p    int      // 'program register' (aka (next-)instruction pointer)
-	b    int      // 'base register'
-	t    int      // 'top-stack register' (aka stack pointer)
-	st   [512]int // stack
+	p    int    // 'program register' (aka (next-)instruction pointer)
+	b    int    // 'base register'
+	t    int    // 'top-stack register' (aka stack pointer)
+	st   [4]int // stack — make it bigger as needed, 4 is the minimum for current built-ins like fac
 	code []instr
 }
 
@@ -58,7 +58,7 @@ func (me *interp) run() int {
 	me.t, me.b, me.p = 0, 1, 0
 	me.st[1], me.st[2], me.st[3] = 0, 0, 0
 
-	for i, running := 0, true; running; running = me.p != 0 {
+	for i, done := 0, false; !done; done = (me.p == 0) {
 		i = me.p
 		me.p++
 

@@ -3,7 +3,7 @@ package climpl
 import (
 	"strconv"
 
-	"github.com/metaleap/go-machines/fpcorelang91/util"
+	"github.com/metaleap/go-machines/1991-fpcorelang/util"
 )
 
 const _MARK7 = true // not a big gain in practice for this unoptimized prototype and its toy examples, still intrinsically a sane (and for real-world likely crucial) approach to have separate val stacks (in addition to addr stack)
@@ -14,7 +14,7 @@ type gMachine struct {
 	Code      code          // evaluated l2r
 	StackA    clutil.StackA // push-to and pop-from its end
 	StackDump []dumpedState
-	StackInts clutil.StackI
+	StackInts clutil.StackI // used if _MARK7
 	Stats     clutil.Stats
 }
 

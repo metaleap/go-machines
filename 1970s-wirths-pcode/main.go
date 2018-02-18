@@ -34,10 +34,10 @@ func main() {
 	var result int
 	var timetaken time.Duration
 	readln, write := bufio.NewScanner(os.Stdin), os.Stdout.WriteString
-	write("\n\nEnter one of the following function names,\nfollowed by 1 space and 1 number:\n")
-	write("· negodd ‹num›\n  — negates the number if it is odd\n")
-	write("· negeven ‹num›\n  — negates the number if it is even\n")
-	write("· fac ‹max 63 on 64-bit›\n  — looping factorial\n\n")
+	write("\n\nEnter one of the following function names,\nfollowed by 1 space and 1 integral number:\n")
+	write("· negodd ‹num›\n  — negates if odd\n")
+	write("· negeven ‹num›\n  — negates if even\n")
+	write("· fac ‹max 20›\n  — factorial\n\n")
 	for readln.Scan() {
 		if ln := strings.TrimSpace(readln.Text()); ln != "" {
 			isnodd, isnev, isfac := strings.HasPrefix(ln, "negodd"), strings.HasPrefix(ln, "negeven"), strings.HasPrefix(ln, "fac")
@@ -53,7 +53,7 @@ func main() {
 					} else {
 						result, timetaken = machine.runFac(arg)
 					}
-					println(timetaken.String())
+					write(timetaken.String() + "\n")
 					println(result)
 				}
 			}
@@ -103,8 +103,7 @@ var codeNegIfOdd = []instr{
 
 func (me *interp) runFac(num int) (result int, timeTaken time.Duration) {
 	me.code = codeFactorialLoop
-	me.code[1].A = num
-	me.code[2].A = len(me.code) - 1
+	me.code[1].A, me.code[2].A = num, len(me.code)-1
 
 	timestarted := time.Now()
 	result = me.run()

@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/metaleap/go-machines/fpcorelang91"
-	// "github.com/metaleap/go-machines/fpcorelang91/impl-01-tmplinst-buggy"
-	"github.com/metaleap/go-machines/fpcorelang91/impl-02-gmachine-mark7"
-	"github.com/metaleap/go-machines/fpcorelang91/syn"
-	"github.com/metaleap/go-machines/fpcorelang91/util"
+	"github.com/metaleap/go-machines/1991-fpcorelang"
+	// "github.com/metaleap/go-machines/1991-fpcorelang/impl-01-tmplinst-buggy"
+	"github.com/metaleap/go-machines/1991-fpcorelang/impl-02-gmachine-mark7"
+	"github.com/metaleap/go-machines/1991-fpcorelang/syn"
+	"github.com/metaleap/go-machines/1991-fpcorelang/util"
 )
 
 func writeLn(s string) { _, _ = os.Stdout.WriteString(s + "\n") }
@@ -22,7 +22,7 @@ func main() {
 		return
 	}
 
-	writeLn("module " + fname + " lexed and parsed, globals are:\n")
+	writeLn("\n\n\nmodule " + fname + " lexed and parsed, globals are:\n")
 	for defname := range mod.Defs {
 		_, _ = os.Stdout.WriteString(" · " + defname)
 	}
@@ -34,7 +34,7 @@ func main() {
 			_, _ = os.Stdout.WriteString(" · " + def.Name)
 		}
 	}
-	writeLn("\n…and can be evaluated easily using `!<name>` or `?<name>`\n")
+	writeLn("\n…and can be evaluated immediately using `!‹name›` or `?‹name›`\n")
 	machine := recompile(mod)
 
 	multiline, repl, pprint := "", bufio.NewScanner(os.Stdin), &corelang.SyntaxTreePrinter{}

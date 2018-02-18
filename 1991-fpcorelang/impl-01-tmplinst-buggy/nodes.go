@@ -1,8 +1,8 @@
 package climpl
 
 import (
-	"github.com/metaleap/go-machines/fpcorelang91/syn"
-	"github.com/metaleap/go-machines/fpcorelang91/util"
+	"github.com/metaleap/go-machines/1991-fpcorelang/syn"
+	"github.com/metaleap/go-machines/1991-fpcorelang/util"
 )
 
 type nodeAp struct {

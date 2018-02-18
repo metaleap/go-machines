@@ -1,7 +1,7 @@
 package corelang
 
 import (
-	. "github.com/metaleap/go-machines/fpcorelang91/syn"
+	. "github.com/metaleap/go-machines/1991-fpcorelang/syn"
 )
 
 var (
