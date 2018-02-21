@@ -12,13 +12,13 @@ const (
 	OP_EXEC
 	OP_LOAD
 	OP_STORE
-	OP_STORE_K
+	OP_STORE_KEEP
 	OP_CALL
 	OP_INCR
 	OP_INCR1
 	OP_JUMP
 	OP_JUMPCOND
-	OP_JUMPCOND_K
+	OP_JUMPCOND_KEEP
 )
 
 type instr struct {
@@ -36,6 +36,7 @@ const (
 	EXEC_AR_SUB
 	EXEC_AR_SUB1
 	EXEC_AR_MUL
+	EXEC_AR_MUL_KEEP
 	EXEC_AR_DIV
 	EXEC_ODD
 	EXEC_DBG
@@ -71,13 +72,13 @@ func interp(code []instr) (int, time.Duration) {
 		case OP_JUMP:
 			p = code[i].A
 
-		case OP_JUMPCOND_K:
+		case OP_JUMPCOND_KEEP:
 			if st[t] == 0 {
 				p = code[i].A
 				t--
 			}
 
-		case OP_STORE_K:
+		case OP_STORE_KEEP:
 			for tmpb, tmpl = b, code[i].L; tmpl > 0; tmpl-- {
 				tmpb = st[tmpb]
 			}
@@ -121,12 +122,15 @@ func interp(code []instr) (int, time.Duration) {
 
 		default: // case OP_EXEC:
 			switch code[i].A {
+			case EXEC_AR_MUL_KEEP:
+				st[t-1] = st[t-1] * st[t]
+
+			case EXEC_AR_SUB1:
+				st[t]--
+
 			case EXEC_AR_MUL:
 				t--
 				st[t] = st[t] * st[t+1]
-
-			case EXEC_AR_SUB1:
-				st[t] = st[t] - 1
 
 			case EXEC_AR_SUB:
 				t--

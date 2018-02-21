@@ -42,6 +42,7 @@ func main() {
 	write("· fac ‹max 20›\n  — factorial\n\n")
 	var result int
 	var timetaken time.Duration
+	const numrums = 999999
 	for readln.Scan() {
 		if ln := strings.TrimSpace(readln.Text()); ln != "" {
 			isnodd, isnev, isfac := strings.HasPrefix(ln, "negodd"), strings.HasPrefix(ln, "negeven"), strings.HasPrefix(ln, "fac")
@@ -51,11 +52,11 @@ func main() {
 					println(err.Error())
 				} else {
 					if arg := int(num); isnodd {
-						result, timetaken = runNegIf(1, arg)
+						result, timetaken = runNegIf(1, arg, numrums)
 					} else if isnev {
-						result, timetaken = runNegIf(0, arg)
+						result, timetaken = runNegIf(0, arg, numrums)
 					} else {
-						result, timetaken = runFac(arg, 999999)
+						result, timetaken = runFac(arg, numrums)
 					}
 					write(timetaken.String() + "\n")
 					println(result)
@@ -71,13 +72,20 @@ func runDemo(descr string, expectedResult string, code []instr) {
 	println(result)
 }
 
-func runNegIf(isNegIfOdd int, num int) (int, time.Duration) {
+func runNegIf(isNegIfOdd int, num int, runs int) (result int, timeTaken time.Duration) {
 	code := codeNegIfEven
 	if isNegIfOdd != 0 {
 		code = codeNegIfOdd
 	}
 	code[0].A, code[3].A, code[5+isNegIfOdd].A = num, num, num
-	return interp(code)
+
+	var totalnanos int64
+	for i := 0; i < runs; i++ {
+		result, timeTaken = interp(code)
+		totalnanos += int64(timeTaken)
+	}
+	timeTaken = time.Duration(int64(float64(totalnanos) / float64(runs)))
+	return
 }
 
 var codeNegIfEven = []instr{
@@ -110,7 +118,23 @@ func runFac(num int, runs int) (result int, timeTaken time.Duration) {
 		result, timeTaken = interp(code)
 		totalnanos += int64(timeTaken)
 	}
-	timeTaken = time.Duration(totalnanos / int64(runs))
+	timeTaken = time.Duration(int64(float64(totalnanos) / float64(runs)))
+	if runs > 1 {
+		var cr, ctr int
+		var ctn int64
+		var ctt time.Duration
+		for i := 0; i < runs; i++ {
+			cr, ctt = facCompiled(num)
+			ctr, ctn = ctr+cr, ctn+int64(ctt)
+		}
+		if ctr != num+num { // always true but ensure ctr is computed not optimized away by a future too-clever compiler
+			print("(avg. over ")
+			print(runs)
+			print(" runs, vs. ")
+			print(time.Duration(int64(float64(ctn) / float64(runs))).String())
+			println(")")
+		}
+	}
 	return
 }
 
@@ -118,12 +142,23 @@ var codeFactorialLoop = []instr{ // r := 1; for n>0 { r=r*n ; n = n-1 }
 	{Op: OP_LIT, A: 1}, //r=1, t1
 	{Op: OP_LIT},       //n, t2
 
-	{Op: OP_JUMPCOND_K},            // n>0, t2
-	{Op: OP_STORE_K, A: 11 - 10},   // stow away n, t2 (addr '11-10' is just for our own later readability because `1` at first reads ambiguous)
-	{Op: OP_EXEC, A: EXEC_AR_MUL},  // r=r*n, t1
-	{Op: OP_LOAD, A: 11 - 10},      // restore n, t2 (addr '11-10' see note above)
+	{Op: OP_JUMPCOND_KEEP}, // n>0, t2
+	// {Op: OP_STORE_KEEP, A: 11 - 10}, // stow away n, t2 (addr '11-10' is just for our own later readability because `1` at first reads ambiguous)
+	{Op: OP_EXEC, A: EXEC_AR_MUL_KEEP}, // r=r*n, t1
+	// {Op: OP_LOAD, A: 11 - 10},       // restore n, t2 (addr '11-10' see note above)
 	{Op: OP_EXEC, A: EXEC_AR_SUB1}, // n=n-1, t2
 	{Op: OP_JUMP, A: 2},            // t2
 
 	opExit,
+}
+
+func facCompiled(n int) (result int, timeTaken time.Duration) {
+	z, _ := strconv.ParseInt(os.Getenv("_DOESNT_REALLY_EVER_EXIST"), 10, 64)
+	zero := int(z)
+	timestarted := time.Now()
+	for result = 1; n > zero; n-- {
+		result = result * n
+	}
+	timeTaken = time.Now().Sub(timestarted)
+	return
 }
