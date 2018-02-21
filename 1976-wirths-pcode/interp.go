@@ -1,5 +1,9 @@
 package main
 
+import (
+	"time"
+)
+
 type opCode int
 
 const (
@@ -8,10 +12,13 @@ const (
 	OP_EXEC
 	OP_LOAD
 	OP_STORE
+	OP_STORE_K
 	OP_CALL
 	OP_INCR
+	OP_INCR1
 	OP_JUMP
 	OP_JUMPCOND
+	OP_JUMPCOND_K
 )
 
 type instr struct {
@@ -27,6 +34,7 @@ const (
 	EXEC_NEG
 	EXEC_AR_ADD
 	EXEC_AR_SUB
+	EXEC_AR_SUB1
 	EXEC_AR_MUL
 	EXEC_AR_DIV
 	EXEC_ODD
@@ -39,145 +47,167 @@ const (
 	EXEC_CMP_LEQ
 )
 
-type interp struct {
-	p    int    // 'program register' (aka (next-)instruction pointer)
-	b    int    // 'base register'
-	t    int    // 'top-stack register' (aka stack pointer)
-	st   [4]int // stack — make it bigger as needed, 4 is the minimum for current built-ins like fac
-	code []instr
-}
+func interp(code []instr) (int, time.Duration) {
+	var (
+		p  int    // 'program register' (aka (next-)instruction pointer)
+		i  int    // curr-instruction pointer
+		b  = 1    // 'base register'
+		t  int    // 'top-stack register' (aka stack pointer)
+		st [4]int // stack — make it bigger as needed, 4 is the minimum for current built-ins like fac
 
-func (me *interp) base(l int) (b int) {
-	for b = me.b; l > 0; l-- {
-		b = me.st[b]
-	}
-	return
-}
+		tmpb int
+		tmpl int
+	)
 
-func (me *interp) run() int {
-	me.t, me.b, me.p = 0, 1, 0
-	me.st[1], me.st[2], me.st[3] = 0, 0, 0
-
-	for i, done := 0, false; !done; done = (me.p == 0) {
-		i = me.p
-		me.p++
-
-		switch me.code[i].Op {
+	timestarted := time.Now()
+	for running := true; running; running = (p != 0) {
+		i = p
+		p++
+		switch code[i].Op {
 		case OP_LIT:
-			me.t++
-			me.st[me.t] = me.code[i].A
-
-		case OP_INCR:
-			me.t = me.t + me.code[i].A
+			t++
+			st[t] = code[i].A
 
 		case OP_JUMP:
-			me.p = me.code[i].A
+			p = code[i].A
 
-		case OP_JUMPCOND:
-			if me.st[me.t] == 0 {
-				me.p = me.code[i].A
+		case OP_JUMPCOND_K:
+			if st[t] == 0 {
+				p = code[i].A
+				t--
 			}
-			me.t--
+
+		case OP_STORE_K:
+			for tmpb, tmpl = b, code[i].L; tmpl > 0; tmpl-- {
+				tmpb = st[tmpb]
+			}
+			st[tmpb+code[i].A] = st[t]
 
 		case OP_LOAD:
-			me.t++
-			me.st[me.t] = me.st[me.base(me.code[i].L)+me.code[i].A]
+			for tmpb, tmpl = b, code[i].L; tmpl > 0; tmpl-- {
+				tmpb = st[tmpb]
+			}
+			t++
+			st[t] = st[tmpb+code[i].A]
 
 		case OP_STORE:
-			me.st[me.base(me.code[i].L)+me.code[i].A] = me.st[me.t]
-			me.t--
+			for tmpb, tmpl = b, code[i].L; tmpl > 0; tmpl-- {
+				tmpb = st[tmpb]
+			}
+			st[tmpb+code[i].A] = st[t]
+			t--
+
+		case OP_INCR:
+			t = t + code[i].A
+
+		case OP_INCR1:
+			t++
+
+		case OP_JUMPCOND:
+			if st[t] == 0 {
+				p = code[i].A
+			}
+			t--
 
 		case OP_CALL:
-			me.st[me.t+1] = me.base(me.code[i].L)
-			me.st[me.t+2] = me.b
-			me.st[me.t+3] = me.p
-			me.b = me.t + 1
-			me.p = me.code[i].A
+			for tmpb, tmpl = b, code[i].L; tmpl > 0; tmpl-- {
+				tmpb = st[tmpb]
+			}
+			st[t+1] = tmpb
+			st[t+2] = b
+			st[t+3] = p
+			b = t + 1
+			p = code[i].A
 
 		case OP_EXEC:
-			switch me.code[i].A {
-			case EXEC_RET:
-				me.t = me.b - 1
-				me.p = me.st[me.t+3]
-				me.b = me.st[me.t+2]
+			switch code[i].A {
+			case EXEC_AR_MUL:
+				t--
+				st[t] = st[t] * st[t+1]
 
-			case EXEC_NEG:
-				me.st[me.t] = -me.st[me.t]
-
-			case EXEC_AR_ADD:
-				me.t--
-				me.st[me.t] = me.st[me.t] + me.st[me.t+1]
+			case EXEC_AR_SUB1:
+				st[t] = st[t] - 1
 
 			case EXEC_AR_SUB:
-				me.t--
-				me.st[me.t] = me.st[me.t] - me.st[me.t+1]
+				t--
+				st[t] = st[t] - st[t+1]
 
-			case EXEC_AR_MUL:
-				me.t--
-				me.st[me.t] = me.st[me.t] * me.st[me.t+1]
+			case EXEC_AR_ADD:
+				t--
+				st[t] = st[t] + st[t+1]
 
 			case EXEC_AR_DIV:
-				me.t--
-				me.st[me.t] = me.st[me.t] / me.st[me.t+1]
+				t--
+				st[t] = st[t] / st[t+1]
 
 			case EXEC_ODD:
-				me.st[me.t] = me.st[me.t] & 1
+				st[t] = st[t] & 1
 
 			case EXEC_CMP_EQ:
-				me.t--
-				if me.st[me.t] == me.st[me.t+1] {
-					me.st[me.t] = 1
+				t--
+				if st[t] == st[t+1] {
+					st[t] = 1
 				} else {
-					me.st[me.t] = 0
+					st[t] = 0
 				}
 
 			case EXEC_CMP_NEQ:
-				me.t--
-				if me.st[me.t] != me.st[me.t+1] {
-					me.st[me.t] = 1
+				t--
+				if st[t] != st[t+1] {
+					st[t] = 1
 				} else {
-					me.st[me.t] = 0
+					st[t] = 0
 				}
 
 			case EXEC_CMP_LT:
-				me.t--
-				if me.st[me.t] < me.st[me.t+1] {
-					me.st[me.t] = 1
+				t--
+				if st[t] < st[t+1] {
+					st[t] = 1
 				} else {
-					me.st[me.t] = 0
+					st[t] = 0
 				}
 
 			case EXEC_CMP_GEQ:
-				me.t--
-				if me.st[me.t] >= me.st[me.t+1] {
-					me.st[me.t] = 1
+				t--
+				if st[t] >= st[t+1] {
+					st[t] = 1
 				} else {
-					me.st[me.t] = 0
+					st[t] = 0
 				}
 
 			case EXEC_CMP_GT:
-				me.t--
-				if me.st[me.t] > me.st[me.t+1] {
-					me.st[me.t] = 1
+				t--
+				if st[t] > st[t+1] {
+					st[t] = 1
 				} else {
-					me.st[me.t] = 0
+					st[t] = 0
 				}
 
 			case EXEC_CMP_LEQ:
-				me.t--
-				if me.st[me.t] <= me.st[me.t+1] {
-					me.st[me.t] = 1
+				t--
+				if st[t] <= st[t+1] {
+					st[t] = 1
 				} else {
-					me.st[me.t] = 0
+					st[t] = 0
 				}
+
+			case EXEC_NEG:
+				st[t] = -st[t]
+
+			case EXEC_RET:
+				t = b - 1
+				p = st[t+3]
+				b = st[t+2]
 
 			case EXEC_DBG:
 				print("t")
-				print(me.t)
+				print(t)
 				print("=")
-				println(me.st[me.t])
+				println(st[t])
 			}
 		}
 	}
-	return me.st[me.t]
+	timetaken := time.Now().Sub(timestarted)
+
+	return st[t], timetaken
 }
