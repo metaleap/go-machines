@@ -1,1 +1,0 @@
-http://sinclairql.speccy.org/archivo/docs/books/Threaded_interpretive_languages.pdf

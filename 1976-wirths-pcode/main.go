@@ -13,8 +13,10 @@ import (
 var opExit = instr{Op: OP_JUMP, A: 0}
 
 func main() {
-	debug.SetGCPercent(-1)
-	runtime.GOMAXPROCS(1)
+	// we get more consistent timings (less runtime background work) and can better micro-experiment with the run() loop with:
+	debug.SetGCPercent(-1) // GC off
+	runtime.GOMAXPROCS(1)  // no thread scheduling
+
 	runDemo("(123×456)÷789", "71", []instr{
 		{Op: OP_LIT, A: 123},
 		{Op: OP_LIT, A: 456},
@@ -33,13 +35,13 @@ func main() {
 		opExit,
 	})
 
-	var result int
-	var timetaken time.Duration
 	readln, write := bufio.NewScanner(os.Stdin), os.Stdout.WriteString
 	write("\n\nEnter one of the following function names,\nfollowed by 1 space and 1 integral number:\n")
 	write("· negodd ‹num›\n  — negates if odd\n")
 	write("· negeven ‹num›\n  — negates if even\n")
 	write("· fac ‹max 20›\n  — factorial\n\n")
+	var result int
+	var timetaken time.Duration
 	for readln.Scan() {
 		if ln := strings.TrimSpace(readln.Text()); ln != "" {
 			isnodd, isnev, isfac := strings.HasPrefix(ln, "negodd"), strings.HasPrefix(ln, "negeven"), strings.HasPrefix(ln, "fac")
@@ -53,7 +55,7 @@ func main() {
 					} else if isnev {
 						result, timetaken = runNegIf(0, arg)
 					} else {
-						result, timetaken = runFac(arg)
+						result, timetaken = runFac(arg, 999999)
 					}
 					write(timetaken.String() + "\n")
 					println(result)
@@ -100,10 +102,16 @@ var codeNegIfOdd = []instr{
 	opExit,
 }
 
-func runFac(num int) (int, time.Duration) {
+func runFac(num int, runs int) (result int, timeTaken time.Duration) {
 	code := codeFactorialLoop
 	code[1].A, code[2].A = num, len(code)-1
-	return interp(code)
+	var totalnanos int64
+	for i := 0; i < runs; i++ {
+		result, timeTaken = interp(code)
+		totalnanos += int64(timeTaken)
+	}
+	timeTaken = time.Duration(totalnanos / int64(runs))
+	return
 }
 
 var codeFactorialLoop = []instr{ // r := 1; for n>0 { r=r*n ; n = n-1 }

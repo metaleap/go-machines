@@ -119,7 +119,7 @@ func interp(code []instr) (int, time.Duration) {
 			b = t + 1
 			p = code[i].A
 
-		case OP_EXEC:
+		default: // case OP_EXEC:
 			switch code[i].A {
 			case EXEC_AR_MUL:
 				t--
