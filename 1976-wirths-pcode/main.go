@@ -111,7 +111,7 @@ var codeNegIfOdd = []instr{
 }
 
 func runFac(num int, runs int) (result int, timeTaken time.Duration) {
-	code := codeFactorialLoop
+	code := codeFactorial_Opt // codeFactorial_Orig
 	code[1].A, code[2].A = num, len(code)-1
 	var totalnanos int64
 	for i := 0; i < runs; i++ {
@@ -138,16 +138,33 @@ func runFac(num int, runs int) (result int, timeTaken time.Duration) {
 	return
 }
 
-var codeFactorialLoop = []instr{ // r := 1; for n>0 { r=r*n ; n = n-1 }
+// uses only original-pcode opcodes — longer=slower vs codeFactorial_Opt
+var codeFactorial_Orig = []instr{ // r := 1; for n>0 { r=r*n ; n = n-1 }
 	{Op: OP_LIT, A: 1}, //r=1, t1
 	{Op: OP_LIT},       //n, t2
 
-	{Op: OP_JUMPCOND_KEEP}, // n>0, t2
-	// {Op: OP_STORE_KEEP, A: 11 - 10}, // stow away n, t2 (addr '11-10' is just for our own later readability because `1` at first reads ambiguous)
+	{Op: OP_JUMPCOND},             // n>0, t1
+	{Op: OP_INCR, A: 1},           // restore n, t2
+	{Op: OP_STORE, A: 11 - 10},    // stow away n, t1 (addr '11-10' is just for our own later readability because there are `1`s everywhere in here)
+	{Op: OP_INCR, A: 1},           // but keep it on-stack still, t2
+	{Op: OP_EXEC, A: EXEC_AR_MUL}, // r=r*n, t1
+	{Op: OP_LOAD, A: 11 - 10},     // restore n, t2 (addr '11-10' see note above)
+	{Op: OP_LIT, A: 1},            // 1, t3
+	{Op: OP_EXEC, A: EXEC_AR_SUB}, // n=n-1, t2
+	{Op: OP_JUMP, A: 2},           // t2
+
+	opExit,
+}
+
+// uses additional/invented/custom opcodes — shorter=faster
+var codeFactorial_Opt = []instr{ // r := 1; for n>0 { r=r*n ; n = n-1 }
+	{Op: OP_LIT, A: 1}, //r=1, t1
+	{Op: OP_LIT},       //n, t2
+
+	{Op: OP_JUMPCOND_KEEP},             // n>0, t2
 	{Op: OP_EXEC, A: EXEC_AR_MUL_KEEP}, // r=r*n, t1
-	// {Op: OP_LOAD, A: 11 - 10},       // restore n, t2 (addr '11-10' see note above)
-	{Op: OP_EXEC, A: EXEC_AR_SUB1}, // n=n-1, t2
-	{Op: OP_JUMP, A: 2},            // t2
+	{Op: OP_EXEC, A: EXEC_AR_SUB1},     // n=n-1, t2
+	{Op: OP_JUMP, A: 2},                // t2
 
 	opExit,
 }
