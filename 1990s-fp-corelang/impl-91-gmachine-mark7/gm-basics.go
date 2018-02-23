@@ -3,7 +3,7 @@ package climpl
 import (
 	"strconv"
 
-	"github.com/metaleap/go-machines/1991-fpcorelang/util"
+	"github.com/metaleap/go-machines/1990s-fp-corelang/util"
 )
 
 const _MARK7 = true // not a big gain in practice for this unoptimized prototype and its toy examples, still intrinsically a sane (and for real-world likely crucial) approach to have separate val stacks (in addition to addr stack)

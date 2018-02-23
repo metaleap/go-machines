@@ -1,7 +1,7 @@
 package clsyn
 
 import (
-	"github.com/metaleap/go-machines/1991-fpcorelang/util"
+	"github.com/metaleap/go-machines/1990s-fp-corelang/util"
 )
 
 func NewLookupEnv(defs []*SynDef, globals clutil.Env, argsEnv map[string]int, otherNames []string) (me map[string]bool) {
