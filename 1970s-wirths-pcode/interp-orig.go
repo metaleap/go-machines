@@ -9,13 +9,13 @@ type opCode int
 const (
 	_           opCode = iota
 	OP_LIT             // lit
-	OP_EXEC            //opr
-	OP_LOAD            //lod
-	OP_STORE           //sto
-	OP_CALL            //cal
-	OP_INCR            //int
-	OP_JUMP            //jmp
-	OP_JUMPCOND        //jpc
+	OP_EXEC            // opr
+	OP_LOAD            // lod
+	OP_STORE           // sto
+	OP_CALL            // cal
+	OP_INCR            // int
+	OP_JUMP            // jmp
+	OP_JUMPCOND        // jpc
 
 	OP_INCR1         // custom, not orig
 	OP_JUMPCOND_KEEP // dito

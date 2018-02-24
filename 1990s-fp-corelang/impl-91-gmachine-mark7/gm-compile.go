@@ -149,7 +149,7 @@ func (me *gMachine) compileExprStrict_SchemeE(expression IExpr, argsEnv env) cod
 		return append(me.compileExprStrict_SchemeE(expr.Scrut, argsEnv), instr{Op: INSTR_CASE_JUMP,
 			CaseJump: me.compileCaseAlts_SchemeD(me.compileExprStrictSplitSlide_SchemeA, expr.Alts, argsEnv)})
 	case *ExprCall:
-		if ctor, ctorrevargs := expr.FlattenedIfEffectivelyCtor(); ctor != nil {
+		if ctor, ctorrevargs := expr.FlattenedIfCtor(); ctor != nil {
 			comp := me.compileExprStrict_SchemeE
 			if _MARK7 {
 				comp = me.compileExprLazy_SchemeC
@@ -203,7 +203,7 @@ func (me *gMachine) compileExprLazy_SchemeC(expression IExpr, argsEnv env) code 
 		}
 		return code{{Op: INSTR_PUSHGLOBAL, Name: expr.Name}}
 	case *ExprCall:
-		if ctor, ctorrevargs := expr.FlattenedIfEffectivelyCtor(); ctor != nil {
+		if ctor, ctorrevargs := expr.FlattenedIfCtor(); ctor != nil {
 			return me.compileCtorAppl(me.compileExprLazy_SchemeC, ctor, ctorrevargs, argsEnv, false)
 		}
 		return append(append(

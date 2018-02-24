@@ -10,6 +10,7 @@ import (
 	"github.com/metaleap/go-machines/1990s-fp-corelang"
 	// "github.com/metaleap/go-machines/1990s-fp-corelang/impl-91-buggy-tmplinst"
 	"github.com/metaleap/go-machines/1990s-fp-corelang/impl-91-gmachine-mark7"
+	// "github.com/metaleap/go-machines/1990s-fp-corelang/impl-92-stg-machine"
 	"github.com/metaleap/go-machines/1990s-fp-corelang/syn"
 	"github.com/metaleap/go-machines/1990s-fp-corelang/util"
 )
@@ -23,8 +24,8 @@ func main() {
 	}
 
 	writeLn("\n\n\nmodule " + fname + " lexed and parsed, globals are:\n")
-	for defname := range mod.Defs {
-		_, _ = os.Stdout.WriteString(" · " + defname)
+	for _, def := range mod.Defs {
+		_, _ = os.Stdout.WriteString(" · " + def.Name)
 	}
 	writeLn("\n\n➜ enter any name to pretty-print the (parsed) AST")
 	writeLn("\n➜ define new globals via `name = expr`, `name x y z = expr` etc (any amount of args is fine)")
@@ -50,8 +51,8 @@ func main() {
 				multiline += readln + "\n  "
 			case !strings.Contains(readln, "="):
 				if readln == "*" || readln == "?" {
-					for defname := range mod.Defs {
-						writeLn(defname)
+					for _, def := range mod.Defs {
+						writeLn(def.Name)
 					}
 				} else if readln[0] == '!' || readln[0] == '?' {
 					defname, starttime := readln[1:], time.Now()

@@ -36,18 +36,17 @@ func (me *ExprCtor) ExtractIntoDef(name string, topLevel bool) *SynDef {
 	return &def
 }
 
-func (me *ExprCall) FlattenedIfEffectivelyCtor() (ctor *ExprCtor, reverseArgs []IExpr) {
-	reverseArgs = []IExpr{me.Arg}
-	for callee := me.Callee; callee != nil; {
-		switch c := callee.(type) {
-		case *ExprCtor:
-			ctor = c
-			return
-		case *ExprCall:
-			callee, reverseArgs = c.Callee, append(reverseArgs, c.Arg)
-		default:
-			return nil, nil
-		}
+func (me *ExprCall) Flattened() (callee IExpr, reverseArgs []IExpr) {
+	for ; me != nil; me, _ = callee.(*ExprCall) {
+		callee, reverseArgs = me.Callee, append(reverseArgs, me.Arg)
+	}
+	return
+}
+
+func (me *ExprCall) FlattenedIfCtor() (ctor *ExprCtor, reverseArgs []IExpr) {
+	callee, revargs := me.Flattened()
+	if ctormaybe, ok := callee.(*ExprCtor); ok {
+		ctor, reverseArgs = ctormaybe, revargs
 	}
 	return
 }

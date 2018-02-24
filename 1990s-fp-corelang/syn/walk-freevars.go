@@ -1,6 +1,10 @@
 package clsyn
 
-func (me *syn) FreeVars(map[string]bool, ...map[string]bool) {}
+func (me *syn) FreeVars(freeVarNames map[string]bool, lookupEnvs ...map[string]bool) {}
+
+func (me *SynDef) FreeVars(freeVarNames map[string]bool, lookupEnvs ...map[string]bool) {
+	me.Body.FreeVars(freeVarNames, append(lookupEnvs, NewLookupEnv(nil, nil, nil, me.Args))...)
+}
 
 func (me *ExprIdent) FreeVars(freeVarNames map[string]bool, lookupEnvs ...map[string]bool) {
 	for _, lookupenv := range lookupEnvs {
