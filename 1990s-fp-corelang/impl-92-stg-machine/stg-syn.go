@@ -1,15 +1,5 @@
 package climpl
 
-type synPrimOp int
-
-const (
-	_ synPrimOp = iota
-	SYN_PRIMOP_ADD
-	SYN_PRIMOP_SUB
-	SYN_PRIMOP_MUL
-	SYN_PRIMOP_DIV
-)
-
 type synMod struct {
 	Binds []synBinding
 }
@@ -46,23 +36,32 @@ type synExprAtomIdent struct {
 	Name string
 }
 
+type iSynExprAtomLit interface {
+	iSynExprAtom
+	exprAtomLit()
+}
+
+type synExprAtomLit struct{ synExprAtom }
+
+func (synExprAtomLit) exprAtomLit() {}
+
 type synExprAtomLitFloat struct {
-	synExprAtom
+	synExprAtomLit
 	Lit float64
 }
 
 type synExprAtomLitUInt struct {
-	synExprAtom
+	synExprAtomLit
 	Lit uint64
 }
 
 type synExprAtomLitRune struct {
-	synExprAtom
+	synExprAtomLit
 	Lit rune
 }
 
 type synExprAtomLitText struct {
-	synExprAtom
+	synExprAtomLit
 	Lit string
 }
 
@@ -87,7 +86,7 @@ type synExprCtor struct {
 
 type synExprPrimOp struct {
 	synExpr
-	PrimOp synPrimOp
+	PrimOp string
 	Left   iSynExprAtom
 	Right  iSynExprAtom
 }
@@ -95,10 +94,14 @@ type synExprPrimOp struct {
 type synExprCaseOf struct {
 	synExpr
 	Scrut iSynExpr
+	Alts  []synCaseAlt
 }
 
 type synCaseAlt struct {
-	CtorTag   synExprAtomIdent
-	CtorVars  []synExprAtomIdent
-	PrimOrDef iSynExprAtom
+	Ctor struct {
+		Tag  synExprAtomIdent
+		Vars []synExprAtomIdent
+	}
+	Atom iSynExprAtom
+	Body iSynExpr
 }

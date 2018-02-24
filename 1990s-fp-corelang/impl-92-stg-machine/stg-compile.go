@@ -46,6 +46,9 @@ func compileExpr(modEnv map[string]bool, prefix string, clExpr corelang.IExpr) i
 	case *corelang.ExprLitRune:
 		return synExprAtomLitRune{Lit: x.Lit}
 	case *corelang.ExprIdent:
+		if letbinds, letbody := compilePrimOpMaybe(modEnv, prefix, x, nil); letbody != nil {
+			return synExprLet{Binds: letbinds, Body: letbody}
+		}
 		return synExprAtomIdent{Name: x.Name}
 	case *corelang.ExprLetIn:
 		let := synExprLet{Rec: x.Rec, Body: compileExpr(modEnv, prefix, x.Body), Binds: make([]synBinding, len(x.Defs))}
@@ -58,7 +61,7 @@ func compileExpr(modEnv map[string]bool, prefix string, clExpr corelang.IExpr) i
 	case *corelang.ExprCall:
 		var let synExprLet
 		call, revargs := x.Flattened()
-		if ctor, _ := call.(*corelang.ExprCtor); ctor != nil {
+		if ctor, ok := call.(*corelang.ExprCtor); ok {
 			me := synExprCtor{Tag: synExprAtomIdent{Name: strconv.Itoa(ctor.Tag)}, Args: make([]iSynExprAtom, ctor.Arity)}
 			prefix += me.Tag.Name + "_"
 			for i, ctorarg := range revargs {
@@ -87,6 +90,9 @@ func compileExpr(modEnv map[string]bool, prefix string, clExpr corelang.IExpr) i
 			me := synExprCall{Args: make([]iSynExprAtom, len(revargs))}
 			switch callee := call.(type) {
 			case *corelang.ExprIdent:
+				if let.Binds, let.Body = compilePrimOpMaybe(modEnv, prefix, callee, revargs); let.Body != nil {
+					goto retLet
+				}
 				me.Callee = synExprAtomIdent{Name: callee.Name}
 			default:
 				me.Callee = synExprAtomIdent{Name: prefix + "callee"}
@@ -104,6 +110,7 @@ func compileExpr(modEnv map[string]bool, prefix string, clExpr corelang.IExpr) i
 			}
 			let.Body = me
 		}
+	retLet:
 		if len(let.Binds) == 0 {
 			return let.Body
 		}
@@ -112,6 +119,59 @@ func compileExpr(modEnv map[string]bool, prefix string, clExpr corelang.IExpr) i
 		bind := compileBind(modEnv, "", &corelang.SynDef{Body: x.Body, Args: x.Args, Name: prefix + "lam"})
 		return synExprLet{Binds: []synBinding{bind}, Body: synExprAtomIdent{Name: bind.Name}}
 	case *corelang.ExprCaseOf:
+		caseof := synExprCaseOf{Scrut: compileExpr(modEnv, prefix, x.Scrut), Alts: make([]synCaseAlt, len(x.Alts))}
+		for i, alt := range x.Alts {
+			caseof.Alts[i].Body = compileExpr(modEnv, prefix, alt.Body)
+			if alt.Tag > 0 {
+				caseof.Alts[i].Ctor.Tag = synExprAtomIdent{Name: strconv.Itoa(alt.Tag)}
+				caseof.Alts[i].Ctor.Vars = make([]synExprAtomIdent, len(alt.Binds))
+				for j, altbind := range alt.Binds {
+					caseof.Alts[i].Ctor.Vars[j] = synExprAtomIdent{Name: altbind}
+				}
+			}
+		}
+		return caseof
 	}
 	return nil
+}
+
+func compilePrimOpMaybe(modEnv map[string]bool, prefix string, callee *corelang.ExprIdent, revArgs []corelang.IExpr) (binds []synBinding, expr iSynExpr) {
+	switch callee.Name {
+	case "+", "-", "*", "/", "==", "!=", "<=", ">=", ">", "<":
+		num, op := len(revArgs), &synExprPrimOp{PrimOp: callee.Name}
+		if expr, prefix = op, prefix+callee.Name+"_"; num > 2 {
+			panic("prim-op `" + op.PrimOp + "` over-saturated: expecting 2 operands, not " + strconv.Itoa(num))
+		}
+		if num > 0 {
+			left := compileExpr(modEnv, prefix, revArgs[num-1])
+			if op.Left, _ = left.(iSynExprAtom); op.Left == nil {
+				bind := synBinding{Name: prefix + "l"}
+				bind.LamForm.Body = left
+				binds, op.Left = append(binds, bind), synExprAtomIdent{Name: bind.Name}
+			}
+		}
+		if num > 1 {
+			right := compileExpr(modEnv, prefix, revArgs[0])
+			if op.Right, _ = right.(iSynExprAtom); op.Right == nil {
+				bind := synBinding{Name: prefix + "r"}
+				bind.LamForm.Body = right
+				binds, op.Right = append(binds, bind), synExprAtomIdent{Name: bind.Name}
+			}
+		}
+		if op.Left == nil || op.Right == nil { // num<2
+			lamdef := synBinding{Name: prefix + "lam"}
+			lamdef.LamForm.Body = op
+			if op.Left == nil { // num==0
+				name := synExprAtomIdent{Name: lamdef.Name + "_l"}
+				op.Left, lamdef.LamForm.Args = name, append(lamdef.LamForm.Args, name)
+			}
+			if op.Right == nil { // num<=1
+				name := synExprAtomIdent{Name: lamdef.Name + "_r"}
+				op.Right, lamdef.LamForm.Args = name, append(lamdef.LamForm.Args, name)
+			}
+			binds = append(binds, lamdef)
+			expr = synExprAtomIdent{Name: lamdef.Name}
+		}
+	}
+	return
 }
