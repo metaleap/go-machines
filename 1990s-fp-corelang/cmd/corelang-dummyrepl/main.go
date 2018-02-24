@@ -9,8 +9,8 @@ import (
 
 	"github.com/metaleap/go-machines/1990s-fp-corelang"
 	// "github.com/metaleap/go-machines/1990s-fp-corelang/impl-91-buggy-tmplinst"
-	// "github.com/metaleap/go-machines/1990s-fp-corelang/impl-91-gmachine-mark7"
-	"github.com/metaleap/go-machines/1990s-fp-corelang/impl-92-stg-machine"
+	"github.com/metaleap/go-machines/1990s-fp-corelang/impl-91-gmachine-mark7"
+	// "github.com/metaleap/go-machines/1990s-fp-corelang/impl-92-stg-machine"
 	"github.com/metaleap/go-machines/1990s-fp-corelang/syn"
 	"github.com/metaleap/go-machines/1990s-fp-corelang/util"
 )

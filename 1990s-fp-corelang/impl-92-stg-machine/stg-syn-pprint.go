@@ -83,11 +83,7 @@ func (me synExprCall) String() (s string) {
 func (me synExprCtor) String() (s string) {
 	s += "«" + me.Tag.String()
 	for i := range me.Args {
-		if me.Args[i] == nil {
-			s += " NIL"
-		} else {
-			s += " " + me.Args[i].String()
-		}
+		s += " " + me.Args[i].String()
 	}
 	s += "»"
 	return
