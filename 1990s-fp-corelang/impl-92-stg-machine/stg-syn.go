@@ -1,10 +1,27 @@
 package climpl
 
+import (
+	"fmt"
+)
+
+var uglyHackyIndent int
+
+type iSyn interface {
+	fmt.Stringer
+	taggedSyn()
+}
+
+type syn struct{}
+
+func (syn) taggedSyn() {}
+
 type synMod struct {
+	syn
 	Binds []synBinding
 }
 
 type synBinding struct {
+	syn
 	Name    string
 	LamForm struct {
 		Free []synExprAtomIdent
@@ -15,21 +32,22 @@ type synBinding struct {
 }
 
 type iSynExpr interface {
-	expr()
+	iSyn
+	taggedSynExpr()
 }
 
-type synExpr struct{}
+type synExpr struct{ syn }
 
-func (synExpr) expr() {}
+func (synExpr) taggedSynExpr() {}
 
 type iSynExprAtom interface {
 	iSynExpr
-	exprAtom()
+	taggedSynExprAtom()
 }
 
 type synExprAtom struct{ synExpr }
 
-func (synExprAtom) exprAtom() {}
+func (synExprAtom) taggedSynExprAtom() {}
 
 type synExprAtomIdent struct {
 	synExprAtom
