@@ -8,14 +8,10 @@ import (
 )
 
 func CompileToMachine(mod *corelang.SynMod) (util.IMachine, []error) {
-	me := &stgMachine{}
-
-	modenv := corelang.NewLookupEnv(mod.Defs_(), nil, nil, nil)
-
+	me, modenv := &stgMachine{}, corelang.NewLookupEnv(mod.Defs_(), nil, nil, nil)
 	for _, global := range mod.Defs {
 		me.mod.Binds = append(me.mod.Binds, compileBind(modenv, "", global))
 	}
-
 	return me, nil
 }
 
@@ -57,16 +53,16 @@ func compileExpr(modEnv map[string]bool, prefix string, clExpr corelang.IExpr) i
 			let.Binds[i] = compileBind(modEnv, prefix, def)
 		}
 		return let
-	case *corelang.ExprCtor:
+	case *corelang.ExprCtor: // not already captured by outer call (see below), so nilary
 		return synExprCtor{Tag: synExprAtomIdent{Name: strconv.Itoa(x.Tag)}}
 	case *corelang.ExprCall:
 		var let synExprLet
 		call, revargs := x.Flattened()
 		if ctor, _ := call.(*corelang.ExprCtor); ctor != nil {
-			me := synExprCtor{Tag: synExprAtomIdent{Name: strconv.Itoa(ctor.Tag)}, Args: make([]iSynExprAtom, len(revargs))}
+			me := synExprCtor{Tag: synExprAtomIdent{Name: strconv.Itoa(ctor.Tag)}, Args: make([]iSynExprAtom, ctor.Arity)}
 			prefix += me.Tag.Name + "_"
 			for i, ctorarg := range revargs {
-				if _i := len(me.Args) - (1 + i); ctorarg.IsAtomic() {
+				if _i := len(revargs) - (1 + i); ctorarg.IsAtomic() {
 					me.Args[_i] = compileExpr(modEnv, prefix, ctorarg).(iSynExprAtom)
 				} else {
 					name := prefix + strconv.Itoa(i)
@@ -75,6 +71,18 @@ func compileExpr(modEnv map[string]bool, prefix string, clExpr corelang.IExpr) i
 				}
 			}
 			let.Body = me
+			if diff := ctor.Arity - len(revargs); diff < 0 {
+				panic("fully-saturated ctor applied like a function")
+			} else if diff > 0 {
+				lamdef := synBinding{Name: prefix + "lam"}
+				lamdef.LamForm.Body, lamdef.LamForm.Args = me, make([]synExprAtomIdent, diff)
+				for i := 0; i < diff; i++ {
+					lamdef.LamForm.Args[i].Name = lamdef.Name + "_a_" + strconv.Itoa(i)
+					me.Args = append(me.Args, lamdef.LamForm.Args[i])
+				}
+				let.Binds = append(let.Binds, lamdef)
+				let.Body = synExprAtomIdent{Name: lamdef.Name}
+			}
 		} else {
 			me := synExprCall{Args: make([]iSynExprAtom, len(revargs))}
 			switch callee := call.(type) {
