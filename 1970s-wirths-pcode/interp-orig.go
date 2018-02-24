@@ -7,18 +7,19 @@ import (
 type opCode int
 
 const (
-	_ opCode = iota
-	OP_LIT
-	OP_EXEC
-	OP_LOAD
-	OP_STORE
-	OP_STORE_KEEP
-	OP_CALL
-	OP_INCR
-	OP_INCR1
-	OP_JUMP
-	OP_JUMPCOND
-	OP_JUMPCOND_KEEP
+	_           opCode = iota
+	OP_LIT             // lit
+	OP_EXEC            //opr
+	OP_LOAD            //lod
+	OP_STORE           //sto
+	OP_CALL            //cal
+	OP_INCR            //int
+	OP_JUMP            //jmp
+	OP_JUMPCOND        //jpc
+
+	OP_INCR1         // custom, not orig
+	OP_JUMPCOND_KEEP // dito
+	OP_STORE_KEEP    //dito
 )
 
 type instr struct {
@@ -39,7 +40,7 @@ const (
 	EXEC_AR_MUL_KEEP
 	EXEC_AR_DIV
 	EXEC_ODD
-	EXEC_DBG
+	EXEC_DBG // custom, not original
 	EXEC_CMP_EQ
 	EXEC_CMP_NEQ
 	EXEC_CMP_LT
