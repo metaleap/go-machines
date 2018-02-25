@@ -235,10 +235,13 @@ func (me *gMachine) eval() {
 			me.StackA = me.StackA.Dropped(arity).Pushed(me.Heap.Alloc(node))
 		case INSTR_CASE_JUMP:
 			node := me.Heap[me.StackA.Top0()].(nodeCtor)
-			if node.Tag >= len(me.Code[0].CaseJump) || len(me.Code[0].CaseJump[node.Tag]) == 0 {
-				panic("unhandled case for ‹" + strconv.Itoa(node.Tag) + "," + strconv.Itoa(len(node.Items)) + "›")
+			if node.Tag < len(me.Code[0].CaseJump) && len(me.Code[0].CaseJump[node.Tag]) > 0 {
+				next = append(me.Code[0].CaseJump[node.Tag], next...)
+			} else if len(me.Code[0].CaseJump[0]) > 0 { // jump to default case
+				next = append(me.Code[0].CaseJump[0], next...)
+			} else {
+				panic("no matching alternative in CASE OF for ‹" + strconv.Itoa(node.Tag) + "," + strconv.Itoa(len(node.Items)) + "› and no default (tag 0) alternative either")
 			}
-			next = append(me.Code[0].CaseJump[node.Tag], next...)
 		case INSTR_CASE_SPLIT:
 			node := me.Heap[me.StackA.Top0()].(nodeCtor)
 			me.StackA = me.StackA.Dropped(1)

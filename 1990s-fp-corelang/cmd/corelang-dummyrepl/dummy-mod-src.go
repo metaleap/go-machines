@@ -8,13 +8,14 @@ const srcMod = `
 page136 x =
     LET foo = CASE x OF 12 -> 111
                         34 -> 222
+                        0 -> 42
     IN (2 2) foo ((234 1) 77)
+
+p136 = page136 (56 0)
 
 z x = CASE x OF 12 -> 444
                 34 -> 555
 zz= (1234567890 1) (z (12 0))
-
-p136 = page136 (34 0)
 
 ctpar foo = (777 4) 22 foo
 

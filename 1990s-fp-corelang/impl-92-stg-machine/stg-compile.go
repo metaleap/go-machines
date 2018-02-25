@@ -17,7 +17,7 @@ func CompileToMachine(mod *corelang.SynMod) (_ util.IMachine, errs []error) {
 			me.mod.Binds = append(me.mod.Binds, bind)
 		}
 	}
-	// println(me.mod.String())
+	println(me.mod.String())
 	return me, errs
 }
 
