@@ -11,16 +11,25 @@ map fn lst =
 
 pow n = n * n
 
-times n foo =
-    when (n == 0)
-    /*then*/ (N 0)
-    /*else*/ ((C 2) foo (times (n-1) foo))
-
-t4 = times 4 123
-
 powlst =
     LET nums = ((Cons 2) 12 ((Cons 2) 34 ((Cons 2) 56 ((Cons 2) 78 (Nil 0)))))
     IN map pow nums
+
+when cond =
+    CASE cond OF
+        False -> k1
+        True -> k0
+
+whx c = when c (T 0) (F 0)
+wht = whx (1>0)
+whf = whx (0>1)
+
+repeat n foo =
+    if (n>0) // known bug in impl-91-gmachine: works with 'if' but not 'when'
+        /*then*/ ((C 2) foo (repeat (n-1) foo))
+        /*else*/ (N 0)
+
+rep4 = repeat 4 12345
 
 
 page136 x =
@@ -66,11 +75,6 @@ tl list = list k1 abort
 abort = abort
 infinite n = cons n (infinite n)
 listish = hd (tl (infinite 4))
-
-when cond then else =
-    CASE cond OF
-    False -> else
-    True -> then
 
 
 fac n =                         // using 'when' instead of builtin 'if' here executes ~15-25% more steps and ~15-25% more calls; plus tends to take ~2x as long

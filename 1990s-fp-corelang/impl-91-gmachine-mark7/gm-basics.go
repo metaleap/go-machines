@@ -28,7 +28,7 @@ func (me *gMachine) Eval(name string) (val interface{}, stats clutil.Stats, err 
 	defer clutil.Catch(&err)
 	me.StackA, me.StackDump, me.StackInts, me.StackStrs = make(clutil.StackA, 0, 64), make([]dumpedState, 0, 16), make(clutil.StackI, 0, 64), make(clutil.StackS, 0, 16)
 	me.Code = code{{Op: INSTR_PUSHGLOBAL, Name: name}, {Op: INSTR_EVAL}}
-	// println(me.Heap[me.Globals[name]].(nodeGlobal).Code.String())
+	// println(me.Heap[me.Globals["times"]].(nodeGlobal).Code.String())
 	me.eval()
 	stats, val = me.Stats, me.Heap[me.StackA.Top0()]
 	return

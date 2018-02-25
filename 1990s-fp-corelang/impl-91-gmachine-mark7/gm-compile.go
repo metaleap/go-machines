@@ -127,7 +127,7 @@ func (me *gMachine) compileExprMark7_SchemeR_(expression IExpr, argsEnv env, d i
 		}
 	case *ExprCaseOf:
 		return append(me.compileExprStrict_SchemeE(expr.Scrut, argsEnv),
-			instr{Op: INSTR_CASE_JUMP, CaseJump: me.compileCaseAlts_SchemeD(me.compileExprStrictSplit_SchemeR(d), expr.Alts, argsEnv)})
+			instr{Op: INSTR_CASE_JUMP, CaseJump: me.compileCaseAlts_SchemeD(me.compileExprMark7StrictSplit_SchemeR(d), expr.Alts, argsEnv)})
 	}
 	return append(me.compileExprStrict_SchemeE(expression, argsEnv),
 		instr{Op: INSTR_UPDATE, Int: d}, instr{Op: INSTR_POP, Int: d}, instr{Op: INSTR_UNWIND})
@@ -169,7 +169,7 @@ func (me *gMachine) compileExprStrictSplitSlide_SchemeA(offset int, expr IExpr, 
 		instr{Op: INSTR_SLIDE, Int: offset})
 }
 
-func (me *gMachine) compileExprStrictSplit_SchemeR(d int) compilationN {
+func (me *gMachine) compileExprMark7StrictSplit_SchemeR(d int) compilationN {
 	return func(offset int, expr IExpr, argsEnv env) code {
 		return me.compileExprStrictSplit(me.compileExprMark7_SchemeR(d), expr, argsEnv, offset)
 	}
