@@ -101,6 +101,44 @@ func (me StackI) Top(i int) int {
 	return me[len(me)-(1+i)]
 }
 
+type StackS []string
+
+func (me StackS) Dropped(n int) StackS {
+	return me[:len(me)-n]
+}
+
+func (me StackS) Pos0() int {
+	return len(me) - 1
+}
+
+func (me StackS) Pos1() int {
+	return len(me) - 2
+}
+
+func (me StackS) Pos(i int) int {
+	return len(me) - (1 + i)
+}
+
+func (me *StackS) Push(i string) {
+	*me = append(*me, i)
+}
+
+func (me StackS) Pushed(i string) StackS {
+	return append(me, i)
+}
+
+func (me StackS) Top0() string {
+	return me[len(me)-1]
+}
+
+func (me StackS) Top1() string {
+	return me[len(me)-2]
+}
+
+func (me StackS) Top(i int) string {
+	return me[len(me)-(1+i)]
+}
+
 type HeapM map[Addr]INode
 
 func (me HeapM) Alloc(obj INode) (addr Addr) {

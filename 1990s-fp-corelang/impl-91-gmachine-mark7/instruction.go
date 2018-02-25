@@ -66,7 +66,7 @@ type instr struct {
 	CondThen  code
 	CondElse  code
 	CtorArity int
-	CaseJump  []code
+	CaseJump  map[string]code
 }
 
 func (me instr) String() string {
@@ -116,7 +116,7 @@ func (me instr) String() string {
 	case INSTR_PRIM_COND:
 		return "Cond"
 	case INSTR_CTOR_PACK:
-		return "Ctor" + strconv.Itoa(me.Int) + ":" + strconv.Itoa(me.CtorArity)
+		return "Ctor:" + me.Name + ":" + strconv.Itoa(me.CtorArity)
 	case INSTR_CASE_JUMP:
 		return "CJmp#" + strconv.Itoa(len(me.CaseJump))
 	case INSTR_CASE_SPLIT:

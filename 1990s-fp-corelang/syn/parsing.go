@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	lex "github.com/go-leap/dev/lex"
+	"github.com/go-leap/str"
 )
 
 type Keyword func(lex.Tokens) (IExpr, lex.Tokens, *Error)
@@ -179,9 +180,9 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 			// at this point, the only sensible way in corelang to joint prev and cur expr is by application:
 
 			// special case, ctor? any appl form akin to (intlit intlit) is parsed as: Ctor{tag,arity} instead of application
-			if ctortag, _ := prevexpr.(*ExprLitUInt); ctortag != nil {
+			if ctortag, _ := prevexpr.(*ExprIdent); ctortag != nil && (ustr.BeginsUpper(ctortag.Name) || ctortag.Name == "_") {
 				if ctorarity, _ := thisexpr.(*ExprLitUInt); ctorarity != nil {
-					prevexpr = Ct(ctortag.Lit, ctorarity.Lit)
+					prevexpr = Ct(ctortag.Name, ctorarity.Lit)
 					prevexpr.init(append(ctortag.toks, ctorarity.toks...)) // TODO: see comment below
 					continue
 				}
@@ -283,7 +284,7 @@ func parseKeywordCaseAlts(tokens lex.Tokens) (alts []*SynCaseAlt, errs []*Error)
 }
 
 func parseKeywordCaseAlt(tokens lex.Tokens) (*SynCaseAlt, lex.Tokens, *Error) {
-	if tokens[0].Kind() != lex.TOKEN_UINT {
+	if tokens[0].Kind() != lex.TOKEN_IDENT {
 		return nil, nil, errTok(&tokens[0], "expected constructor tag instead of `"+tokens[0].String()+"`")
 	} else if len(tokens) == 1 {
 		return nil, nil, errTok(&tokens[0], "expected name(s) or `->` next")
@@ -296,7 +297,7 @@ func parseKeywordCaseAlt(tokens lex.Tokens) (*SynCaseAlt, lex.Tokens, *Error) {
 		return nil, nil, errTok(&tokens[0], "incomplete `CASE` alternative (possibly mal-indentation)")
 	}
 
-	i, alt := 0, &SynCaseAlt{Tag: int(tokens[0].Uint)}
+	i, alt := 0, &SynCaseAlt{Tag: tokens[0].Str}
 	alt.init(toks)
 
 	// binds up until `->`

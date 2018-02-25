@@ -24,7 +24,7 @@ type SynDef struct {
 
 type SynCaseAlt struct {
 	syn
-	Tag   int
+	Tag   string
 	Binds []string
 	Body  IExpr
 }

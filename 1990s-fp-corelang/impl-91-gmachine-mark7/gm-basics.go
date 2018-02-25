@@ -6,7 +6,7 @@ import (
 	"github.com/metaleap/go-machines/1990s-fp-corelang/util"
 )
 
-const _MARK7 = true // not a big gain in practice for this unoptimized prototype and its toy examples, still intrinsically a sane (and for real-world likely crucial) approach to have separate val stacks (in addition to addr stack)
+const _MARK7 = false // not a big gain in practice for this unoptimized prototype and its toy examples, still intrinsically a sane (and for real-world likely crucial) approach to have separate val stacks (in addition to addr stack)
 
 type gMachine struct {
 	Heap      clutil.HeapA // no GC here, forever growing
@@ -15,6 +15,7 @@ type gMachine struct {
 	StackA    clutil.StackA // push-to and pop-from its end
 	StackDump []dumpedState
 	StackInts clutil.StackI // used if _MARK7
+	StackStrs clutil.StackS // used if _MARK7 ever since we swapped ctor int tags for str tags
 	Stats     clutil.Stats
 }
 
@@ -25,7 +26,7 @@ type dumpedState struct {
 
 func (me *gMachine) Eval(name string) (val interface{}, stats clutil.Stats, err error) {
 	defer clutil.Catch(&err)
-	me.StackA, me.StackDump, me.StackInts = make(clutil.StackA, 0, 64), make([]dumpedState, 0, 16), make(clutil.StackI, 0, 64)
+	me.StackA, me.StackDump, me.StackInts, me.StackStrs = make(clutil.StackA, 0, 64), make([]dumpedState, 0, 16), make(clutil.StackI, 0, 64), make(clutil.StackS, 0, 16)
 	me.Code = code{{Op: INSTR_PUSHGLOBAL, Name: name}, {Op: INSTR_EVAL}}
 	// println(me.Heap[me.Globals[name]].(nodeGlobal).Code.String())
 	me.eval()
@@ -129,14 +130,14 @@ func (me *gMachine) eval() {
 				case INSTR_PRIM_CMP_GEQ:
 					istrue = (num1 >= num2)
 				}
-				var result int
+				var result string
 				if istrue {
-					result = 2
+					result = "True"
 				} else {
-					result = 1
+					result = "False"
 				}
-				me.StackInts = me.StackInts.Dropped(1)
-				me.StackInts[me.StackInts.Pos0()] = result
+				me.StackInts = me.StackInts.Dropped(2)
+				me.StackStrs.Push(result)
 			} else {
 				node1, node2 := me.Heap[me.StackA.Top0()].(nodeInt), me.Heap[me.StackA.Top1()].(nodeInt)
 				var istrue bool
@@ -156,9 +157,9 @@ func (me *gMachine) eval() {
 				}
 				var result nodeCtor
 				if istrue {
-					result.Tag = 2
+					result.Tag = "True"
 				} else {
-					result.Tag = 1
+					result.Tag = "False"
 				}
 				addr := me.Heap.Alloc(result)
 				me.StackA = me.StackA.Dropped(1)
@@ -207,19 +208,19 @@ func (me *gMachine) eval() {
 			}
 		case INSTR_PRIM_COND:
 			if _MARK7 {
-				bnum := me.StackInts.Top0()
-				me.StackInts = me.StackInts.Dropped(1)
-				if bnum == 2 {
+				ctortag := me.StackStrs.Top0()
+				me.StackStrs = me.StackStrs.Dropped(1)
+				if ctortag == "True" {
 					next = append(me.Code[0].CondThen, next...)
-				} else if bnum == 1 {
+				} else if ctortag == "False" {
 					next = append(me.Code[0].CondElse, next...)
 				} else {
-					panic(bnum)
+					panic(ctortag)
 				}
 			} else {
-				if node := me.Heap[me.StackA.Top0()].(nodeCtor); node.Tag == 2 {
+				if node := me.Heap[me.StackA.Top0()].(nodeCtor); node.Tag == "True" {
 					next = append(me.Code[0].CondThen, next...)
-				} else if node.Tag == 1 {
+				} else if node.Tag == "False" {
 					next = append(me.Code[0].CondElse, next...)
 				} else {
 					panic(node.Tag)
@@ -228,19 +229,19 @@ func (me *gMachine) eval() {
 			}
 		case INSTR_CTOR_PACK:
 			arity := me.Code[0].CtorArity
-			node := nodeCtor{Tag: me.Code[0].Int, Items: make([]clutil.Addr, arity)}
+			node := nodeCtor{Tag: me.Code[0].Name, Items: make([]clutil.Addr, arity)}
 			for i := 0; i < arity; i++ {
 				node.Items[i] = me.StackA.Top(i)
 			}
 			me.StackA = me.StackA.Dropped(arity).Pushed(me.Heap.Alloc(node))
 		case INSTR_CASE_JUMP:
 			node := me.Heap[me.StackA.Top0()].(nodeCtor)
-			if node.Tag < len(me.Code[0].CaseJump) && len(me.Code[0].CaseJump[node.Tag]) > 0 {
-				next = append(me.Code[0].CaseJump[node.Tag], next...)
-			} else if len(me.Code[0].CaseJump[0]) > 0 { // jump to default case
-				next = append(me.Code[0].CaseJump[0], next...)
+			if code := me.Code[0].CaseJump[node.Tag]; len(code) > 0 {
+				next = append(code, next...)
+			} else if code = me.Code[0].CaseJump["_"]; len(code) > 0 { // jump to default case
+				next = append(code, next...)
 			} else {
-				panic("no matching alternative in CASE OF for ‹" + strconv.Itoa(node.Tag) + "," + strconv.Itoa(len(node.Items)) + "› and no default (tag 0) alternative either")
+				panic("no matching alternative in CASE OF for ‹" + node.Tag + "," + strconv.Itoa(len(node.Items)) + "› and no default (tag 0) alternative either")
 			}
 		case INSTR_CASE_SPLIT:
 			node := me.Heap[me.StackA.Top0()].(nodeCtor)
@@ -251,8 +252,8 @@ func (me *gMachine) eval() {
 		case INSTR_MARK7_PUSHINTVAL:
 			me.StackInts.Push(me.Code[0].Int)
 		case INSTR_MARK7_MAKENODEBOOL:
-			me.StackA.Push(me.Heap.Alloc(nodeCtor{Tag: me.StackInts.Top0()}))
-			me.StackInts = me.StackInts.Dropped(1)
+			me.StackA.Push(me.Heap.Alloc(nodeCtor{Tag: me.StackStrs.Top0()}))
+			me.StackStrs = me.StackStrs.Dropped(1)
 		case INSTR_MARK7_MAKENODEINT:
 			me.StackA.Push(me.Heap.Alloc(nodeInt(me.StackInts.Top0())))
 			me.StackInts = me.StackInts.Dropped(1)
@@ -261,7 +262,7 @@ func (me *gMachine) eval() {
 			me.StackA = me.StackA.Dropped(1)
 			switch node := me.Heap[addr].(type) {
 			case nodeCtor:
-				me.StackInts.Push(node.Tag)
+				me.StackStrs.Push(node.Tag)
 			case nodeInt:
 				me.StackInts.Push(int(node))
 			}
@@ -284,7 +285,7 @@ func (me *gMachine) String(result interface{}) string {
 	case nodeInt:
 		return "#" + strconv.Itoa(int(res))
 	case nodeCtor:
-		s := "‹T" + strconv.Itoa(res.Tag)
+		s := "‹" + res.Tag
 		for _, addr := range res.Items {
 			s += " " + me.String(me.Heap[addr])
 		}

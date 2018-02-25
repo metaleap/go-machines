@@ -21,6 +21,6 @@ type nodeIndirection struct {
 }
 
 type nodeCtor struct {
-	Tag   int
+	Tag   string
 	Items []clutil.Addr
 }

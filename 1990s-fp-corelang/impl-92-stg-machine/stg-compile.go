@@ -69,7 +69,7 @@ func compileCoreExprToStgExpr(modEnv map[string]bool, prefix string, clExpr core
 		}
 		return let
 	case *corelang.ExprCtor: // not already captured by outer call (see below), so nilary
-		return synExprCtor{Tag: synExprAtomIdent{Name: strconv.Itoa(x.Tag)}}
+		return synExprCtor{Tag: synExprAtomIdent{Name: x.Tag}}
 	case *corelang.ExprCall:
 		var let synExprLet
 		call, revargs := x.Flattened()
@@ -78,7 +78,7 @@ func compileCoreExprToStgExpr(modEnv map[string]bool, prefix string, clExpr core
 			if argscap < len(revargs) {
 				panic("fully-saturated ctor applied like a function")
 			}
-			me := synExprCtor{Tag: synExprAtomIdent{Name: strconv.Itoa(ctor.Tag)}, Args: make([]iSynExprAtom, len(revargs), argscap)}
+			me := synExprCtor{Tag: synExprAtomIdent{Name: ctor.Tag}, Args: make([]iSynExprAtom, len(revargs), argscap)}
 			prefix += me.Tag.Name + "·"
 			for i, ctorarg := range revargs {
 				if _i := len(revargs) - (1 + i); ctorarg.IsAtomic() {
@@ -138,8 +138,8 @@ func compileCoreExprToStgExpr(modEnv map[string]bool, prefix string, clExpr core
 		caseof := synExprCaseOf{Scrut: compileCoreExprToStgExpr(modEnv, prefix, x.Scrut), Alts: make([]synCaseAlt, len(x.Alts))}
 		for i, alt := range x.Alts {
 			caseof.Alts[i].Body = compileCoreExprToStgExpr(modEnv, prefix, alt.Body)
-			if alt.Tag > 0 {
-				caseof.Alts[i].Ctor.Tag = synExprAtomIdent{Name: strconv.Itoa(alt.Tag)}
+			if alt.Tag != "_" {
+				caseof.Alts[i].Ctor.Tag = synExprAtomIdent{Name: alt.Tag}
 				caseof.Alts[i].Ctor.Vars = make([]synExprAtomIdent, len(alt.Binds))
 				for j, altbind := range alt.Binds {
 					caseof.Alts[i].Ctor.Vars[j] = synExprAtomIdent{Name: altbind}

@@ -2,7 +2,7 @@ package clsyn
 
 func Ap(callee IExpr, arg IExpr) *ExprCall     { return &ExprCall{Callee: callee, Arg: arg} }
 func Ab(args []string, body IExpr) *ExprLambda { return &ExprLambda{Args: args, Body: body} }
-func Ct(tag uint64, arity uint64) *ExprCtor    { return &ExprCtor{Tag: int(tag), Arity: int(arity)} }
+func Ct(tag string, arity uint64) *ExprCtor    { return &ExprCtor{Tag: tag, Arity: int(arity)} }
 
 func Call(callee IExpr /*argsReversed bool,*/, args ...IExpr) (call *ExprCall) {
 	var i int
@@ -24,7 +24,7 @@ func Call(callee IExpr /*argsReversed bool,*/, args ...IExpr) (call *ExprCall) {
 
 type ExprCtor struct {
 	exprComp
-	Tag   int
+	Tag   string
 	Arity int
 }
 

@@ -4,22 +4,42 @@ package main
 // https://www.youtube.com/watch?v=GhERMBT7u4w 21m
 
 const srcMod = `
+map fn lst =
+    CASE lst OF
+        Nil -> (Nil 0)
+        Cons x xs -> (Cons 2) (fn x) (map fn xs)
+
+pow n = n * n
+
+times n foo =
+    when (n == 0)
+    /*then*/ (N 0)
+    /*else*/ ((C 2) foo (times (n-1) foo))
+
+t4 = times 4 123
+
+powlst =
+    LET nums = ((Cons 2) 12 ((Cons 2) 34 ((Cons 2) 56 ((Cons 2) 78 (Nil 0)))))
+    IN map pow nums
+
 
 page136 x =
-    LET foo = CASE x OF 12 -> 111
-                        34 -> 222
-                        0 -> 42
-    IN (2 2) foo ((234 1) 77)
+    LET foo = CASE x OF Foo -> 111
+                        Bar -> 222
+                        _ -> 42
+    IN (P136 2) foo ((Wot 1) 77)
 
-p136 = page136 (56 0)
+p136 = page136 (Nope 0)
 
-z x = CASE x OF 12 -> 444
-                34 -> 555
-zz= (1234567890 1) (z (12 0))
+z x = CASE x OF One -> 444
+                Two -> 555
+zz= (Zz 1) (z (One 0))
 
-ctpar foo = (777 4) 22 foo
+ctpar foo = (Partial 4) 22 foo
 
-page137_1 x = (99 5) 123 x 333
+ctp = ctpar 33 44 55
+
+page137_1 x = (P137_1 5) 123 x 333
 
 p137_1 =
     LET REC
@@ -30,7 +50,7 @@ p137_1 =
 
 page137_2 incompletector = incompletector 654
 
-p137_2 = (page137_2 ((88 3) 321)) 987
+p137_2 = (page137_2 ((P137_2 3) 321)) 987
 
 
 
@@ -49,11 +69,11 @@ listish = hd (tl (infinite 4))
 
 when cond then else =
     CASE cond OF
-    1 -> else
-    2 -> then
+    False -> else
+    True -> then
 
 
-fac n =                         // using 'when' instead of 'if' here works equivalently: but executes ~20-30% more steps and ~20-30% more calls; plus tends to take ~2x as long
+fac n =                         // using 'when' instead of builtin 'if' here executes ~15-25% more steps and ~15-25% more calls; plus tends to take ~2x as long
     when (n==0)
     /*then*/ 1
     /*else*/ (n * (fac (n - 1)))
@@ -61,11 +81,11 @@ fac n =                         // using 'when' instead of 'if' here works equiv
 
 
 test ctor =
-    CASE ctor OF    1 n -> neg n
-                    2 x y -> x + y
-                    3 x y -> x * y
+    CASE ctor OF    Neg n -> neg n
+                    Add x y -> x + y
+                    Mul x y -> x * y
 
-do = test ((3 2) 5 3) // call to test with ctor of (3 2) returns the result of 5*3
+do = test ((Mul 2) 5 3) // call to test with ctor of (3 2) returns the result of 5*3
 
 
 

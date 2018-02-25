@@ -48,8 +48,8 @@ var primsPrecompiledForLazy = map[string]nodeGlobal{
 var primsMark7Globals = map[string]*SynDef{
 	"negate": {TopLevel: true, Name: "neg", Args: []string{"x"}, Body: Ap(Id("neg"), Id("x"))},
 	"if":     {TopLevel: true, Name: "if", Args: []string{"c", "t", "f"}, Body: Ap(Ap(Ap(Id("if"), Id("c")), Id("t")), Id("f"))},
-	"True":   {TopLevel: true, Name: "True", Body: Ct(2, 0)},
-	"False":  {TopLevel: true, Name: "False", Body: Ct(1, 0)},
+	// "True":   {TopLevel: true, Name: "True", Body: Ct(2, 0)},
+	// "False":  {TopLevel: true, Name: "False", Body: Ct(1, 0)},
 }
 
 func init() {
@@ -230,7 +230,7 @@ func (me *gMachine) compileExprLazy_SchemeC(expression IExpr, argsEnv env) code 
 
 func (me *gMachine) compileCtorAppl(comp compilation, ctor *ExprCtor, reverseArgs []IExpr, argsEnv env, fromMark7E bool) code {
 	if len(reverseArgs) != ctor.Arity {
-		dynglobalname := "#ctor#" + strconv.Itoa(ctor.Tag) + "#" + strconv.Itoa(ctor.Arity)
+		dynglobalname := "#ctor#" + ctor.Tag + "#" + strconv.Itoa(ctor.Arity)
 		dynglobaladdr := me.Globals[dynglobalname]
 		if dynglobaladdr == 0 {
 			dynglobaldef := ctor.ExtractIntoDef(dynglobalname, true)
@@ -253,7 +253,7 @@ func (me *gMachine) compileCtorAppl(comp compilation, ctor *ExprCtor, reverseArg
 			instrs = append(instrs, instr{Op: INSTR_EVAL})
 		}
 	}
-	return append(instrs, instr{Op: INSTR_CTOR_PACK, Int: ctor.Tag, CtorArity: ctor.Arity})
+	return append(instrs, instr{Op: INSTR_CTOR_PACK, Name: ctor.Tag, CtorArity: ctor.Arity})
 }
 
 func (me *gMachine) compileLet(compbody compilation, let *ExprLetIn, argsEnv env, finalOp instruction) (instrs code) {
@@ -282,14 +282,8 @@ func (me *gMachine) compileLet(compbody compilation, let *ExprLetIn, argsEnv env
 	return
 }
 
-func (me *gMachine) compileCaseAlts_SchemeD(compn compilationN, caseAlts []*SynCaseAlt, argsEnv env) (jumpblocks []code) {
-	var tagmax int
-	for i := 0; i < len(caseAlts); i++ {
-		if caseAlts[i].Tag > tagmax {
-			tagmax = caseAlts[i].Tag
-		}
-	}
-	jumpblocks = make([]code, tagmax+1)
+func (me *gMachine) compileCaseAlts_SchemeD(compn compilationN, caseAlts []*SynCaseAlt, argsEnv env) (jumpblocks map[string]code) {
+	jumpblocks = make(map[string]code, len(caseAlts))
 	for _, alt := range caseAlts {
 		jumpblocks[alt.Tag] = me.compileCaseAlt_SchemeA(compn, alt, argsEnv)
 	}
