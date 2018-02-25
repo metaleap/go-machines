@@ -83,6 +83,11 @@ fac n =                         // using 'when' instead of builtin 'if' here exe
     /*else*/ (n * (fac (n - 1)))
 
 
+fib n = // n<23 to not hit our arbitrary 10million-steps execution limit / forced abort — with 'if', but n<22 with 'when'
+    if (n < 3)
+        ( 1 )
+        ( (fib (n-1)) + (fib (n-2)) )
+
 
 test ctor =
     CASE ctor OF    Neg n -> neg n

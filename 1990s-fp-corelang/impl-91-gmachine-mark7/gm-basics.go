@@ -6,7 +6,7 @@ import (
 	"github.com/metaleap/go-machines/1990s-fp-corelang/util"
 )
 
-const _MARK7 = false // not a big gain in practice for this unoptimized prototype and its toy examples, still intrinsically a sane (and for real-world likely crucial) approach to have separate val stacks (in addition to addr stack)
+const _MARK7 = true // not a big gain in practice for this unoptimized prototype and its toy examples, still intrinsically a sane (and for real-world likely crucial) approach to have separate val stacks (in addition to addr stack)
 
 type gMachine struct {
 	Heap      clutil.HeapA // no GC here, forever growing
@@ -273,8 +273,8 @@ func (me *gMachine) eval() {
 		if me.Code = next; me.Stats.MaxStack < len(me.StackA) {
 			me.Stats.MaxStack = len(me.StackA)
 		}
-		if me.Stats.NumSteps > 999999 {
-			panic("exceeded 1 million steps: probable infinite loop, stopping evaluation")
+		if me.Stats.NumSteps > 9999999 {
+			panic("exceeded 10 million steps: probable infinite loop, stopping evaluation")
 		}
 	}
 	me.Stats.HeapSize = len(me.Heap)
