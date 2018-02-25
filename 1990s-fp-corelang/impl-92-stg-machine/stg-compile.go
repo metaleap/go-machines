@@ -7,12 +7,24 @@ import (
 	util "github.com/metaleap/go-machines/1990s-fp-corelang/util"
 )
 
-func CompileToMachine(mod *corelang.SynMod) (util.IMachine, []error) {
+func CompileToMachine(mod *corelang.SynMod) (_ util.IMachine, errs []error) {
 	me, modenv := &stgMachine{}, corelang.NewLookupEnv(mod.Defs_(), nil, nil, nil)
+	me.mod.Binds = make([]synBinding, 0, len(mod.Defs))
 	for _, global := range mod.Defs {
-		me.mod.Binds = append(me.mod.Binds, compileCoreDefToStgBind(modenv, "", global))
+		if bind, err := compileCoreGlobalToStg(modenv, global); err != nil {
+			errs = append(errs, err)
+		} else {
+			me.mod.Binds = append(me.mod.Binds, bind)
+		}
 	}
-	return me, nil
+	// println(me.mod.String())
+	return me, errs
+}
+
+func compileCoreGlobalToStg(modEnv map[string]bool, global *corelang.SynDef) (bind synBinding, err error) {
+	defer util.Catch(&err)
+	bind = compileCoreDefToStgBind(modEnv, "", global)
+	return
 }
 
 func compileCoreDefToStgBind(modEnv map[string]bool, prefix string, clDef *corelang.SynDef) (bind synBinding) {
@@ -78,10 +90,10 @@ func compileCoreExprToStgExpr(modEnv map[string]bool, prefix string, clExpr core
 				}
 			}
 			if diff := ctor.Arity - len(revargs); diff > 0 {
-				lamdef := synBinding{Name: prefix + "lam"}
+				lamdef := synBinding{Name: prefix + "CLAM"}
 				lamdef.LamForm.Args = make([]synExprAtomIdent, diff)
 				for i := 0; i < diff; i++ {
-					lamdef.LamForm.Args[i].Name = lamdef.Name + "·a" + strconv.Itoa(i)
+					lamdef.LamForm.Args[i].Name = lamdef.Name + "·A" + strconv.Itoa(i)
 					me.Args = append(me.Args, lamdef.LamForm.Args[i])
 				}
 				lamdef.LamForm.Body = me
@@ -99,7 +111,7 @@ func compileCoreExprToStgExpr(modEnv map[string]bool, prefix string, clExpr core
 				}
 				me.Callee = synExprAtomIdent{Name: callee.Name}
 			default:
-				me.Callee = synExprAtomIdent{Name: prefix + "callee"}
+				me.Callee = synExprAtomIdent{Name: prefix + "CALL"}
 				let.Binds = append(let.Binds, compileCoreDefToStgBind(modEnv, "", &corelang.SynDef{Name: me.Callee.Name, Body: callee}))
 			}
 			prefix += me.Callee.Name + "·"
@@ -120,7 +132,7 @@ func compileCoreExprToStgExpr(modEnv map[string]bool, prefix string, clExpr core
 		}
 		return let
 	case *corelang.ExprLambda:
-		bind := compileCoreDefToStgBind(modEnv, "", &corelang.SynDef{Body: x.Body, Args: x.Args, Name: prefix + "lam"})
+		bind := compileCoreDefToStgBind(modEnv, "", &corelang.SynDef{Body: x.Body, Args: x.Args, Name: prefix + "LAM"})
 		return synExprLet{Binds: []synBinding{bind}, Body: synExprAtomIdent{Name: bind.Name}}
 	case *corelang.ExprCaseOf:
 		caseof := synExprCaseOf{Scrut: compileCoreExprToStgExpr(modEnv, prefix, x.Scrut), Alts: make([]synCaseAlt, len(x.Alts))}
@@ -149,7 +161,7 @@ func compileCoreCallToStgPrimOpMaybe(modEnv map[string]bool, prefix string, call
 		if num > 0 {
 			left := compileCoreExprToStgExpr(modEnv, prefix, revArgs[num-1])
 			if op.Left, _ = left.(iSynExprAtom); op.Left == nil {
-				bind := synBinding{Name: prefix + "l"}
+				bind := synBinding{Name: prefix + "¯L"}
 				bind.LamForm.Body = left
 				binds, op.Left = append(binds, bind), synExprAtomIdent{Name: bind.Name}
 			}
@@ -157,20 +169,20 @@ func compileCoreCallToStgPrimOpMaybe(modEnv map[string]bool, prefix string, call
 		if num > 1 {
 			right := compileCoreExprToStgExpr(modEnv, prefix, revArgs[0])
 			if op.Right, _ = right.(iSynExprAtom); op.Right == nil {
-				bind := synBinding{Name: prefix + "r"}
+				bind := synBinding{Name: prefix + "¯R"}
 				bind.LamForm.Body = right
 				binds, op.Right = append(binds, bind), synExprAtomIdent{Name: bind.Name}
 			}
 		}
 		if op.Left == nil || op.Right == nil { // num<2
-			lamdef := synBinding{Name: prefix + "lam"}
+			lamdef := synBinding{Name: prefix + "PLAM"}
 			lamdef.LamForm.Body = op
 			if op.Left == nil { // num==0
-				name := synExprAtomIdent{Name: lamdef.Name + "·l"}
+				name := synExprAtomIdent{Name: lamdef.Name + "¨L"}
 				op.Left, lamdef.LamForm.Args = name, append(lamdef.LamForm.Args, name)
 			}
 			if op.Right == nil { // num<=1
-				name := synExprAtomIdent{Name: lamdef.Name + "·r"}
+				name := synExprAtomIdent{Name: lamdef.Name + "¨R"}
 				op.Right, lamdef.LamForm.Args = name, append(lamdef.LamForm.Args, name)
 			}
 			binds = append(binds, lamdef)

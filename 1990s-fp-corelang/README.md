@@ -12,6 +12,6 @@ Lexing + parsing (in `syn`) is from scratch, not 'by the book'. But the above ma
 
 - **Template Instantiation Machine:** evaluation by ad-hoc graph construction/instantiation and traversal/reduction, involves no real compilation / one-time pre-processing phase
     > _incomplete: lacking arithmetic, conditionals, and constructors, but the prelude-defs work — moved on to the cooler stuff before completion, given this machine's real-world uselessness (except for newcomers testing the waters)_
-- **G-Machine:** completed all levels (mark 7) — fairly intricate compilation schemes to this virtual reduction-machine's (essentially) byte-code, better evaluation characteristics (flat pre-generated instruction stream instead of ad-hoc graph construction/traversal)
+- **G-Machine:** completed all levels (mark 7) — fairly intricate compilation schemes to this virtual reduction-machine's (essentially) byte-code, better (than above one, but still atrocious) evaluation characteristics (flat pre-generated instruction stream instead of ad-hoc graph construction/traversal)
 - **Three-Instruction Machine:** — skipped entirely
 - **Spineless Tagless G-Machine:** — in progress

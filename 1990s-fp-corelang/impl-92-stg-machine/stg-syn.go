@@ -4,8 +4,6 @@ import (
 	"fmt"
 )
 
-var uglyHackyIndent int
-
 type iSyn interface {
 	fmt.Stringer
 	taggedSyn()

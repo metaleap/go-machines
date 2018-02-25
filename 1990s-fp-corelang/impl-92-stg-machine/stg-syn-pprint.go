@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+var uglyHackyIndent int
+
 func (me synMod) String() (s string) {
 	for i := range me.Binds {
 		if uglyHackyIndent = 0; i > 0 {
