@@ -17,9 +17,9 @@ const (
 	OP_JUMP            // jmp
 	OP_JUMPCOND        // jpc
 
-	OP_INCR1         // custom, not orig: if one followed through on this pattern 'all the way', the original pcode stack machine would morph into a register machine
+	OP_INCR1         // custom, not pcode orig
 	OP_JUMPCOND_KEEP // dito
-	OP_STORE_KEEP    //dito
+	OP_STORE_KEEP    // dito
 )
 
 type instr struct {

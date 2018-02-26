@@ -4,10 +4,18 @@ package main
 // https://www.youtube.com/watch?v=GhERMBT7u4w 21m
 
 const srcMod = `
-map fn lst =
-    CASE lst OF
+map f xs =
+    CASE xs OF
         Nil -> (Nil 0)
-        Cons x xs -> (Cons 2) (fn x) (map fn xs)
+        Cons y ys -> (Cons 2) (f y) (map f ys)
+
+map1 f = LET REC
+    nil = (Nil 0)
+    cons = (Cons 2)
+    mf xs = CASE xs OF
+        Nil -> nil
+        Cons y ys -> cons (f y) (mf ys)
+    IN mf
 
 pow n = n * n
 
@@ -83,7 +91,7 @@ fac n =                         // using 'when' instead of builtin 'if' here exe
     /*else*/ (n * (fac (n - 1)))
 
 
-fib n = // n<23 to not hit our arbitrary 10million-steps execution limit / forced abort — with 'if', but n<22 with 'when'
+fib n = // n<23 to not hit our arbitrary 10million-steps execution limit / forced abort (with 'if' — need n<22 with 'when')
     if (n < 3)
         ( 1 )
         ( (fib (n-1)) + (fib (n-2)) )
@@ -111,8 +119,6 @@ main1 k = LET REC
 
 
 // random noisy rubbish..
-
-foo=bar
 
 
 

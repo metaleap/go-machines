@@ -17,7 +17,7 @@ func CompileToMachine(mod *corelang.SynMod) (_ util.IMachine, errs []error) {
 			me.mod.Binds = append(me.mod.Binds, bind)
 		}
 	}
-	println(me.mod.String())
+	// println(me.mod.String())
 	return me, errs
 }
 
@@ -43,7 +43,7 @@ func compileCoreDefToStgBind(modEnv map[string]bool, prefix string, clDef *corel
 		i, bind.LamForm.Free[i].Name = i+1, freevarname
 	}
 
-	bind.LamForm.Body = compileCoreExprToStgExpr(modEnv, prefix+clDef.Name+"·", clDef.Body)
+	bind.LamForm.Body = compileCoreExprToStgExpr(modEnv, prefix+clDef.Name+"_", clDef.Body)
 	return
 }
 
@@ -79,7 +79,7 @@ func compileCoreExprToStgExpr(modEnv map[string]bool, prefix string, clExpr core
 				panic("fully-saturated ctor applied like a function")
 			}
 			me := synExprCtor{Tag: synExprAtomIdent{Name: ctor.Tag}, Args: make([]iSynExprAtom, len(revargs), argscap)}
-			prefix += me.Tag.Name + "·"
+			prefix += me.Tag.Name + "_"
 			for i, ctorarg := range revargs {
 				if _i := len(revargs) - (1 + i); ctorarg.IsAtomic() {
 					me.Args[_i] = compileCoreExprToStgExpr(modEnv, prefix, ctorarg).(iSynExprAtom)
@@ -90,10 +90,15 @@ func compileCoreExprToStgExpr(modEnv map[string]bool, prefix string, clExpr core
 				}
 			}
 			if diff := ctor.Arity - len(revargs); diff > 0 {
-				lamdef := synBinding{Name: prefix + "CLAM"}
+				i, fv, lamdef := 0, map[string]bool{}, synBinding{Name: prefix + "CLAM"}
+				x.FreeVars(fv, modEnv)
+				lamdef.LamForm.Free = make([]synExprAtomIdent, len(fv))
+				for k := range fv {
+					i, lamdef.LamForm.Free[i].Name = i+1, k
+				} // TODO! disallow shadowing of globals
 				lamdef.LamForm.Args = make([]synExprAtomIdent, diff)
-				for i := 0; i < diff; i++ {
-					lamdef.LamForm.Args[i].Name = lamdef.Name + "·A" + strconv.Itoa(i)
+				for i = 0; i < diff; i++ {
+					lamdef.LamForm.Args[i].Name = lamdef.Name + "_A" + strconv.Itoa(i)
 					me.Args = append(me.Args, lamdef.LamForm.Args[i])
 				}
 				lamdef.LamForm.Body = me
@@ -114,7 +119,7 @@ func compileCoreExprToStgExpr(modEnv map[string]bool, prefix string, clExpr core
 				me.Callee = synExprAtomIdent{Name: prefix + "CALL"}
 				let.Binds = append(let.Binds, compileCoreDefToStgBind(modEnv, "", &corelang.SynDef{Name: me.Callee.Name, Body: callee}))
 			}
-			prefix += me.Callee.Name + "·"
+			prefix += me.Callee.Name + "_"
 			for i, callarg := range revargs {
 				if _i := len(me.Args) - (1 + i); callarg.IsAtomic() {
 					me.Args[_i] = compileCoreExprToStgExpr(modEnv, prefix, callarg).(iSynExprAtom)
@@ -155,7 +160,7 @@ func compileCoreCallToStgPrimOpMaybe(modEnv map[string]bool, prefix string, call
 	switch callee.Name {
 	case "+", "-", "*", "/", "==", "!=", "<=", ">=", ">", "<":
 		num, op := len(revArgs), &synExprPrimOp{PrimOp: callee.Name}
-		if expr, prefix = op, prefix+callee.Name+"·"; num > 2 {
+		if expr, prefix = op, prefix+callee.Name+"_"; num > 2 {
 			panic("prim-op `" + op.PrimOp + "` over-saturated: expected 2 operands, not " + strconv.Itoa(num))
 		}
 		if num > 0 {
