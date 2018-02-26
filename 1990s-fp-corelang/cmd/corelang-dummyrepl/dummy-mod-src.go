@@ -120,7 +120,7 @@ main1 k = LET REC
 
 // random noisy rubbish..
 
-
+foo=moo
 
 checkIfLexedOpish = 3 × (4 ÷ 5)
 

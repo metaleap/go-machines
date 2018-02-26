@@ -43,6 +43,13 @@ func LexAndParseDefs(srcFilePath string, src string) ([]*SynDef, []*Error) {
 
 func ParseDefs(srcFilePath string, tokens lex.Tokens) (defs []*SynDef, errs []*Error) {
 	defs, errs = parseDefs(tokens, true)
+	// for _, def := range defs {
+	// 	freevars := map[string]bool{}
+	// 	def.FreeVars(freevars, NewLookupEnv(defs, nil, nil, nil))
+	// 	for name := range freevars {
+	// 		errs = append(errs, errTok(&def.Toks()[0], "undefined: "+name))
+	// 	}
+	// }
 	for _, e := range errs {
 		e.Pos.Filename = srcFilePath
 	}

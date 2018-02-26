@@ -83,11 +83,11 @@ func (me synExprCall) String() (s string) {
 }
 
 func (me synExprCtor) String() (s string) {
-	s += "«" + me.Tag.String()
+	s += "‹" + me.Tag.String()
 	for i := range me.Args {
 		s += " " + me.Args[i].String()
 	}
-	s += "»"
+	s += "›"
 	return
 }
 
@@ -109,11 +109,11 @@ func (me synCaseAlt) String() (s string) {
 	if me.Atom != nil {
 		s = me.Atom.String()
 	} else if me.Ctor.Tag.Name != "" {
-		s = "«" + me.Ctor.Tag.String()
+		s = "‹" + me.Ctor.Tag.String()
 		for i := range me.Ctor.Vars {
 			s += " " + me.Ctor.Vars[i].String()
 		}
-		s += "»"
+		s += "›"
 	} else {
 		s = "_"
 	}

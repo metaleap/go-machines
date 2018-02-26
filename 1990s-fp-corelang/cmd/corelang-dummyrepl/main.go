@@ -35,8 +35,8 @@ func main() {
 			_, _ = os.Stdout.WriteString(" · " + def.Name)
 		}
 	}
-	machine := recompile(mod)
 	writeLn("\n…and can be evaluated immediately using `!‹name›` or `?‹name›`\n")
+	machine := recompile(mod)
 
 	multiline, repl, pprint := "", bufio.NewScanner(os.Stdin), &corelang.SyntaxTreePrinter{}
 	for repl.Scan() {
