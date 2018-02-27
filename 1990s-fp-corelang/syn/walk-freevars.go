@@ -9,6 +9,7 @@ func (me *SynDef) FreeVars(freeVarNames map[string]bool, lookupEnvs ...map[strin
 func (me *ExprIdent) FreeVars(freeVarNames map[string]bool, lookupEnvs ...map[string]bool) {
 	for _, lookupenv := range lookupEnvs {
 		if lookupenv[me.Name] {
+			// delete(freeVarNames, me.Name)
 			return
 		}
 	}
@@ -29,9 +30,9 @@ func (me *ExprLetIn) FreeVars(freeVarNames map[string]bool, lookupEnvs ...map[st
 	combined := append(lookupEnvs, defsenv)
 	for _, def := range me.Defs {
 		if me.Rec {
-			def.Body.FreeVars(freeVarNames, combined...)
+			def.FreeVars(freeVarNames, combined...)
 		} else {
-			def.Body.FreeVars(freeVarNames, lookupEnvs...)
+			def.FreeVars(freeVarNames, lookupEnvs...)
 		}
 	}
 	me.Body.FreeVars(freeVarNames, combined...)

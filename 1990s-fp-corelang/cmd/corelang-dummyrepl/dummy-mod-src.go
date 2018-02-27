@@ -17,6 +17,11 @@ map1 f = LET REC
         Cons y ys -> cons (f y) (mf ys)
     IN mf
 
+free = LET REC
+    fone fOne = fOne ftwo
+    ftwo fTwo = fTwo fone
+    IN fone ftwo
+
 pow n = n * n
 
 powlst =
@@ -119,8 +124,6 @@ main1 k = LET REC
 
 
 // random noisy rubbish..
-
-foo=moo
 
 checkIfLexedOpish = 3 × (4 ÷ 5)
 
