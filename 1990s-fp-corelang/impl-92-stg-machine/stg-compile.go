@@ -39,9 +39,10 @@ func nextIdent() string {
 
 func compileCoreGlobalToStg(modEnv map[string]bool, global *corelang.SynDef) (bind synBinding, err error) {
 	defer util.Catch(&err)
-
 	for _, argname := range global.Args {
-		modEnv[argname] = false // hacky hiding of shadowed globals: for compileCoreExprToStgExpr/ExprCall/ExprCtor/arityDiff case way below
+		if _, argnameshadowsglobal := modEnv[argname]; argnameshadowsglobal {
+			modEnv[argname] = false // hacky hiding of shadowed globals: for compileCtorApplMaybeLambda()
+		}
 	}
 	bind = compileCoreDefToStgBind(modEnv, global)
 	for globalname := range modEnv {
@@ -91,8 +92,14 @@ func compileCoreExprToStgExpr(modEnv map[string]bool, clExpr corelang.IExpr) iSy
 			let.Binds[i] = compileCoreDefToStgBind(modEnv, def)
 		}
 		return let
-	case *corelang.ExprCtor: // not already captured by outer call (see below), so nilary
-		return synExprCtor{Tag: synExprAtomIdent{Name: x.Tag}}
+	case *corelang.ExprCtor: // not already captured by outer call (see below), so nilary application
+		var let synExprLet
+		me := synExprCtor{Tag: synExprAtomIdent{Name: x.Tag}}
+		compileCtorApplMaybeLambda(modEnv, x.Arity, x, &me, &let)
+		if len(let.Binds) == 0 {
+			return me
+		}
+		return let
 	case *corelang.ExprCall:
 		var let synExprLet
 		call, revargs := x.Flattened()
@@ -111,24 +118,8 @@ func compileCoreExprToStgExpr(modEnv map[string]bool, clExpr corelang.IExpr) iSy
 					me.Args[_i] = synExprAtomIdent{Name: name}
 				}
 			}
-			if diff := ctor.Arity - len(revargs); diff > 0 {
-				i, fv, lamdef := 0, map[string]bool{}, synBinding{Name: nextIdent()}
-				x.FreeVars(fv, modEnv)
-				lamdef.LamForm.Free = make([]synExprAtomIdent, len(fv))
-				for k := range fv {
-					i, lamdef.LamForm.Free[i].Name = i+1, k
-				}
-				lamdef.LamForm.Args = make([]synExprAtomIdent, diff)
-				for i = 0; i < diff; i++ {
-					lamdef.LamForm.Args[i].Name = nextIdent()
-					me.Args = append(me.Args, lamdef.LamForm.Args[i])
-				}
-				lamdef.LamForm.Body = me
-				let.Binds = append(let.Binds, lamdef)
-				let.Body = synExprAtomIdent{Name: lamdef.Name}
-			} else {
-				let.Body = me
-			}
+			let.Body = me
+			compileCtorApplMaybeLambda(modEnv, ctor.Arity-len(revargs), ctor, &me, &let)
 		} else {
 			me := synExprCall{Args: make([]iSynExprAtom, len(revargs))}
 			switch callee := call.(type) {
@@ -175,6 +166,25 @@ func compileCoreExprToStgExpr(modEnv map[string]bool, clExpr corelang.IExpr) iSy
 		return caseof
 	}
 	return nil
+}
+
+func compileCtorApplMaybeLambda(modEnv map[string]bool, diff int, expr *corelang.ExprCtor, me *synExprCtor, let *synExprLet) {
+	if diff > 0 {
+		i, fv, lamdef := 0, map[string]bool{}, synBinding{Name: nextIdent()}
+		expr.FreeVars(fv, modEnv)
+		lamdef.LamForm.Free = make([]synExprAtomIdent, len(fv))
+		for k := range fv {
+			i, lamdef.LamForm.Free[i].Name = i+1, k
+		}
+		lamdef.LamForm.Args = make([]synExprAtomIdent, diff)
+		for i = 0; i < diff; i++ {
+			lamdef.LamForm.Args[i].Name = nextIdent()
+			me.Args = append(me.Args, lamdef.LamForm.Args[i])
+		}
+		lamdef.LamForm.Body = me
+		let.Binds = append(let.Binds, lamdef)
+		let.Body = synExprAtomIdent{Name: lamdef.Name}
+	}
 }
 
 func compileCoreCallToStgPrimOpMaybe(modEnv map[string]bool, callee *corelang.ExprIdent, revArgs []corelang.IExpr) (binds []synBinding, expr iSynExpr) {

@@ -10,11 +10,9 @@ map f xs =
         Cons y ys -> (Cons 2) (f y) (map f ys)
 
 map1 f = LET REC
-    nil = (Nil 0)
-    cons = (Cons 2)
     mf xs = CASE xs OF
-        Nil -> nil
-        Cons y ys -> cons (f y) (mf ys)
+        Nil -> (Nil 0)
+        Cons y ys -> (Cons 2) (f y) (mf ys)
     IN mf
 
 free = LET REC
