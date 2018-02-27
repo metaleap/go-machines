@@ -19,7 +19,9 @@ func (me synMod) String() (s string) {
 
 func (me synBinding) String() (s string) {
 	if s = me.Name; me.LamForm.Upd {
-		s += " UPD"
+		s += " ª"
+	} else {
+		s += " º"
 	}
 	if len(me.LamForm.Free) > 0 {
 		s += " ‹"

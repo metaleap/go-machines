@@ -9,16 +9,12 @@ map f xs =
         Nil -> (Nil 0)
         Cons y ys -> (Cons 2) (f y) (map f ys)
 
-map1 f = LET REC
+map1 f = LET REC // note/caution: this def wont compile in the 91 machines in their present form, but will in 92-stg-machine
     mf xs = CASE xs OF
         Nil -> (Nil 0)
         Cons y ys -> (Cons 2) (f y) (mf ys)
     IN mf
 
-free = LET REC
-    fone fOne = fOne ftwo
-    ftwo fTwo = fTwo fone
-    IN fone ftwo
 
 pow n = n * n
 

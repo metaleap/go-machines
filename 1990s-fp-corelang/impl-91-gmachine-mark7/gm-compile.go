@@ -63,7 +63,6 @@ func CompileToMachine(mod *SynMod) (util.IMachine, []error) {
 		Heap:    make(util.HeapA, 1, 1024*1024),
 		Globals: make(util.Env, len(mod.Defs)),
 	}
-
 	if _MARK7 {
 		for name, def := range primsMark7Globals {
 			if node, err := me.compileGlobal_SchemeSC(def); err != nil {
@@ -73,7 +72,6 @@ func CompileToMachine(mod *SynMod) (util.IMachine, []error) {
 			}
 		}
 	}
-
 	for primname, primnode := range primsPrecompiledForLazy {
 		me.Globals[primname] = me.Heap.Alloc(primnode)
 	}

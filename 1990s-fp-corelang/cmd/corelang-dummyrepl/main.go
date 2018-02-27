@@ -63,10 +63,10 @@ func main() {
 					} else {
 						fmt.Printf("Reduced in %v (%d appls / %d steps / S%d / H%d) to:\n%s\n", timetaken, stats.NumAppls, stats.NumSteps, stats.MaxStack, stats.HeapSize, machine.String(val))
 					}
-				} else if def := mod.Defs[readln]; def == nil {
+				} else if def := mod.Def(readln); def == nil {
 					println("not found: " + readln)
 				} else {
-					writeLn(pprint.Def(mod.Defs[readln]))
+					writeLn(pprint.Def(def))
 				}
 			case lexAndParse("<input>", readln, mod):
 				machine = recompile(mod)
@@ -91,10 +91,12 @@ func lexAndParse(filePath string, src string, mod *clsyn.SynMod) bool {
 	defs, errs_parse := clsyn.LexAndParseDefs(filePath, src)
 
 	for _, def := range defs {
-		if mod.Defs[def.Name] != nil {
+		if i := mod.IndexOf(def.Name); i >= 0 {
 			println("Redefined: " + def.Name)
+			mod.Defs[i] = def
+		} else {
+			mod.Defs = append(mod.Defs, def)
 		}
-		mod.Defs[def.Name] = def
 	}
 	for _, e := range errs_parse {
 		println(e.Error())

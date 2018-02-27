@@ -11,19 +11,21 @@ type iSyn interface {
 
 type syn struct{}
 
-func (syn) taggedSyn() {}
+func (*syn) taggedSyn() {}
 
 type synMod struct {
 	syn
-	Binds []synBinding
+	Binds synBindings
 }
+
+type synBindings []*synBinding
 
 type synBinding struct {
 	syn
 	Name    string
 	LamForm struct {
-		Free []synExprAtomIdent
-		Args []synExprAtomIdent
+		Free []*synExprAtomIdent
+		Args []*synExprAtomIdent
 		Body iSynExpr
 		Upd  bool
 	}
@@ -36,7 +38,7 @@ type iSynExpr interface {
 
 type synExpr struct{ syn }
 
-func (synExpr) taggedSynExpr() {}
+func (*synExpr) taggedSynExpr() {}
 
 type iSynExprAtom interface {
 	iSynExpr
@@ -45,7 +47,7 @@ type iSynExprAtom interface {
 
 type synExprAtom struct{ synExpr }
 
-func (synExprAtom) taggedSynExprAtom() {}
+func (*synExprAtom) taggedSynExprAtom() {}
 
 type synExprAtomIdent struct {
 	synExprAtom
@@ -59,7 +61,7 @@ type iSynExprAtomLit interface {
 
 type synExprAtomLit struct{ synExprAtom }
 
-func (synExprAtomLit) exprAtomLit() {}
+func (*synExprAtomLit) exprAtomLit() {}
 
 type synExprAtomLitFloat struct {
 	synExprAtomLit
@@ -83,20 +85,20 @@ type synExprAtomLitText struct {
 
 type synExprLet struct {
 	synExpr
-	Binds []synBinding
+	Binds synBindings
 	Body  iSynExpr
 	Rec   bool
 }
 
 type synExprCall struct {
 	synExpr
-	Callee synExprAtomIdent
+	Callee *synExprAtomIdent
 	Args   []iSynExprAtom
 }
 
 type synExprCtor struct {
 	synExpr
-	Tag  synExprAtomIdent
+	Tag  *synExprAtomIdent
 	Args []iSynExprAtom
 }
 
@@ -110,13 +112,13 @@ type synExprPrimOp struct {
 type synExprCaseOf struct {
 	synExpr
 	Scrut iSynExpr
-	Alts  []synCaseAlt
+	Alts  []*synCaseAlt
 }
 
 type synCaseAlt struct {
 	Ctor struct {
-		Tag  synExprAtomIdent
-		Vars []synExprAtomIdent
+		Tag  *synExprAtomIdent
+		Vars []*synExprAtomIdent
 	}
 	Atom iSynExprAtom
 	Body iSynExpr
