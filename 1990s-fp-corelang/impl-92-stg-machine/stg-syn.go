@@ -6,10 +6,13 @@ import (
 
 type iSyn interface {
 	fmt.Stringer
+	setUpd(...func(string) *synBinding)
 	taggedSyn()
 }
 
 type syn struct{}
+
+func (me *syn) setUpd(...func(string) *synBinding) {}
 
 func (*syn) taggedSyn() {}
 
@@ -18,7 +21,27 @@ type synMod struct {
 	Binds synBindings
 }
 
+func (me *synMod) setUpd(resolvers ...func(string) *synBinding) {
+	me.Binds.setUpd()
+}
+
 type synBindings []*synBinding
+
+func (me synBindings) byName(name string) *synBinding {
+	for _, bind := range me {
+		if bind.Name == name {
+			return bind
+		}
+	}
+	return nil
+}
+
+func (me synBindings) setUpd(resolvers ...func(string) *synBinding) {
+	r := append(resolvers, me.byName)
+	for _, bind := range me {
+		bind.setUpd(r...)
+	}
+}
 
 type synBinding struct {
 	syn
@@ -29,6 +52,22 @@ type synBinding struct {
 		Body iSynExpr
 		Upd  bool
 	}
+}
+
+func (me *synBinding) setUpd(resolvers ...func(string) *synBinding) {
+	if me.LamForm.Upd = true; len(me.LamForm.Args) > 0 {
+		me.LamForm.Upd = false
+	} else if call, iscall := me.LamForm.Body.(*synExprCall); iscall {
+		for _, r := range resolvers {
+			if def := r(call.Callee.Name); def != nil && len(def.LamForm.Args) != len(call.Args) {
+				me.LamForm.Upd = false
+				break
+			}
+		}
+	} else if _, isctor := me.LamForm.Body.(*synExprCtor); isctor {
+		me.LamForm.Upd = false
+	}
+	me.LamForm.Body.setUpd(resolvers...)
 }
 
 type iSynExpr interface {
@@ -90,6 +129,11 @@ type synExprLet struct {
 	Rec   bool
 }
 
+func (me *synExprLet) setUpd(resolvers ...func(string) *synBinding) {
+	me.Binds.setUpd(resolvers...)
+	me.Body.setUpd(append(resolvers, me.Binds.byName)...)
+}
+
 type synExprCall struct {
 	synExpr
 	Callee *synExprAtomIdent
@@ -115,6 +159,13 @@ type synExprCaseOf struct {
 	Alts  []*synCaseAlt
 }
 
+func (me *synExprCaseOf) setUpd(resolvers ...func(string) *synBinding) {
+	me.Scrut.setUpd(resolvers...)
+	for _, alt := range me.Alts {
+		alt.setUpd(resolvers...)
+	}
+}
+
 type synCaseAlt struct {
 	Ctor struct {
 		Tag  *synExprAtomIdent
@@ -122,4 +173,8 @@ type synCaseAlt struct {
 	}
 	Atom iSynExprAtom
 	Body iSynExpr
+}
+
+func (me *synCaseAlt) setUpd(resolvers ...func(string) *synBinding) {
+	me.Body.setUpd(resolvers...)
 }

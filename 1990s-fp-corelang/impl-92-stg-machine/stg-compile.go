@@ -22,6 +22,7 @@ func CompileToMachine(mod *corelang.SynMod) (_ util.IMachine, errs []error) {
 			me.mod.Binds = append(me.mod.Binds, bind)
 		}
 	}
+	me.mod.setUpd()
 	// println(me.mod.String())
 	return me, errs
 }
@@ -38,7 +39,7 @@ func nextIdent() string {
 }
 
 func compileCoreGlobalToStg(modEnv map[string]bool, global *corelang.SynDef) (bind *synBinding, err error) {
-	// defer util.Catch(&err)
+	defer util.Catch(&err)
 	for _, argname := range global.Args {
 		if _, argnameshadowsglobal := modEnv[argname]; argnameshadowsglobal {
 			modEnv[argname] = false // hacky hiding of shadowed globals: for compileCtorApplMaybeLambda()
