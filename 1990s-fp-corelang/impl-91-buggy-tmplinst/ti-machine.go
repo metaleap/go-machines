@@ -26,70 +26,70 @@ func CompileToMachine(mod *clsyn.SynMod) (clutil.IMachine, []error) {
 	return me, nil
 }
 
-func (me *tiMachine) String(result interface{}) string { return fmt.Sprintf("%v", result) }
+func (this *tiMachine) String(result interface{}) string { return fmt.Sprintf("%v", result) }
 
-func (me *tiMachine) Eval(name string) (val interface{}, stats clutil.Stats, err error) {
+func (this *tiMachine) Eval(name string) (val interface{}, stats clutil.Stats, err error) {
 	defer clutil.Catch(&err)
-	addr := me.Env[name]
+	addr := this.Env[name]
 	if addr == 0 {
 		panic("undefined: " + name)
 	} else {
-		me.Stack = clutil.StackA{addr}
-		me.eval()
-		val, stats = me.Heap[me.Stack[0]], me.Stats
+		this.Stack = clutil.StackA{addr}
+		this.eval()
+		val, stats = this.Heap[this.Stack[0]], this.Stats
 	}
 	return
 }
 
-func (me *tiMachine) eval() {
-	for me.Stats.NumSteps, me.Stats.NumAppls = 0, 0; !me.isFinalState(); me.step() {
+func (this *tiMachine) eval() {
+	for this.Stats.NumSteps, this.Stats.NumAppls = 0, 0; !this.isFinalState(); this.step() {
 	}
 }
 
-func (me *tiMachine) isFinalState() bool {
-	return len(me.Stack) == 1 && isDataNode(me.Heap[me.Stack[0]])
+func (this *tiMachine) isFinalState() bool {
+	return len(this.Stack) == 1 && isDataNode(this.Heap[this.Stack[0]])
 }
 
-func (me *tiMachine) step() {
-	if me.Stats.NumSteps++; me.Stats.NumSteps > 9999 {
+func (this *tiMachine) step() {
+	if this.Stats.NumSteps++; this.Stats.NumSteps > 9999 {
 		panic("infinite loop")
 	}
-	addr := me.Stack.Top(0)
-	obj := me.Heap[addr]
+	addr := this.Stack.Top(0)
+	obj := this.Heap[addr]
 	switch n := obj.(type) {
 	case nodeNumFloat, nodeNumUint:
 		panic("number applied as a function")
 	case *nodeAp:
-		me.Stats.NumAppls++
-		me.Stack.Push(n.Callee)
+		this.Stats.NumAppls++
+		this.Stack.Push(n.Callee)
 	case *nodeDef:
-		oldenv := me.Env
-		me.Env = make(map[string]clutil.Addr, len(n.Args)+len(oldenv))
+		oldenv := this.Env
+		this.Env = make(map[string]clutil.Addr, len(n.Args)+len(oldenv))
 		for k, v := range oldenv {
-			me.Env[k] = v
+			this.Env[k] = v
 		}
 
-		argsaddrs := me.getArgs(n.Name, len(n.Args))
+		argsaddrs := this.getArgs(n.Name, len(n.Args))
 		for i, argname := range n.Args {
-			me.Env[argname] = argsaddrs[i]
+			this.Env[argname] = argsaddrs[i]
 		}
 
-		resultaddr := me.instantiate(n.Body)
-		me.Stack = me.Stack.Dropped(1 + len(n.Args)).Pushed(resultaddr)
+		resultaddr := this.instantiate(n.Body)
+		this.Stack = this.Stack.Dropped(1 + len(n.Args)).Pushed(resultaddr)
 
 		// me.Env = oldenv
 	}
 }
 
-func (me *tiMachine) getArgs(name string, count int) (argsaddrs []clutil.Addr) {
-	pos := me.Stack.Pos(count)
+func (this *tiMachine) getArgs(name string, count int) (argsaddrs []clutil.Addr) {
+	pos := this.Stack.Pos(count)
 	if pos < 0 {
 		panic(name + ": not enough arguments given")
 	}
 	argsaddrs = make([]clutil.Addr, count)
 	for i := 0; i < count; i++ {
-		addr := me.Stack[pos+i]
-		nap, _ := me.Heap[addr].(*nodeAp)
+		addr := this.Stack[pos+i]
+		nap, _ := this.Heap[addr].(*nodeAp)
 		argsaddrs[count-1-i] = nap.Arg
 	}
 	return

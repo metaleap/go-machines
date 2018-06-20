@@ -12,7 +12,7 @@ type iSyn interface {
 
 type syn struct{}
 
-func (me *syn) setUpd(...func(string) *synBinding) {}
+func (this *syn) setUpd(...func(string) *synBinding) {}
 
 func (*syn) taggedSyn() {}
 
@@ -21,14 +21,14 @@ type synMod struct {
 	Binds synBindings
 }
 
-func (me *synMod) setUpd(resolvers ...func(string) *synBinding) {
-	me.Binds.setUpd()
+func (this *synMod) setUpd(resolvers ...func(string) *synBinding) {
+	this.Binds.setUpd()
 }
 
 type synBindings []*synBinding
 
-func (me synBindings) byName(name string) *synBinding {
-	for _, bind := range me {
+func (this synBindings) byName(name string) *synBinding {
+	for _, bind := range this {
 		if bind.Name == name {
 			return bind
 		}
@@ -36,9 +36,9 @@ func (me synBindings) byName(name string) *synBinding {
 	return nil
 }
 
-func (me synBindings) setUpd(resolvers ...func(string) *synBinding) {
-	r := append(resolvers, me.byName)
-	for _, bind := range me {
+func (this synBindings) setUpd(resolvers ...func(string) *synBinding) {
+	r := append(resolvers, this.byName)
+	for _, bind := range this {
 		bind.setUpd(r...)
 	}
 }
@@ -54,20 +54,20 @@ type synBinding struct {
 	}
 }
 
-func (me *synBinding) setUpd(resolvers ...func(string) *synBinding) {
-	if me.LamForm.Upd = true; len(me.LamForm.Args) > 0 {
-		me.LamForm.Upd = false
-	} else if call, iscall := me.LamForm.Body.(*synExprCall); iscall {
+func (this *synBinding) setUpd(resolvers ...func(string) *synBinding) {
+	if this.LamForm.Upd = true; len(this.LamForm.Args) > 0 {
+		this.LamForm.Upd = false
+	} else if call, iscall := this.LamForm.Body.(*synExprCall); iscall {
 		for _, r := range resolvers {
 			if def := r(call.Callee.Name); def != nil && len(def.LamForm.Args) != len(call.Args) {
-				me.LamForm.Upd = false
+				this.LamForm.Upd = false
 				break
 			}
 		}
-	} else if _, isctor := me.LamForm.Body.(*synExprCtor); isctor {
-		me.LamForm.Upd = false
+	} else if _, isctor := this.LamForm.Body.(*synExprCtor); isctor {
+		this.LamForm.Upd = false
 	}
-	me.LamForm.Body.setUpd(resolvers...)
+	this.LamForm.Body.setUpd(resolvers...)
 }
 
 type iSynExpr interface {
@@ -129,9 +129,9 @@ type synExprLet struct {
 	Rec   bool
 }
 
-func (me *synExprLet) setUpd(resolvers ...func(string) *synBinding) {
-	me.Binds.setUpd(resolvers...)
-	me.Body.setUpd(append(resolvers, me.Binds.byName)...)
+func (this *synExprLet) setUpd(resolvers ...func(string) *synBinding) {
+	this.Binds.setUpd(resolvers...)
+	this.Body.setUpd(append(resolvers, this.Binds.byName)...)
 }
 
 type synExprCall struct {
@@ -159,9 +159,9 @@ type synExprCaseOf struct {
 	Alts  []*synCaseAlt
 }
 
-func (me *synExprCaseOf) setUpd(resolvers ...func(string) *synBinding) {
-	me.Scrut.setUpd(resolvers...)
-	for _, alt := range me.Alts {
+func (this *synExprCaseOf) setUpd(resolvers ...func(string) *synBinding) {
+	this.Scrut.setUpd(resolvers...)
+	for _, alt := range this.Alts {
 		alt.setUpd(resolvers...)
 	}
 }
@@ -175,6 +175,6 @@ type synCaseAlt struct {
 	Body iSynExpr
 }
 
-func (me *synCaseAlt) setUpd(resolvers ...func(string) *synBinding) {
-	me.Body.setUpd(resolvers...)
+func (this *synCaseAlt) setUpd(resolvers ...func(string) *synBinding) {
+	this.Body.setUpd(resolvers...)
 }

@@ -4,14 +4,14 @@ import (
 	"strconv"
 )
 
-func (me *ExprCaseOf) ExtractIntoDef(name string, topLevel bool, lookupEnv map[string]bool) (*SynDef, IExpr) {
-	return me.extractIntoDef(me, name, topLevel, lookupEnv)
+func (this *ExprCaseOf) ExtractIntoDef(name string, topLevel bool, lookupEnv map[string]bool) (*SynDef, IExpr) {
+	return this.extractIntoDef(this, name, topLevel, lookupEnv)
 }
 
-func (me *exprComp) extractIntoDef(this IExpr, name string, topLevel bool, lookupEnv map[string]bool) (*SynDef, IExpr) {
-	i, free, def := 0, make(map[string]bool, 8), SynDef{Name: name, TopLevel: topLevel, Body: this}
-	this.FreeVars(free, lookupEnv)
-	def.toks, def.Args = me.toks, make([]string, len(free))
+func (this *exprComp) extractIntoDef(self IExpr, name string, topLevel bool, lookupEnv map[string]bool) (*SynDef, IExpr) {
+	i, free, def := 0, make(map[string]bool, 8), SynDef{Name: name, TopLevel: topLevel, Body: self}
+	self.FreeVars(free, lookupEnv)
+	def.toks, def.Args = this.toks, make([]string, len(free))
 	for name := range free {
 		def.Args[i], i = name, i+1
 	}
@@ -23,28 +23,27 @@ func (me *exprComp) extractIntoDef(this IExpr, name string, topLevel bool, looku
 	for i = 1; i < len(def.Args); i++ {
 		call = ExprCall{Callee: &call, Arg: Id(def.Args[i])}
 	}
-	call.toks = me.toks
+	call.toks = this.toks
 	return &def, &call
 }
-
-func (me *ExprCtor) ExtractIntoDef(name string, topLevel bool) *SynDef {
-	def := SynDef{Name: name, TopLevel: topLevel, Body: me, Args: make([]string, me.Arity)}
-	for i := 0; i < me.Arity; i++ {
+func (this *ExprCtor) ExtractIntoDef(name string, topLevel bool) *SynDef {
+	def := SynDef{Name: name, TopLevel: topLevel, Body: this, Args: make([]string, this.Arity)}
+	for i := 0; i < this.Arity; i++ {
 		def.Args[i] = "v" + strconv.Itoa(i)
 		def.Body = Ap(def.Body, Id(def.Args[i]))
 	}
 	return &def
 }
 
-func (me *ExprCall) Flattened() (callee IExpr, reverseArgs []IExpr) {
-	for ; me != nil; me, _ = callee.(*ExprCall) {
-		callee, reverseArgs = me.Callee, append(reverseArgs, me.Arg)
+func (this *ExprCall) Flattened() (callee IExpr, reverseArgs []IExpr) {
+	for ; this != nil; this, _ = callee.(*ExprCall) {
+		callee, reverseArgs = this.Callee, append(reverseArgs, this.Arg)
 	}
 	return
 }
 
-func (me *ExprCall) FlattenedIfCtor() (ctor *ExprCtor, reverseArgs []IExpr) {
-	callee, revargs := me.Flattened()
+func (this *ExprCall) FlattenedIfCtor() (ctor *ExprCtor, reverseArgs []IExpr) {
+	callee, revargs := this.Flattened()
 	if ctormaybe, ok := callee.(*ExprCtor); ok {
 		ctor, reverseArgs = ctormaybe, revargs
 	}

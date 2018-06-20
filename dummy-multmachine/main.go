@@ -30,25 +30,25 @@ func main() {
 	}
 }
 
-func (me *multiplicator) eval(op1 int64, op2 int64) int64 {
-	for me.init(op1, op2); !me.finalState(); me.step() {
+func (this *multiplicator) eval(op1 int64, op2 int64) int64 {
+	for this.init(op1, op2); !this.finalState(); this.step() {
 		// nothing else to do here while we step
 	}
-	return me.RunningTotal
+	return this.RunningTotal
 }
 
-func (me *multiplicator) init(op1 int64, op2 int64) {
-	me.Operand1, me.Operand2, me.Jobber, me.RunningTotal = op1, op2, 0, 0
+func (this *multiplicator) init(op1 int64, op2 int64) {
+	this.Operand1, this.Operand2, this.Jobber, this.RunningTotal = op1, op2, 0, 0
 }
 
-func (me *multiplicator) finalState() bool {
-	return me.Operand2 == 0 && me.Jobber == 0
+func (this *multiplicator) finalState() bool {
+	return this.Operand2 == 0 && this.Jobber == 0
 }
 
-func (me *multiplicator) step() {
-	if me.Jobber == 0 {
-		me.Jobber, me.Operand2 = me.Operand1, me.Operand2-1
+func (this *multiplicator) step() {
+	if this.Jobber == 0 {
+		this.Jobber, this.Operand2 = this.Operand1, this.Operand2-1
 	} else {
-		me.Jobber, me.RunningTotal = me.Jobber-1, me.RunningTotal+1
+		this.Jobber, this.RunningTotal = this.Jobber-1, this.RunningTotal+1
 	}
 }

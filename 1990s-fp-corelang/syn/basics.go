@@ -25,13 +25,13 @@ type syn struct {
 	// parent ISyn
 }
 
-func (me *syn) init(toks lex.Tokens) { me.toks = toks }
+func (this *syn) init(toks lex.Tokens) { this.toks = toks }
 
 func (*syn) isExpr() bool { return false }
 
-func (me *syn) Pos() *lex.TokenMeta { return &me.toks[0].Meta }
+func (this *syn) Pos() *lex.TokenMeta { return &this.toks[0].Meta }
 
-func (me *syn) Toks() lex.Tokens { return me.toks }
+func (this *syn) Toks() lex.Tokens { return this.toks }
 
 type expr struct{ syn }
 
@@ -59,4 +59,4 @@ func errTok(tok *lex.Token, msg string) *Error {
 	return errPos(&tok.Meta.Position, msg, len(tok.String()))
 }
 
-func (me *Error) Error() string { return me.msg }
+func (this *Error) Error() string { return this.msg }

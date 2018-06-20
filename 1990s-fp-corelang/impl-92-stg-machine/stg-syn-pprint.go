@@ -7,118 +7,114 @@ import (
 
 var uglyHackyIndent int
 
-func (me synMod) String() (s string) {
-	for i := range me.Binds {
+func (this synMod) String() (s string) {
+	for i := range this.Binds {
 		if uglyHackyIndent = 0; i > 0 {
 			s += "\n\n"
 		}
-		s += me.Binds[i].String()
+		s += this.Binds[i].String()
 	}
 	return
 }
 
-func (me synBinding) String() (s string) {
-	if s = me.Name; me.LamForm.Upd {
+func (this synBinding) String() (s string) {
+	if s = this.Name; this.LamForm.Upd {
 		s += " ¤"
 	} else {
 		s += " Ø"
 	}
-	if len(me.LamForm.Free) > 0 {
+	if len(this.LamForm.Free) > 0 {
 		s += " ‹"
-		for i := range me.LamForm.Free {
+		for i := range this.LamForm.Free {
 			if i > 0 {
 				s += ","
 			}
-			s += me.LamForm.Free[i].String()
+			s += this.LamForm.Free[i].String()
 		}
 		s += "›"
 	}
 	s += " = \\"
-	for i := range me.LamForm.Args {
-		s += " " + me.LamForm.Args[i].String()
+	for i := range this.LamForm.Args {
+		s += " " + this.LamForm.Args[i].String()
 	}
 	s += " -> "
-	if _, isatomic := me.LamForm.Body.(iSynExprAtom); isatomic {
-		s += me.LamForm.Body.String()
+	if _, isatomic := this.LamForm.Body.(iSynExprAtom); isatomic {
+		s += this.LamForm.Body.String()
 	} else {
 		uglyHackyIndent++
-		s += "\n" + strings.Repeat("  ", uglyHackyIndent) + me.LamForm.Body.String()
+		s += "\n" + strings.Repeat("  ", uglyHackyIndent) + this.LamForm.Body.String()
 		uglyHackyIndent--
 	}
 	return
 }
 
-func (me synExprAtomIdent) String() string { return me.Name }
+func (this synExprAtomIdent) String() string    { return this.Name }
+func (this synExprAtomLitFloat) String() string { return strconv.FormatFloat(this.Lit, 'g', -1, 64) }
+func (this synExprAtomLitUInt) String() string  { return strconv.FormatUint(this.Lit, 10) }
+func (this synExprAtomLitRune) String() string  { return strconv.QuoteRune(this.Lit) }
+func (this synExprAtomLitText) String() string  { return strconv.Quote(this.Lit) }
 
-func (me synExprAtomLitFloat) String() string { return strconv.FormatFloat(me.Lit, 'g', -1, 64) }
-
-func (me synExprAtomLitUInt) String() string { return strconv.FormatUint(me.Lit, 10) }
-
-func (me synExprAtomLitRune) String() string { return strconv.QuoteRune(me.Lit) }
-
-func (me synExprAtomLitText) String() string { return strconv.Quote(me.Lit) }
-
-func (me synExprLet) String() (s string) {
+func (this synExprLet) String() (s string) {
 	s = "LET"
-	if me.Rec {
+	if this.Rec {
 		s += " REC"
 	}
 	uglyHackyIndent++
-	for i := range me.Binds {
-		s += "\n" + strings.Repeat("  ", uglyHackyIndent) + me.Binds[i].String()
+	for i := range this.Binds {
+		s += "\n" + strings.Repeat("  ", uglyHackyIndent) + this.Binds[i].String()
 	}
 	uglyHackyIndent--
 	s += "\n" + strings.Repeat("  ", uglyHackyIndent) + "IN\n"
 	uglyHackyIndent++
-	s += strings.Repeat("  ", uglyHackyIndent) + me.Body.String()
+	s += strings.Repeat("  ", uglyHackyIndent) + this.Body.String()
 	uglyHackyIndent--
 	return
 }
 
-func (me synExprCall) String() (s string) {
-	s = "(" + me.Callee.String()
-	for i := range me.Args {
-		s += " " + me.Args[i].String()
+func (this synExprCall) String() (s string) {
+	s = "(" + this.Callee.String()
+	for i := range this.Args {
+		s += " " + this.Args[i].String()
 	}
 	s += ")"
 	return
 }
 
-func (me synExprCtor) String() (s string) {
-	s += "‹" + me.Tag.String()
-	for i := range me.Args {
-		s += " " + me.Args[i].String()
+func (this synExprCtor) String() (s string) {
+	s += "‹" + this.Tag.String()
+	for i := range this.Args {
+		s += " " + this.Args[i].String()
 	}
 	s += "›"
 	return
 }
 
-func (me synExprPrimOp) String() string {
-	return "(" + me.Left.String() + " " + me.PrimOp + " " + me.Right.String() + ")"
+func (this synExprPrimOp) String() string {
+	return "(" + this.Left.String() + " " + this.PrimOp + " " + this.Right.String() + ")"
 }
 
-func (me synExprCaseOf) String() (s string) {
-	s = "CASE " + me.Scrut.String() + " OF"
+func (this synExprCaseOf) String() (s string) {
+	s = "CASE " + this.Scrut.String() + " OF"
 	uglyHackyIndent++
-	for i := range me.Alts {
-		s += "\n" + strings.Repeat("  ", uglyHackyIndent) + me.Alts[i].String()
+	for i := range this.Alts {
+		s += "\n" + strings.Repeat("  ", uglyHackyIndent) + this.Alts[i].String()
 	}
 	uglyHackyIndent--
 	return
 }
 
-func (me synCaseAlt) String() (s string) {
-	if me.Atom != nil {
-		s = me.Atom.String()
-	} else if me.Ctor.Tag.Name != "" {
-		s = "‹" + me.Ctor.Tag.String()
-		for i := range me.Ctor.Vars {
-			s += " " + me.Ctor.Vars[i].String()
+func (this synCaseAlt) String() (s string) {
+	if this.Atom != nil {
+		s = this.Atom.String()
+	} else if this.Ctor.Tag.Name != "" {
+		s = "‹" + this.Ctor.Tag.String()
+		for i := range this.Ctor.Vars {
+			s += " " + this.Ctor.Vars[i].String()
 		}
 		s += "›"
 	} else {
 		s = "_"
 	}
-	s += " -> " + me.Body.String()
+	s += " -> " + this.Body.String()
 	return
 }

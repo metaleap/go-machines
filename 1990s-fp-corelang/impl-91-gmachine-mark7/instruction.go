@@ -6,9 +6,9 @@ import (
 
 type code []instr
 
-func (me code) String() (s string) {
+func (this code) String() (s string) {
 	s = "["
-	for i, instr := range me {
+	for i, instr := range this {
 		if i > 0 {
 			s += " · "
 		}
@@ -69,26 +69,26 @@ type instr struct {
 	CaseJump  map[string]code
 }
 
-func (me instr) String() string {
-	switch me.Op {
+func (this instr) String() string {
+	switch this.Op {
 	case INSTR_UNWIND:
 		return "Unwd"
 	case INSTR_PUSHGLOBAL:
-		return "Push`" + me.Name
+		return "Push`" + this.Name
 	case INSTR_PUSHINT:
-		return "Push=" + strconv.Itoa(me.Int)
+		return "Push=" + strconv.Itoa(this.Int)
 	case INSTR_PUSHARG:
-		return "Push@" + strconv.Itoa(me.Int)
+		return "Push@" + strconv.Itoa(this.Int)
 	case INSTR_SLIDE:
-		return "Slide:" + strconv.Itoa(me.Int)
+		return "Slide:" + strconv.Itoa(this.Int)
 	case INSTR_MAKEAPPL:
 		return "MkAp"
 	case INSTR_UPDATE:
-		return "Upd@" + strconv.Itoa(me.Int)
+		return "Upd@" + strconv.Itoa(this.Int)
 	case INSTR_POP:
-		return "Pop@" + strconv.Itoa(me.Int)
+		return "Pop@" + strconv.Itoa(this.Int)
 	case INSTR_ALLOC:
-		return "Alloc=" + strconv.Itoa(me.Int)
+		return "Alloc=" + strconv.Itoa(this.Int)
 	case INSTR_EVAL:
 		return "Eval"
 	case INSTR_PRIM_AR_ADD:
@@ -116,11 +116,11 @@ func (me instr) String() string {
 	case INSTR_PRIM_COND:
 		return "Cond"
 	case INSTR_CTOR_PACK:
-		return "Ctor:" + me.Name + ":" + strconv.Itoa(me.CtorArity)
+		return "Ctor:" + this.Name + ":" + strconv.Itoa(this.CtorArity)
 	case INSTR_CASE_JUMP:
-		return "CJmp#" + strconv.Itoa(len(me.CaseJump))
+		return "CJmp#" + strconv.Itoa(len(this.CaseJump))
 	case INSTR_CASE_SPLIT:
-		return "CSpl=" + strconv.Itoa(me.Int)
+		return "CSpl=" + strconv.Itoa(this.Int)
 	case INSTR_MARK7_PUSHINTVAL:
 		return "Push:"
 	case INSTR_MARK7_PUSHNODEINT:
@@ -130,5 +130,5 @@ func (me instr) String() string {
 	case INSTR_MARK7_MAKENODEBOOL:
 		return "MkNB"
 	}
-	return strconv.Itoa(int(me.Op))
+	return strconv.Itoa(int(this.Op))
 }

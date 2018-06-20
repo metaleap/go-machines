@@ -1,47 +1,47 @@
 package clsyn
 
-func (me *syn) FreeVars(freeVarNames map[string]bool, lookupEnvs ...map[string]bool) {}
+func (this *syn) FreeVars(freeVarNames map[string]bool, lookupEnvs ...map[string]bool) {}
 
-func (me *SynDef) FreeVars(freeVarNames map[string]bool, lookupEnvs ...map[string]bool) {
-	me.Body.FreeVars(freeVarNames, append(lookupEnvs, NewLookupEnv(nil, nil, nil, me.Args))...)
+func (this *SynDef) FreeVars(freeVarNames map[string]bool, lookupEnvs ...map[string]bool) {
+	this.Body.FreeVars(freeVarNames, append(lookupEnvs, NewLookupEnv(nil, nil, nil, this.Args))...)
 }
 
-func (me *ExprIdent) FreeVars(freeVarNames map[string]bool, lookupEnvs ...map[string]bool) {
-	if !freeVarNames[me.Name] {
+func (this *ExprIdent) FreeVars(freeVarNames map[string]bool, lookupEnvs ...map[string]bool) {
+	if !freeVarNames[this.Name] {
 		for _, lookupenv := range lookupEnvs {
-			if lookupenv[me.Name] {
+			if lookupenv[this.Name] {
 				return
 			}
 		}
-		freeVarNames[me.Name] = true
+		freeVarNames[this.Name] = true
 	}
 }
 
-func (me *ExprCall) FreeVars(freeVarNames map[string]bool, lookupEnvs ...map[string]bool) {
-	me.Callee.FreeVars(freeVarNames, lookupEnvs...)
-	me.Arg.FreeVars(freeVarNames, lookupEnvs...)
+func (this *ExprCall) FreeVars(freeVarNames map[string]bool, lookupEnvs ...map[string]bool) {
+	this.Callee.FreeVars(freeVarNames, lookupEnvs...)
+	this.Arg.FreeVars(freeVarNames, lookupEnvs...)
 }
 
-func (me *ExprLambda) FreeVars(freeVarNames map[string]bool, lookupEnvs ...map[string]bool) {
-	me.Body.FreeVars(freeVarNames, append(lookupEnvs, NewLookupEnv(nil, nil, nil, me.Args))...)
+func (this *ExprLambda) FreeVars(freeVarNames map[string]bool, lookupEnvs ...map[string]bool) {
+	this.Body.FreeVars(freeVarNames, append(lookupEnvs, NewLookupEnv(nil, nil, nil, this.Args))...)
 }
 
-func (me *ExprLetIn) FreeVars(freeVarNames map[string]bool, lookupEnvs ...map[string]bool) {
-	defsenv := NewLookupEnv(me.Defs, nil, nil, nil)
+func (this *ExprLetIn) FreeVars(freeVarNames map[string]bool, lookupEnvs ...map[string]bool) {
+	defsenv := NewLookupEnv(this.Defs, nil, nil, nil)
 	combined := append(lookupEnvs, defsenv)
-	for _, def := range me.Defs {
-		if me.Rec {
+	for _, def := range this.Defs {
+		if this.Rec {
 			def.FreeVars(freeVarNames, combined...)
 		} else {
 			def.FreeVars(freeVarNames, lookupEnvs...)
 		}
 	}
-	me.Body.FreeVars(freeVarNames, combined...)
+	this.Body.FreeVars(freeVarNames, combined...)
 }
 
-func (me *ExprCaseOf) FreeVars(freeVarNames map[string]bool, lookupEnvs ...map[string]bool) {
-	me.Scrut.FreeVars(freeVarNames, lookupEnvs...)
-	for _, alt := range me.Alts {
+func (this *ExprCaseOf) FreeVars(freeVarNames map[string]bool, lookupEnvs ...map[string]bool) {
+	this.Scrut.FreeVars(freeVarNames, lookupEnvs...)
+	for _, alt := range this.Alts {
 		alt.Body.FreeVars(freeVarNames, append(lookupEnvs, NewLookupEnv(nil, nil, nil, alt.Binds))...)
 	}
 }

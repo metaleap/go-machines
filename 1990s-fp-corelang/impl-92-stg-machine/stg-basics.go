@@ -8,17 +8,17 @@ type stgMachine struct {
 	mod synMod
 }
 
-func (me *stgMachine) Eval(argLessDefName string) (result interface{}, stats util.Stats, err error) {
-	for i := range me.mod.Binds {
-		if me.mod.Binds[i].Name == argLessDefName {
-			result = me.mod.Binds[i]
+func (this *stgMachine) Eval(argLessDefName string) (result interface{}, stats util.Stats, err error) {
+	for i := range this.mod.Binds {
+		if this.mod.Binds[i].Name == argLessDefName {
+			result = this.mod.Binds[i]
 			return
 		}
 	}
 	return
 }
 
-func (me *stgMachine) String(result interface{}) string {
+func (this *stgMachine) String(result interface{}) string {
 	if syn, _ := result.(iSyn); syn != nil {
 		return syn.String()
 	}

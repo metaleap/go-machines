@@ -24,22 +24,22 @@ func isDataNode(node clutil.INode) (isvalue bool) {
 	return
 }
 
-func (me *tiMachine) instantiate(expression clsyn.IExpr) (resultAddr clutil.Addr) {
+func (this *tiMachine) instantiate(expression clsyn.IExpr) (resultAddr clutil.Addr) {
 	switch expr := expression.(type) {
 	case *clsyn.ExprLitFloat:
-		resultAddr = me.Heap.Alloc(nodeNumFloat(expr.Lit))
+		resultAddr = this.Heap.Alloc(nodeNumFloat(expr.Lit))
 	case *clsyn.ExprLitUInt:
-		resultAddr = me.Heap.Alloc(nodeNumUint(expr.Lit))
+		resultAddr = this.Heap.Alloc(nodeNumUint(expr.Lit))
 	case *clsyn.ExprCall:
-		resultAddr = me.Heap.Alloc(&nodeAp{me.instantiate(expr.Callee), me.instantiate(expr.Arg)})
+		resultAddr = this.Heap.Alloc(&nodeAp{this.instantiate(expr.Callee), this.instantiate(expr.Arg)})
 	case *clsyn.ExprIdent:
-		resultAddr = me.Env.LookupOrPanic(expr.Name)
+		resultAddr = this.Env.LookupOrPanic(expr.Name)
 	case *clsyn.ExprLetIn:
 		for _, def := range expr.Defs {
 			ndef := nodeDef(*def)
-			me.Env[def.Name] = me.Heap.Alloc(&ndef)
+			this.Env[def.Name] = this.Heap.Alloc(&ndef)
 		}
-		resultAddr = me.instantiate(expr.Body)
+		resultAddr = this.instantiate(expr.Body)
 	case *clsyn.ExprCaseOf, *clsyn.ExprCtor:
 		panic("instantiate: expr type coming soon")
 	default:

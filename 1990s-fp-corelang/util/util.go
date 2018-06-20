@@ -14,12 +14,12 @@ type INode interface {
 
 type Addr int
 
-func (me Addr) String() string { return strconv.Itoa(int(me)) }
+func (this Addr) String() string { return strconv.Itoa(int(this)) }
 
 type Env map[string]Addr
 
-func (me Env) LookupOrPanic(name string) (addr Addr) {
-	if addr = me[name]; addr == 0 {
+func (this Env) LookupOrPanic(name string) (addr Addr) {
+	if addr = this[name]; addr == 0 {
 		panic("undefined: " + name)
 	}
 	return
@@ -27,138 +27,138 @@ func (me Env) LookupOrPanic(name string) (addr Addr) {
 
 type StackA []Addr
 
-func (me StackA) Dropped(n int) StackA {
-	return me[:len(me)-n]
+func (this StackA) Dropped(n int) StackA {
+	return this[:len(this)-n]
 }
 
-func (me StackA) Pos0() int {
-	return len(me) - 1
+func (this StackA) Pos0() int {
+	return len(this) - 1
 }
 
-func (me StackA) Pos1() int {
-	return len(me) - 2
+func (this StackA) Pos1() int {
+	return len(this) - 2
 }
 
-func (me StackA) Pos(i int) int {
-	return len(me) - (1 + i)
+func (this StackA) Pos(i int) int {
+	return len(this) - (1 + i)
 }
 
-func (me *StackA) Push(addr Addr) {
-	*me = append(*me, addr)
+func (this *StackA) Push(addr Addr) {
+	*this = append(*this, addr)
 }
 
-func (me StackA) Pushed(addr Addr) StackA {
-	return append(me, addr)
+func (this StackA) Pushed(addr Addr) StackA {
+	return append(this, addr)
 }
 
-func (me StackA) Top0() Addr {
-	return me[len(me)-1]
+func (this StackA) Top0() Addr {
+	return this[len(this)-1]
 }
 
-func (me StackA) Top1() Addr {
-	return me[len(me)-2]
+func (this StackA) Top1() Addr {
+	return this[len(this)-2]
 }
 
-func (me StackA) Top(i int) Addr {
-	return me[len(me)-(1+i)]
+func (this StackA) Top(i int) Addr {
+	return this[len(this)-(1+i)]
 }
 
 type StackI []int
 
-func (me StackI) Dropped(n int) StackI {
-	return me[:len(me)-n]
+func (this StackI) Dropped(n int) StackI {
+	return this[:len(this)-n]
 }
 
-func (me StackI) Pos0() int {
-	return len(me) - 1
+func (this StackI) Pos0() int {
+	return len(this) - 1
 }
 
-func (me StackI) Pos1() int {
-	return len(me) - 2
+func (this StackI) Pos1() int {
+	return len(this) - 2
 }
 
-func (me StackI) Pos(i int) int {
-	return len(me) - (1 + i)
+func (this StackI) Pos(i int) int {
+	return len(this) - (1 + i)
 }
 
-func (me *StackI) Push(i int) {
-	*me = append(*me, i)
+func (this *StackI) Push(i int) {
+	*this = append(*this, i)
 }
 
-func (me StackI) Pushed(i int) StackI {
-	return append(me, i)
+func (this StackI) Pushed(i int) StackI {
+	return append(this, i)
 }
 
-func (me StackI) Top0() int {
-	return me[len(me)-1]
+func (this StackI) Top0() int {
+	return this[len(this)-1]
 }
 
-func (me StackI) Top1() int {
-	return me[len(me)-2]
+func (this StackI) Top1() int {
+	return this[len(this)-2]
 }
 
-func (me StackI) Top(i int) int {
-	return me[len(me)-(1+i)]
+func (this StackI) Top(i int) int {
+	return this[len(this)-(1+i)]
 }
 
 type StackS []string
 
-func (me StackS) Dropped(n int) StackS {
-	return me[:len(me)-n]
+func (this StackS) Dropped(n int) StackS {
+	return this[:len(this)-n]
 }
 
-func (me StackS) Pos0() int {
-	return len(me) - 1
+func (this StackS) Pos0() int {
+	return len(this) - 1
 }
 
-func (me StackS) Pos1() int {
-	return len(me) - 2
+func (this StackS) Pos1() int {
+	return len(this) - 2
 }
 
-func (me StackS) Pos(i int) int {
-	return len(me) - (1 + i)
+func (this StackS) Pos(i int) int {
+	return len(this) - (1 + i)
 }
 
-func (me *StackS) Push(i string) {
-	*me = append(*me, i)
+func (this *StackS) Push(i string) {
+	*this = append(*this, i)
 }
 
-func (me StackS) Pushed(i string) StackS {
-	return append(me, i)
+func (this StackS) Pushed(i string) StackS {
+	return append(this, i)
 }
 
-func (me StackS) Top0() string {
-	return me[len(me)-1]
+func (this StackS) Top0() string {
+	return this[len(this)-1]
 }
 
-func (me StackS) Top1() string {
-	return me[len(me)-2]
+func (this StackS) Top1() string {
+	return this[len(this)-2]
 }
 
-func (me StackS) Top(i int) string {
-	return me[len(me)-(1+i)]
+func (this StackS) Top(i int) string {
+	return this[len(this)-(1+i)]
 }
 
 type HeapM map[Addr]INode
 
-func (me HeapM) Alloc(obj INode) (addr Addr) {
-	addr = me.NextAddr()
-	me[addr] = obj
+func (this HeapM) Alloc(obj INode) (addr Addr) {
+	addr = this.NextAddr()
+	this[addr] = obj
 	return
 }
 
-func (me HeapM) NextAddr() Addr {
-	return Addr(1 + len(me))
+func (this HeapM) NextAddr() Addr {
+	return Addr(1 + len(this))
 }
 
 type HeapA []INode
 
-func (me *HeapA) Alloc(obj INode) (addr Addr) {
-	addr = me.NextAddr()
-	*me = append(*me, obj)
+func (this *HeapA) Alloc(obj INode) (addr Addr) {
+	addr = this.NextAddr()
+	*this = append(*this, obj)
 	return
 }
 
-func (me HeapA) NextAddr() Addr {
-	return Addr(len(me))
+func (this HeapA) NextAddr() Addr {
+	return Addr(len(this))
 }

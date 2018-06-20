@@ -13,36 +13,36 @@ type SyntaxTreePrinter struct {
 	curIndent int
 }
 
-func (me *SyntaxTreePrinter) Mod(mod *SynMod) string {
+func (this *SyntaxTreePrinter) Mod(mod *SynMod) string {
 	var buf bytes.Buffer
 	for _, def := range mod.Defs {
-		me.curIndent = 0
-		me.def(&buf, def)
+		this.curIndent = 0
+		this.def(&buf, def)
 		buf.WriteString("\n\n")
 	}
 	return buf.String()
 }
 
-func (me *SyntaxTreePrinter) def(w *bytes.Buffer, def *SynDef) {
+func (this *SyntaxTreePrinter) def(w *bytes.Buffer, def *SynDef) {
 	w.WriteString(def.Name)
 	for _, defarg := range def.Args {
 		w.WriteRune(' ')
 		w.WriteString(defarg)
 	}
 	w.WriteString(" =\n")
-	me.curIndent++
-	w.WriteString(strings.Repeat("  ", me.curIndent))
-	me.expr(w, def.Body, false)
-	me.curIndent--
+	this.curIndent++
+	w.WriteString(strings.Repeat("  ", this.curIndent))
+	this.expr(w, def.Body, false)
+	this.curIndent--
 }
 
-func (me *SyntaxTreePrinter) Def(def *SynDef) string {
+func (this *SyntaxTreePrinter) Def(def *SynDef) string {
 	var buf bytes.Buffer
-	me.def(&buf, def)
+	this.def(&buf, def)
 	return buf.String()
 }
 
-func (me *SyntaxTreePrinter) expr(w *bytes.Buffer, expression IExpr, parensUnlessAtomic bool) {
+func (this *SyntaxTreePrinter) expr(w *bytes.Buffer, expression IExpr, parensUnlessAtomic bool) {
 	if parensUnlessAtomic && !expression.IsAtomic() {
 		w.WriteRune('(')
 	}
@@ -75,26 +75,26 @@ func (me *SyntaxTreePrinter) expr(w *bytes.Buffer, expression IExpr, parensUnles
 			w.WriteRune(' ')
 		}
 		w.WriteString("-> ")
-		me.expr(w, expr.Body, true)
+		this.expr(w, expr.Body, true)
 	case *ExprCall:
-		me.expr(w, expr.Callee, true)
+		this.expr(w, expr.Callee, true)
 		w.WriteRune(' ')
-		me.expr(w, expr.Arg, true)
+		this.expr(w, expr.Arg, true)
 	case *ExprLetIn:
 		w.WriteString("LET\n")
-		me.curIndent++
+		this.curIndent++
 		for _, letdef := range expr.Defs {
-			w.WriteString(strings.Repeat("  ", me.curIndent))
-			me.def(w, letdef)
+			w.WriteString(strings.Repeat("  ", this.curIndent))
+			this.def(w, letdef)
 			w.WriteRune('\n')
 		}
-		me.curIndent--
-		w.WriteString(strings.Repeat("  ", me.curIndent))
+		this.curIndent--
+		w.WriteString(strings.Repeat("  ", this.curIndent))
 		w.WriteString("IN\n")
-		me.curIndent++
-		w.WriteString(strings.Repeat("  ", me.curIndent))
-		me.expr(w, expr.Body, false)
-		me.curIndent--
+		this.curIndent++
+		w.WriteString(strings.Repeat("  ", this.curIndent))
+		this.expr(w, expr.Body, false)
+		this.curIndent--
 	case *ExprCtor:
 		w.WriteRune('(')
 		w.WriteString(expr.Tag)
@@ -103,10 +103,10 @@ func (me *SyntaxTreePrinter) expr(w *bytes.Buffer, expression IExpr, parensUnles
 		w.WriteRune(')')
 	case *ExprCaseOf:
 		w.WriteString("CASE ")
-		me.expr(w, expr.Scrut, false)
+		this.expr(w, expr.Scrut, false)
 		w.WriteString(" OF\n")
-		me.curIndent++
-		w.WriteString(strings.Repeat("  ", me.curIndent))
+		this.curIndent++
+		w.WriteString(strings.Repeat("  ", this.curIndent))
 		for _, alt := range expr.Alts {
 			w.WriteString(alt.Tag)
 			for _, bind := range alt.Binds {
@@ -114,14 +114,14 @@ func (me *SyntaxTreePrinter) expr(w *bytes.Buffer, expression IExpr, parensUnles
 				w.WriteString(bind)
 			}
 			w.WriteString(" ->\n")
-			me.curIndent++
-			w.WriteString(strings.Repeat("  ", me.curIndent))
-			me.expr(w, alt.Body, false)
-			me.curIndent--
+			this.curIndent++
+			w.WriteString(strings.Repeat("  ", this.curIndent))
+			this.expr(w, alt.Body, false)
+			this.curIndent--
 			w.WriteRune('\n')
-			w.WriteString(strings.Repeat("  ", me.curIndent))
+			w.WriteString(strings.Repeat("  ", this.curIndent))
 		}
-		me.curIndent--
+		this.curIndent--
 	default:
 		panic(fmt.Errorf("unknown expression type %T — %#v", expr, expr))
 	}
@@ -131,8 +131,8 @@ func (me *SyntaxTreePrinter) expr(w *bytes.Buffer, expression IExpr, parensUnles
 	return
 }
 
-func (me *SyntaxTreePrinter) Expr(expr IExpr) string {
+func (this *SyntaxTreePrinter) Expr(expr IExpr) string {
 	var buf bytes.Buffer
-	me.expr(&buf, expr, false)
+	this.expr(&buf, expr, false)
 	return buf.String()
 }

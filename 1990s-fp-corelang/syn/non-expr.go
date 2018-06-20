@@ -4,15 +4,15 @@ type SynMod struct {
 	Defs []*SynDef
 }
 
-func (me *SynMod) Def(name string) *SynDef {
-	if i := me.IndexOf(name); i > -1 {
-		return me.Defs[i]
+func (this *SynMod) Def(name string) *SynDef {
+	if i := this.IndexOf(name); i > -1 {
+		return this.Defs[i]
 	}
 	return nil
 }
 
-func (me *SynMod) IndexOf(name string) int {
-	for i, def := range me.Defs {
+func (this *SynMod) IndexOf(name string) int {
+	for i, def := range this.Defs {
 		if def.Name == name {
 			return i
 		}
