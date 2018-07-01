@@ -128,11 +128,7 @@ func runFac(num int, runs int) (result int, timeTaken time.Duration) {
 			ctr, ctn = ctr+cr, ctn+int64(ctt)
 		}
 		if ctr != num+num { // always true but ensure ctr is computed not optimized away by a future too-clever compiler
-			print("(avg. over ")
-			print(runs)
-			print(" runs, vs. ")
-			print(time.Duration(int64(float64(ctn) / float64(runs))).String())
-			println(")")
+			println("(avg. over ", runs, " runs, vs. ", time.Duration(int64(float64(ctn)/float64(runs))).String(), ")")
 		}
 	}
 	return

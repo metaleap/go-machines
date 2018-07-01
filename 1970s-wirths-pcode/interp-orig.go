@@ -205,10 +205,7 @@ func interp(code []instr) (int, time.Duration) {
 				b = st[t+2]
 
 			case EXEC_DBG:
-				print("t")
-				print(t)
-				print("=")
-				println(st[t])
+				println("t", t, "=", st[t])
 			}
 		}
 	}
