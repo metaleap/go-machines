@@ -57,7 +57,7 @@ func parse(src []byte) code {
 
 	var cur int
 	for pos := range src {
-		var op *instr // ptr: less to copy and as a tmp local it should remain on the stack & not escape
+		var op *instr // ptr: less to copy and as a temp local it should remain on the stack / not escape
 		switch src[pos] {
 		case '+':
 			op = &opinc
