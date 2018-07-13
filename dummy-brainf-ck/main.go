@@ -57,21 +57,21 @@ func parse(src []byte) code {
 
 	var cur int
 	for pos := range src {
-		var op instr
+		var op *instr // ptr: less to copy and as a tmp local it should remain on the stack & not escape
 		switch src[pos] {
 		case '+':
-			op = opinc
+			op = &opinc
 		case '-':
-			op = opdec
+			op = &opdec
 		case '>':
-			op = opmovr
+			op = &opmovr
 		case '<':
-			op = opmovl
+			op = &opmovl
 		case '.':
-			op = opprint
+			op = &opprint
 		case ']':
 			// if cur > 0 {
-			stack, op = stack[:cur], instr{opCode: LOOP, loop: stack[cur]}
+			stack, op = stack[:cur], &instr{opCode: LOOP, loop: stack[cur]}
 			cur--
 			// } else { panic("source error: unmatched closing bracket") }
 		case '[':
@@ -81,7 +81,7 @@ func parse(src []byte) code {
 		default:
 			continue
 		}
-		stack[cur] = append(stack[cur], op)
+		stack[cur] = append(stack[cur], *op)
 	}
 	return stack[0]
 }
@@ -92,9 +92,8 @@ func run(prog code) {
 		case INC:
 			vm.tape[vm.pos] += prog[i].val
 		case MOVE:
-			vm.pos += prog[i].val
-			if overshoot := (vm.pos - len(vm.tape)); overshoot > -1 {
-				vm.tape = append(vm.tape, make([]int, overshoot+1)...)
+			if vm.pos += prog[i].val; vm.pos >= len(vm.tape) {
+				vm.tape = append(vm.tape, make([]int, 1+(vm.pos-len(vm.tape)))...)
 			}
 		case PRINT:
 			os.Stdout.WriteString(string(vm.tape[vm.pos]))
