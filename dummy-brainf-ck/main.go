@@ -45,14 +45,14 @@ func main() {
 	}
 	prog := parse(src)
 
-	machine.tape = make([]int, 1, 16)
+	machine.tape = make([]int, 1, 32)
 	run(prog)
 }
 
 func parse(src []byte) code {
 	opinc, opdec, opmovr, opmovl, opprint :=
 		instr{opCode: INC, val: 1}, instr{opCode: INC, val: -1}, instr{opCode: MOVE, val: 1}, instr{opCode: MOVE, val: -1}, instr{opCode: PRINT}
-	stack := make([]code, 1, 16)
+	stack := make([]code, 1, 32)
 	stack[0] = make(code, 0, len(src))
 
 	var cur int
