@@ -29,7 +29,7 @@ type instr struct {
 	loop   code
 }
 
-var machine struct {
+var vm struct {
 	tape []int
 	pos  int
 }
@@ -45,7 +45,7 @@ func main() {
 	}
 	prog := parse(src)
 
-	machine.tape = make([]int, 1, 32)
+	vm.tape = make([]int, 1, 32)
 	run(prog)
 }
 
@@ -90,16 +90,16 @@ func run(prog code) {
 	for i := range prog {
 		switch prog[i].opCode {
 		case INC:
-			machine.tape[machine.pos] += prog[i].val
+			vm.tape[vm.pos] += prog[i].val
 		case MOVE:
-			machine.pos += prog[i].val
-			if overshoot := (machine.pos - len(machine.tape)); overshoot > -1 {
-				machine.tape = append(machine.tape, make([]int, overshoot+1)...)
+			vm.pos += prog[i].val
+			if overshoot := (vm.pos - len(vm.tape)); overshoot > -1 {
+				vm.tape = append(vm.tape, make([]int, overshoot+1)...)
 			}
 		case PRINT:
-			os.Stdout.WriteString(string(machine.tape[machine.pos]))
+			os.Stdout.WriteString(string(vm.tape[vm.pos]))
 		case LOOP:
-			for machine.tape[machine.pos] > 0 {
+			for vm.tape[vm.pos] > 0 {
 				run(prog[i].loop)
 			}
 		}
