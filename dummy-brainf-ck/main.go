@@ -21,10 +21,12 @@ const (
 	LOOP
 )
 
+type code = []instr
+
 type instr struct {
 	opCode int
 	val    int
-	loop   []instr
+	loop   code
 }
 
 var machine struct {
@@ -47,11 +49,11 @@ func main() {
 	run(prog)
 }
 
-func parse(src []byte) []instr {
+func parse(src []byte) code {
 	opinc, opdec, opmovr, opmovl, opprint :=
 		instr{opCode: INC, val: 1}, instr{opCode: INC, val: -1}, instr{opCode: MOVE, val: 1}, instr{opCode: MOVE, val: -1}, instr{opCode: PRINT}
-	stack := make([][]instr, 1, 16)
-	stack[0] = make([]instr, 0, len(src))
+	stack := make([]code, 1, 16)
+	stack[0] = make(code, 0, len(src))
 
 	var cur int
 	for pos := range src {
@@ -69,11 +71,12 @@ func parse(src []byte) []instr {
 			op = opprint
 		case ']':
 			// if cur > 0 {
-			op = instr{opCode: LOOP, loop: stack[cur]}
-			stack, cur = stack[:cur], cur-1
+			stack, op = stack[:cur], instr{opCode: LOOP, loop: stack[cur]}
+			cur--
 			// } else { panic("source error: unmatched closing bracket") }
 		case '[':
-			stack, cur = append(stack, make([]instr, 0, len(src)-pos)), cur+1
+			stack = append(stack, make(code, 0, len(src)-pos))
+			cur++
 			continue
 		default:
 			continue
@@ -83,7 +86,7 @@ func parse(src []byte) []instr {
 	return stack[0]
 }
 
-func run(prog []instr) {
+func run(prog code) {
 	for i := range prog {
 		switch prog[i].opCode {
 		case INC:
