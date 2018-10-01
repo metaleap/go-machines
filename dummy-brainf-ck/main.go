@@ -21,7 +21,7 @@ const (
 	LOOP
 )
 
-type code = []instr
+type code []instr
 
 type instr struct {
 	opCode int
