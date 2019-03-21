@@ -35,18 +35,18 @@ func main() {
 			_, _ = os.Stdout.WriteString(" · " + def.Name)
 		}
 	}
-	writeLn("\n…and can be evaluated immediately using `!‹name›` or `?‹name›`\n")
+	writeLn("\n...and can be evaluated immediately using `!‹name›` or `?‹name›`\n")
 	machine := recompile(mod)
 
 	multiline, repl, pprint := "", bufio.NewScanner(os.Stdin), &corelang.SyntaxTreePrinter{}
 	for repl.Scan() {
 		if readln := strings.TrimSpace(repl.Text()); readln != "" {
-			if readln == "…" && multiline != "" {
+			if readln == "..." && multiline != "" {
 				readln, multiline = strings.TrimSpace(multiline), ""
 			}
 			switch {
-			case strings.HasSuffix(readln, "…"):
-				multiline = readln[:len(readln)-len("…")] + "\n  "
+			case strings.HasSuffix(readln, "..."):
+				multiline = readln[:len(readln)-len("...")] + "\n  "
 			case multiline != "":
 				multiline += readln + "\n  "
 			case !strings.Contains(readln, "="):
