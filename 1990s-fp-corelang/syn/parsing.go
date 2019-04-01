@@ -33,7 +33,7 @@ func Lex(srcFilePath string, src string) (lex.Tokens, []*lex.Error) {
 func LexAndParseDefs(srcFilePath string, src string) ([]*SynDef, []*Error) {
 	toks, lexerrs := Lex(srcFilePath, src)
 	if len(lexerrs) == 0 {
-		return ParseDefs(srcFilePath, toks.SansComments(nil))
+		return ParseDefs(srcFilePath, toks.SansComments(nil, nil))
 	}
 
 	errs := make([]*Error, len(lexerrs))
