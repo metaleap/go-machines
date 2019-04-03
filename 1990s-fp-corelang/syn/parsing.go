@@ -27,7 +27,7 @@ func RegisterKeyword(triggerWord string, keyword Keyword) string {
 }
 
 func Lex(srcFilePath string, src string) (lex.Tokens, []*lex.Error) {
-	return lex.Lex(srcFilePath, strings.NewReader(src), 0, 0, len(src)/6)
+	return lex.Lex(strings.NewReader(src), srcFilePath, 0, 0, len(src)/6)
 }
 
 func LexAndParseDefs(srcFilePath string, src string) ([]*SynDef, []*Error) {
