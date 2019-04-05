@@ -89,7 +89,7 @@ func parseDef(tokens lex.Tokens) (*SynDef, lex.Tokens, *Error) {
 
 	// args up until `=`
 	for inargs := true; inargs && i < len(toks); i++ {
-		if tkind := toks[i].Kind(); tkind == lex.TOKEN_OTHER && toks[i].Str == "=" {
+		if tkind := toks[i].Kind(); tkind == lex.TOKEN_OPISH && toks[i].Str == "=" {
 			inargs = false
 		} else if tkind == lex.TOKEN_IDENT {
 			def.Args = append(def.Args, toks[i].Str)
@@ -118,11 +118,11 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 		var thistoks lex.Tokens // always set together with thisexpr
 
 		// LAMBDA?
-		if toks[0].Kind() == lex.TOKEN_OTHER && toks[0].Str == "\\" {
+		if toks[0].Kind() == lex.TOKEN_OPISH && toks[0].Str == "\\" {
 			if toks = toks[1:]; len(toks) == 0 {
 				return nil, errTok(&toks[0], "expected complete lambda abstraction")
 			}
-			lamargs, lambody := toks.BreakOnOther("->")
+			lamargs, lambody := toks.BreakOnOpish("->")
 			if len(lamargs) == 0 {
 				return nil, errTok(&toks[0], "missing argument(s) for lambda expression")
 			} else if len(lambody) == 0 {
@@ -153,7 +153,7 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 				thistoks, toks, thisexpr = toks[:1], toks[1:], Lr(toks[0].Rune())
 			case lex.TOKEN_STR:
 				thistoks, toks, thisexpr = toks[:1], toks[1:], Lt(toks[0].Str)
-			case lex.TOKEN_OTHER: // any operator/separator/punctuation sequence other than "(" and ")"
+			case lex.TOKEN_OPISH: // any operator/separator/punctuation sequence other than "(" and ")"
 				thistoks, toks, thisexpr = toks[:1], toks[1:], Op(toks[0].Str, len(toks) == 1)
 			case lex.TOKEN_IDENT:
 				if keyword := keywords[toks[0].Str]; keyword == nil || len(toks) == 1 {
@@ -167,7 +167,7 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 		}
 
 		if thisexpr == nil { // PARENSED SUB-EXPR?
-			if toks[0].Kind() == lex.TOKEN_SEP && toks[0].Str == "(" {
+			if toks[0].Kind() == lex.TOKEN_SEPISH && toks[0].Str == "(" {
 				sub, subtail, numunclosed := toks.Sub("(", ")")
 				if numunclosed != 0 {
 					return nil, errTok(&toks[0], "unclosed parentheses in current indent level")
@@ -311,7 +311,7 @@ func parseKeywordCaseAlt(tokens lex.Tokens) (*SynCaseAlt, lex.Tokens, *Error) {
 
 	// binds up until `->`
 	for inbinds := true; inbinds && i < len(toks); i++ {
-		if tkind := toks[i].Kind(); tkind == lex.TOKEN_OTHER && toks[i].Str == "->" {
+		if tkind := toks[i].Kind(); tkind == lex.TOKEN_OPISH && toks[i].Str == "->" {
 			inbinds = false
 		} else if tkind == lex.TOKEN_IDENT {
 			alt.Binds = append(alt.Binds, toks[i].Str)
