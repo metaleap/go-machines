@@ -122,7 +122,7 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 			if toks = toks[1:]; len(toks) == 0 {
 				return nil, errTok(&toks[0], "expected complete lambda abstraction")
 			}
-			lamargs, lambody := toks.BreakOnOpish("->")
+			lamargs, _, lambody := toks.BreakOnOpish("->")
 			if len(lamargs) == 0 {
 				return nil, errTok(&toks[0], "missing argument(s) for lambda expression")
 			} else if len(lambody) == 0 {
