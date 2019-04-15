@@ -168,7 +168,7 @@ func parseExpr(toks lex.Tokens) (IExpr, *Error) {
 
 		if thisexpr == nil { // PARENSED SUB-EXPR?
 			if toks[0].Kind() == lex.TOKEN_SEPISH && toks[0].Str == "(" {
-				sub, subtail, numunclosed := toks.Sub("(", ")")
+				sub, subtail, numunclosed := toks.Sub('(', ')')
 				if numunclosed != 0 {
 					return nil, errTok(&toks[0], "unclosed parentheses in current indent level")
 				} else if len(sub) == 0 {
