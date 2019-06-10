@@ -56,7 +56,7 @@ func errPos(pos *scanner.Position, msg string, rangeLen int) *Error {
 }
 
 func errTok(tok *lex.Token, msg string) *Error {
-	return errPos(&tok.Meta.Position, msg, len(tok.String()))
+	return errPos(&tok.Meta.Pos, msg, len(tok.String()))
 }
 
 func (this *Error) Error() string { return this.msg }
