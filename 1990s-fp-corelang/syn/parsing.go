@@ -15,7 +15,7 @@ func init() {
 	RegisterKeyword("LET", parseKeywordLet)
 	RegisterKeyword("CASE", parseKeywordCase)
 	lex.RestrictedWhitespace = true
-	lex.StandaloneSeps = []string{"(", ")"}
+	lex.SepsGroupers = "()"
 }
 
 func RegisterKeyword(triggerWord string, keyword Keyword) string {
