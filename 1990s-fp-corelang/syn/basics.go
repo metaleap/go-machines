@@ -1,8 +1,6 @@
 package clsyn
 
 import (
-	"text/scanner"
-
 	lex "github.com/go-leap/dev/lex"
 )
 
@@ -47,11 +45,11 @@ func (*exprComp) IsAtomic() bool { return false }
 
 type Error struct {
 	msg      string
-	Pos      scanner.Position
+	Pos      lex.Pos
 	RangeLen int
 }
 
-func errPos(pos *scanner.Position, msg string, rangeLen int) *Error {
+func errPos(pos *lex.Pos, msg string, rangeLen int) *Error {
 	return &Error{Pos: *pos, msg: msg, RangeLen: rangeLen}
 }
 

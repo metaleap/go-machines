@@ -27,7 +27,7 @@ func RegisterKeyword(triggerWord string, keyword Keyword) string {
 }
 
 func Lex(srcFilePath string, src string) (lex.Tokens, []*lex.Error) {
-	return lex.Lex(strings.NewReader(src), srcFilePath, len(src)/6)
+	return lex.Lex([]byte(src), srcFilePath, len(src)/6)
 }
 
 func LexAndParseDefs(srcFilePath string, src string) ([]*SynDef, []*Error) {
@@ -53,7 +53,7 @@ func ParseDefs(srcFilePath string, tokens lex.Tokens) (defs []*SynDef, errs []*E
 	// 	}
 	// }
 	for _, e := range errs {
-		e.Pos.Filename = srcFilePath
+		e.Pos.FilePath = srcFilePath
 	}
 	return
 }
@@ -234,10 +234,10 @@ func parseKeywordLet(tokens lex.Tokens) (IExpr, lex.Tokens, *Error) {
 		return nil, nil, bodyerr
 	}
 
-	if def0 := &defstoks[0].Meta; def0.Pos.Line == tokens[0].Meta.Pos.Line { // first def on same line as LET?
-		def0.LineIndent = def0.Pos.Column
-	} else if isrec && def0.Pos.Line == tokens[1].Meta.Pos.Line { // or on same line as REC?
-		def0.LineIndent = def0.Pos.Column
+	if def0 := &defstoks[0].Meta; def0.Pos.Ln1 == tokens[0].Meta.Pos.Ln1 { // first def on same line as LET?
+		def0.LineIndent = def0.Pos.Col1
+	} else if isrec && def0.Pos.Ln1 == tokens[1].Meta.Pos.Ln1 { // or on same line as REC?
+		def0.LineIndent = def0.Pos.Col1
 	}
 	defsyns, deferrs := parseDefs(defstoks, false)
 	if len(deferrs) > 0 {
@@ -266,8 +266,8 @@ func parseKeywordCase(tokens lex.Tokens) (IExpr, lex.Tokens, *Error) {
 		return nil, nil, scruterr
 	}
 
-	if alt0 := &altstoks[0].Meta; alt0.Pos.Line == tokens[0].Meta.Pos.Line {
-		alt0.LineIndent = alt0.Pos.Column
+	if alt0 := &altstoks[0].Meta; alt0.Pos.Ln1 == tokens[0].Meta.Pos.Ln1 {
+		alt0.LineIndent = alt0.Pos.Col1
 	}
 	altsyns, alterrs := parseKeywordCaseAlts(altstoks)
 	if len(alterrs) > 0 {
