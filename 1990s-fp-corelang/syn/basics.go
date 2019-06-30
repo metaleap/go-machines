@@ -8,7 +8,7 @@ type ISyn interface {
 	init(lex.Tokens)
 	isExpr() bool
 	FreeVars(map[string]bool, ...map[string]bool)
-	Pos() *lex.TokenMeta
+	Pos() *lex.Pos
 	Toks() lex.Tokens
 }
 
@@ -27,7 +27,7 @@ func (this *syn) init(toks lex.Tokens) { this.toks = toks }
 
 func (*syn) isExpr() bool { return false }
 
-func (this *syn) Pos() *lex.TokenMeta { return &this.toks[0].Meta }
+func (this *syn) Pos() *lex.Pos { return &this.toks[0].Pos }
 
 func (this *syn) Toks() lex.Tokens { return this.toks }
 
@@ -54,7 +54,7 @@ func errPos(pos *lex.Pos, msg string, rangeLen int) *Error {
 }
 
 func errTok(tok *lex.Token, msg string) *Error {
-	return errPos(&tok.Meta.Pos, msg, len(tok.String()))
+	return errPos(&tok.Pos, msg, len(tok.String()))
 }
 
 func (this *Error) Error() string { return this.msg }
