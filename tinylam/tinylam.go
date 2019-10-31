@@ -49,10 +49,11 @@ func parseModule(src string) Module {
 					}
 				}
 			}
-			if module[topdefname] == nil {
+			if topdefname != "" && topdefbody != nil {
+				if module[topdefname] != nil {
+					panic("duplicate global def name '" + topdefname + "' in:\n" + firstln)
+				}
 				module[topdefname] = topdefbody
-			} else {
-				panic("duplicate global def name '" + topdefname + "' in:\n" + firstln)
 			}
 		}
 	}
