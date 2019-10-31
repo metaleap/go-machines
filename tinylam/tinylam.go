@@ -34,15 +34,12 @@ func Load(modules map[string][]byte) Prog {
 func parseModule(src string) Module {
 	topchunks := strings.Split(src, "\n\n")
 	module := make(Module, len(topchunks))
-	for i := range topchunks {
-		if topchunks[i] = strings.TrimSpace(topchunks[i]); topchunks[i] != "" {
-			topdefname, firstln, lines, localnamesdone := "", "", strings.Split(topchunks[i], "\n"), make(map[string]bool, 8)
+	for _, chunk := range topchunks {
+		if chunk = strings.TrimSpace(chunk); chunk != "" {
+			topdefname, firstln, lines, localnamesdone := "", "", strings.Split(chunk, "\n"), make(map[string]bool, 8)
 			var topdefbody IExpr
 			for _, ln := range lines {
-				if ln = strings.TrimSpace(ln); len(ln) != 0 && ln[0] == '#' {
-					ln = ""
-				}
-				if ln != "" {
+				if ln = strings.TrimSpace(ln); ln != "" && ln[0] != '#' {
 					if sl, sr := strBreakOn(ln, ':'); firstln == "" {
 						firstln, topdefname, topdefbody = ln, sl[0], parseExpr(sr, ln, sl[1:])
 					} else if localnamesdone[sl[0]] {
@@ -75,17 +72,17 @@ func parseExpr(toks []string, ln string, argNames []string) (expr IExpr) {
 		if expr = ExprLit(tagval); !ok {
 			expr, allTags[tok] = ExprLit(len(allTags)+1), len(allTags)+1
 		}
-	} else if isnum := tok[0] >= '0' && tok[0] <= '9'; isnum && strings.IndexByte(tok, '.') > 0 {
+	} else if isnum, isneg, isdot := (tok[0] >= '0' && tok[0] <= '9'), tok[0] == '-', tok[0] == '.'; isdot || ((isnum || isneg) && strings.IndexByte(tok, '.') > 0) {
 		if f64, err := strconv.ParseFloat(tok, 64); err != nil {
-			panic(tok + ": " + err.Error() + " in:\n" + ln)
+			panic(err.Error() + " in:\n" + ln)
 		} else {
 			expr = ExprLit(f64)
 		}
-	} else if isnum {
-		if ui64, err := strconv.ParseUint(tok, 0, 64); err != nil {
-			panic(tok + ": " + err.Error() + " in:\n" + ln)
+	} else if isnum || isneg {
+		if i64, err := strconv.ParseInt(tok, 0, 64); err != nil {
+			panic(err.Error() + " in:\n" + ln)
 		} else {
-			expr = ExprLit(ui64)
+			expr = ExprLit(i64)
 		}
 	} else {
 		expr = ExprName(tok)
