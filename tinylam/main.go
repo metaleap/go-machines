@@ -6,11 +6,13 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	tl "github.com/metaleap/tinylam/go"
 )
 
 func main() {
 	files, err := ioutil.ReadDir(os.Args[1])
-	var prog Prog
+	var prog tl.Prog
 	if err == nil {
 		srcs := make(map[string][]byte, len(files))
 		for _, file := range files {
@@ -20,7 +22,7 @@ func main() {
 				}
 			}
 		}
-		prog = Load(srcs)
+		prog = tl.Load(srcs)
 		jsonout := json.NewEncoder(os.Stdout)
 		jsonout.SetIndent("", "  ")
 		err = jsonout.Encode(prog)
