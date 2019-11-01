@@ -20,8 +20,11 @@ func main() {
 				}
 			}
 		}
-		prog = tl.Load(srcs)
+		if len(os.Args) <= 1 {
+			panic("missing argument: name of prog to run")
+		}
 		defqname := os.Args[1]
+		prog = tl.Load(srcs, os.Args[2:])
 		if strings.IndexByte(defqname, '.') < 0 {
 			defqname = "appdemo." + defqname + ".main"
 		}
@@ -31,7 +34,7 @@ func main() {
 			println(def.Str())
 		}
 		println("__________________")
-		println(prog.Run(defqname, make([]byte, 123)).Str())
+		println(prog.Run(defqname, make([]byte, 321)).Str())
 	}
 	if err != nil {
 		panic(err)
