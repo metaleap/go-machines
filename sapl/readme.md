@@ -6,11 +6,17 @@ SAPL interpreter implementation following: **"Efficient Interpretation by
 Transforming Data Types and Patterns to Functions"** (Jan Martin Jansen, Pieter
 Koopman, Rinus Plasmeijer)
 
+More specifically, implementation in Go of the elegantly slim spec on pages 8-9
+(chapter 1.4), excluding all the optimizations starting from section 1.4.1
+(p.9ff). No GC / heap / dump etc, stack-only. Go does GC anyway.
+
 Divergence from the paper: NumArgs is not carried around with the Func Ref but
 stored in the top-level-funcs array together with that func's expression.
 
-"Non"-Parser loads from a JSON format: no need to expressly spec it out here,
-it's under 40 LoC in `LoadFromJson` and `exprFromJson` funcs.
+"Non"-Parser loads from a simple JSON arrays-of-arrays format: no need to
+expressly spec out the details here, it's under 40 LoC in the `LoadFromJson` and
+`exprFromJson` funcs. See the `sapltest/foo.json` that can be fed into the
+`sapltest/main.go` program via `stdin`.
 
 ## Usage
 
