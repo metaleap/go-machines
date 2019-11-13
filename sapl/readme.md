@@ -10,7 +10,7 @@ Divergence from the paper: NumArgs is not carried around with the Func Ref but
 stored in the top-level-funcs array together with that func's expression.
 
 "Non"-Parser loads from a JSON format: no need to expressly spec it out here,
-it's under 40 LoC in `prog.go`'s `LoadFromJson([]byte)`.
+it's under 40 LoC in `LoadFromJson` and `exprFromJson` funcs.
 
 ## Usage
 
@@ -99,7 +99,7 @@ const (
 #### type Prog
 
 ```go
-type Prog []fn
+type Prog []TopDef
 ```
 
 
@@ -112,5 +112,14 @@ func LoadFromJson(src []byte) Prog
 #### func (Prog) Eval
 
 ```go
-func (me Prog) Eval(expr Expr) Expr
+func (me Prog) Eval(expr Expr) (ret Expr, timeTaken time.Duration)
+```
+
+#### type TopDef
+
+```go
+type TopDef = struct {
+	NumArgs int
+	Expr    Expr
+}
 ```

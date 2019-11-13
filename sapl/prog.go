@@ -1,3 +1,8 @@
+// SAPL interpreter implementation following: **"Efficient Interpretation by Transforming Data Types and Patterns to Functions"** (Jan Martin Jansen, Pieter Koopman, Rinus Plasmeijer)
+//
+// Divergence from the paper: NumArgs is not carried around with the Func Ref but stored in the top-level-funcs array together with that func's expression.
+//
+// "Non"-Parser loads from a JSON format: no need to expressly spec it out here, it's under 40 LoC in `LoadFromJson` and `exprFromJson` funcs.
 package sapl
 
 import (
@@ -5,25 +10,12 @@ import (
 	"strconv"
 )
 
-type OpCode int
-
-const (
-	OpAdd OpCode = -1
-	OpSub OpCode = -2
-	OpMul OpCode = -3
-	OpDiv OpCode = -4
-	OpMod OpCode = -5
-	OpEq  OpCode = -6
-	OpLt  OpCode = -7
-	OpGt  OpCode = -8
-)
-
-type fn = struct {
+type TopDef = struct {
 	NumArgs int
 	Expr    Expr
 }
 
-type Prog []fn
+type Prog []TopDef
 
 type Expr interface{ String() string }
 
@@ -43,21 +35,23 @@ type ExprAppl struct {
 	Arg    Expr
 }
 
+type any = interface{}
+
 func LoadFromJson(src []byte) Prog {
-	arr := make([][]interface{}, 0, 128)
+	arr := make([][]any, 0, 128)
 	if e := json.Unmarshal(src, &arr); e != nil {
 		panic(e)
 	}
 	me := make(Prog, 0, len(arr))
 	for _, it := range arr {
-		me = append(me, fn{int(it[0].(float64)), exprFromJson(it[1])})
+		me = append(me, TopDef{int(it[0].(float64)), exprFromJson(it[1])})
 	}
 	return me
 }
 
-func exprFromJson(from interface{}) Expr {
+func exprFromJson(from any) Expr {
 	switch it := from.(type) {
-	case map[string]interface{}: // allows for free-form annotations / comments / meta-data like orig-source-file/line-number mappings...
+	case map[string]any: // allows for free-form annotations / comments / meta-data like orig-source-file/line-number mappings...
 		return exprFromJson(it[""]) // ... by digging into this field and ignoring all others
 	case float64:
 		return ExprNum(int(it))
@@ -67,7 +61,7 @@ func exprFromJson(from interface{}) Expr {
 		} else {
 			return ExprArgRef(int(n))
 		}
-	case []interface{}:
+	case []any:
 		if len(it) == 1 {
 			return ExprFnRef(int(it[0].(float64)))
 		} else {

@@ -13,5 +13,6 @@ func main() {
 		panic(err)
 	}
 	prog := sapl.LoadFromJson(src)
-	println(prog.Eval(prog[len(prog)-1].Expr).String())
+	result, timetaken := prog.Eval(prog[len(prog)-1].Expr)
+	println(timetaken.String(), result.String())
 }

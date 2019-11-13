@@ -1,12 +1,28 @@
-// SAPL interpreter implementation following: **"Efficient Interpretation by Transforming Data Types and Patterns to Functions"** (Jan Martin Jansen, Pieter Koopman, Rinus Plasmeijer)
-//
-// Divergence from the paper: NumArgs is not carried around with the Func Ref but stored in the top-level-funcs array together with that func's expression.
-//
-// "Non"-Parser loads from a JSON format: no need to expressly spec it out here, it's under 40 LoC in `prog.go`'s `LoadFromJson([]byte)`.
 package sapl
 
-func (me Prog) Eval(expr Expr) Expr {
-	return me.eval(expr, make([]Expr, 0, 32))
+import (
+	"time"
+)
+
+type OpCode int
+
+const (
+	OpAdd OpCode = -1
+	OpSub OpCode = -2
+	OpMul OpCode = -3
+	OpDiv OpCode = -4
+	OpMod OpCode = -5
+	OpEq  OpCode = -6
+	OpLt  OpCode = -7
+	OpGt  OpCode = -8
+)
+
+func (me Prog) Eval(expr Expr) (ret Expr, timeTaken time.Duration) {
+	stack := make([]Expr, 0, 128)
+	tstart := time.Now().UnixNano()
+	ret = me.eval(expr, stack)
+	timeTaken = time.Duration(time.Now().UnixNano() - tstart)
+	return
 }
 
 func (me Prog) eval(expr Expr, stack []Expr) Expr {
