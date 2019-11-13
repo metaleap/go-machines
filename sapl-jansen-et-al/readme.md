@@ -44,10 +44,7 @@ func (me ExprArgRef) String() string
 #### type ExprFnRef
 
 ```go
-type ExprFnRef struct {
-	NumArgs int
-	Idx     int
-}
+type ExprFnRef int
 ```
 
 
@@ -93,7 +90,7 @@ const (
 #### type Prog
 
 ```go
-type Prog []Expr
+type Prog []fn
 ```
 
 
