@@ -53,8 +53,6 @@ func LoadFromJson(src []byte) Prog {
 
 func exprFromJson(from any) Expr {
 	switch it := from.(type) {
-	case map[string]any: // allows for free-form annotations / comments / meta-data like orig-source-file/line-number mappings...
-		return exprFromJson(it[""]) // ... by digging into this field and ignoring all others
 	case float64:
 		return ExprNum(int(it))
 	case string:
@@ -66,13 +64,14 @@ func exprFromJson(from any) Expr {
 	case []any:
 		if len(it) == 1 {
 			return ExprFnRef(int(it[0].(float64)))
-		} else {
-			expr := exprFromJson(it[0])
-			for i := 1; i < len(it); i++ {
-				expr = ExprAppl{expr, exprFromJson(it[i])}
-			}
-			return expr
 		}
+		expr := exprFromJson(it[0])
+		for i := 1; i < len(it); i++ {
+			expr = ExprAppl{expr, exprFromJson(it[i])}
+		}
+		return expr
+	case map[string]any: // allows for free-form annotations / comments / meta-data like orig-source-file/line-number mappings...
+		return exprFromJson(it[""]) // ... by digging into this field and ignoring all others
 	}
 	panic(from)
 }
