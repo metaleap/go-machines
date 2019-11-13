@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/metaleap/go-machines/sapl-jansen-et-al"
+	"github.com/metaleap/go-machines/sapl"
 )
 
 func main() {

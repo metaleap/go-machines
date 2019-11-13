@@ -1,7 +1,16 @@
 # sapl
 --
-    import "github.com/metaleap/go-machines/sapl-jansen-et-al"
+    import "github.com/metaleap/go-machines/sapl"
 
+SAPL interpreter implementation following: **"Efficient Interpretation by
+Transforming Data Types and Patterns to Functions"** (Jan Martin Jansen, Pieter
+Koopman, Rinus Plasmeijer)
+
+Divergence from the paper: NumArgs is not carried around with the Func Ref but
+stored in the top-level-funcs array together with that func's expression.
+
+"Non"-Parser loads from a JSON format: no need to expressly spec it out here,
+it's under 40 LoC in `prog.go`'s `LoadFromJson([]byte)`.
 
 ## Usage
 

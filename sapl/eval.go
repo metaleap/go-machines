@@ -1,3 +1,8 @@
+// SAPL interpreter implementation following: **"Efficient Interpretation by Transforming Data Types and Patterns to Functions"** (Jan Martin Jansen, Pieter Koopman, Rinus Plasmeijer)
+//
+// Divergence from the paper: NumArgs is not carried around with the Func Ref but stored in the top-level-funcs array together with that func's expression.
+//
+// "Non"-Parser loads from a JSON format: no need to expressly spec it out here, it's under 40 LoC in `prog.go`'s `LoadFromJson([]byte)`.
 package sapl
 
 func (me Prog) Eval(expr Expr) Expr {
@@ -29,20 +34,12 @@ func (me Prog) eval(expr Expr, stack []Expr) Expr {
 				return (lhs / rhs)
 			case OpMod:
 				return (lhs % rhs)
-			case OpEq:
-				if numargs, it = 2, 2; lhs == rhs {
-					it = 1
-				}
-			case OpLt:
-				if numargs, it = 2, 2; lhs < rhs {
-					it = 1
-				}
-			case OpGt:
-				if numargs, it = 2, 2; lhs > rhs {
-					it = 1
-				}
 			default:
-				panic(stack)
+				if op := OpCode(it); (op == OpEq && lhs == rhs) || (op == OpLt && lhs < rhs) || (op == OpGt && lhs > rhs) {
+					it, numargs = 1, 2
+				} else {
+					it, numargs = 2, 2
+				}
 			}
 		}
 		return me.eval(inst(me[it].Expr, stack), stack[:len(stack)-numargs])
