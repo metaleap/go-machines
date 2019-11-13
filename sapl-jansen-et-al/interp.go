@@ -1,38 +1,46 @@
 package sapl
 
+import (
+	"strconv"
+)
+
 type OpCode int
 
 const (
-	_ OpCode = -iota
-	OpAdd
-	OpSub
-	OpMul
-	OpDiv
-	OpMod
-	OpEq
-	OpLt
-	OpGt
+	OpAdd OpCode = -1
+	OpSub OpCode = -2
+	OpMul OpCode = -3
+	OpDiv OpCode = -4
+	OpMod OpCode = -5
+	OpEq  OpCode = -6
+	OpLt  OpCode = -7
+	OpGt  OpCode = -8
 )
 
 type Expr interface{ String() string }
 
+func (me ExprNum) String() string    { return strconv.Itoa(int(me)) }
+func (me ExprArgRef) String() string { return "#" + strconv.Itoa(int(me)) }
+func (me ExprFnRef) String() string  { return strconv.Itoa(me.NumArgs) + "@" + strconv.Itoa(me.Idx) }
+func (me ExprAppl) String() string   { return "(" + me.Callee.String() + " " + me.Arg.String() + ")" }
+
 type ExprNum int
 
-type ExprVar int
+type ExprArgRef int
 
 type ExprAppl struct {
-	lhs Expr
-	rhs Expr
+	Callee Expr
+	Arg    Expr
 }
 
-type ExprFunc struct {
-	numArgs int
-	idx     int
+type ExprFnRef struct {
+	NumArgs int
+	Idx     int
 }
 
-func (me *ExprFunc) boolish(isTrue bool) {
-	if me.numArgs, me.idx = 2, 2; isTrue {
-		me.idx = 1
+func (me *ExprFnRef) boolish(isTrue bool) {
+	if me.NumArgs, me.Idx = 2, 2; isTrue {
+		me.Idx = 1
 	}
 }
 
@@ -43,15 +51,15 @@ func (me Prog) Eval(expr Expr) Expr {
 func (me Prog) eval(expr Expr, stack []Expr) Expr {
 	switch it := expr.(type) {
 	case ExprAppl:
-		return me.eval(it.lhs, append(stack, it.rhs))
-	case ExprFunc:
-		if len(stack) < it.numArgs {
+		return me.eval(it.Callee, append(stack, it.Arg))
+	case ExprFnRef:
+		if len(stack) < it.NumArgs {
 			return rebuildAppl(it, stack)
 		}
-		if it.idx < 0 {
-			lhs, rhs := stack[len(stack)-2].(ExprNum), stack[len(stack)-1].(ExprNum)
+		if it.Idx < 0 {
+			lhs, rhs := stack[len(stack)-1].(ExprNum), stack[len(stack)-2].(ExprNum)
 			stack = stack[:len(stack)-2]
-			switch OpCode(it.idx) {
+			switch OpCode(it.Idx) {
 			case OpAdd:
 				return (lhs + rhs)
 			case OpSub:
@@ -72,14 +80,14 @@ func (me Prog) eval(expr Expr, stack []Expr) Expr {
 				panic(stack)
 			}
 		}
-		return me.eval(inst(me[it.idx], stack), stack[:len(stack)-it.numArgs])
+		return me.eval(inst(me[it.Idx], stack), stack[:len(stack)-it.NumArgs])
 	}
 	return expr
 }
 
 func rebuildAppl(expr Expr, stack []Expr) Expr {
 	for len(stack) > 0 {
-		expr, stack = ExprAppl{lhs: expr, rhs: stack[len(stack)-1]}, stack[:len(stack)-1]
+		expr, stack = ExprAppl{expr, stack[len(stack)-1]}, stack[:len(stack)-1]
 	}
 	return expr
 }
@@ -87,8 +95,8 @@ func rebuildAppl(expr Expr, stack []Expr) Expr {
 func inst(expr Expr, stack []Expr) Expr {
 	switch it := expr.(type) {
 	case ExprAppl:
-		return ExprAppl{lhs: inst(it.lhs, stack), rhs: inst(it.rhs, stack)}
-	case ExprVar:
+		return ExprAppl{inst(it.Callee, stack), inst(it.Arg, stack)}
+	case ExprArgRef:
 		return stack[(len(stack)-1)-int(it)]
 	}
 	return expr
