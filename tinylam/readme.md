@@ -187,9 +187,3 @@ type Values []Value
 ```go
 func ValueSlice(it Value) (Values, bool)
 ```
-
-#### func (Values) Copy
-
-```go
-func (me Values) Copy() Values
-```

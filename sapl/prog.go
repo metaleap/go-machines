@@ -62,7 +62,9 @@ func exprFromJson(from any) Expr {
 			return ExprArgRef(int(n))
 		}
 	case []any:
-		if len(it) == 1 {
+		if len(it) == 0 {
+			return ExprFnRef(-1234567890) // only `panic` mechanism we have in the JSON syntax for now
+		} else if len(it) == 1 {
 			return ExprFnRef(int(it[0].(float64)))
 		}
 		expr := exprFromJson(it[0])

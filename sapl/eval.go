@@ -50,12 +50,14 @@ func (me Prog) eval(expr Expr, stack []Expr) Expr {
 				return (lhs / rhs)
 			case OpMod:
 				return (lhs % rhs)
-			default:
+			case OpEq, OpGt, OpLt:
 				if op := OpCode(it); (op == OpEq && lhs == rhs) || (op == OpLt && lhs < rhs) || (op == OpGt && lhs > rhs) {
 					it, numargs = 1, 2
 				} else {
 					it, numargs = 2, 2
 				}
+			default:
+				panic(stack)
 			}
 		}
 		return me.eval(inst(me[it].Expr, stack), stack[:len(stack)-numargs])

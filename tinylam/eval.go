@@ -155,7 +155,7 @@ func (me *valThunk) force() (r Value) {
 
 type Values []Value
 
-func (me Values) Copy() Values { return append(make(Values, 0, len(me)), me...) }
+func (me Values) shallowCopy() Values { return append(make(Values, 0, len(me)), me...) }
 
 func (me *Prog) Eval(expr Expr, env Values) Value {
 	me.NumEvalSteps++
@@ -165,10 +165,10 @@ func (me *Prog) Eval(expr Expr, env Values) Value {
 	case *ExprLitTag:
 		return valTag(it.TagVal)
 	case *ExprFunc:
-		return &valClosure{body: it.Body, env: env.Copy()}
+		return &valClosure{body: it.Body, env: env.shallowCopy()}
 	case *ExprName:
 		if it.idxOrInstr > 0 { // it's never 0 thanks to prior & completed `Prog.preResolveNames`
-			return &valClosure{instr: instr(-it.idxOrInstr), env: env.Copy()}
+			return &valClosure{instr: instr(-it.idxOrInstr), env: env.shallowCopy()}
 		} else if it.idxOrInstr == 0 {
 			panic(it.locStr() + "NEWLY INTRODUCED INTERPRETER BUG: " + it.String())
 		}
