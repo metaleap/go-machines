@@ -12,10 +12,10 @@ type Prog struct {
 	OnInstrMSG   func(string, Value)
 	NumEvalSteps int
 
-	exprBoolTrue             *ExprFunc
-	exprBoolFalse            *ExprFunc
-	exprBoolTrueBodyBody     Expr
-	exprListConsBodyBodyBody Expr
+	exprBoolTrue         *ExprFunc
+	exprBoolFalse        *ExprFunc
+	exprListNil          *ExprFunc
+	exprListConsCtorBody Expr
 }
 
 func (me *Prog) RunAsMain(mainFuncExpr Expr, osProcArgs []string) (ret Value) {
@@ -73,9 +73,9 @@ func (me *Prog) value(it Value) Value {
 	if cl := it.isClosure(); cl != nil {
 		if isfalse, istrue := (cl.body == me.exprBoolFalse.Body), (cl.body == me.exprBoolTrue.Body); isfalse || istrue {
 			it = valFinalBool(istrue)
-		} else if cl.body == me.exprBoolTrueBodyBody {
+		} else if cl.body == me.exprListNil.Body {
 			it = valFinalList(nil)
-		} else if cl.body == me.exprListConsBodyBodyBody {
+		} else if cl.body == me.exprListConsCtorBody {
 			it = &valTempCons{me.value(cl.env[len(cl.env)-2]), me.value(cl.env[len(cl.env)-1])}
 		}
 	}

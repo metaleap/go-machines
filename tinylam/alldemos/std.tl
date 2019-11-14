@@ -1,8 +1,8 @@
 
-Enum x y  := Foo x | Bar | Baz y
 Bool      := True | False
-May t     := No | Ok t
-Tuple x y := Pair x y
+May t     := None | That t
+Try a b   := Ok a | Fail b
+Tuple a b := Pair a b
 List t    := Nil | Cons t (List t)
 
 self it   := it   // I combinator aka 'id' / identity
@@ -26,10 +26,10 @@ lEQ v1 v2 := or (v1.LT v2) (v1.EQ v2)
 
 /> it fn      := fn it
 
->> it fns   := if !fns it (else ( >> (fns.-< it) fns.>- ))
+>> it fns   := if (!fns) it (else ( >> (fns.-< it) fns.>- ))
 
 // flip args for `fn`
-<> fn       := a1 -> fn _ a1
+<> fn       := a1 a2 -> fn a2 a1
 
 // compose right to left
 <· f2 f1 a  := f2 (f1 a)
@@ -39,7 +39,7 @@ lEQ v1 v2 := or (v1.LT v2) (v1.EQ v2)
 
 // like a fold/reduce without an initial zero val, hence assumes a non-nil `l`
 ** binOp l  := l.iter
-  iter args := if !args.>- args.-< (else binOp args.-< ( iter args.>- ))
+  iter args := if (!args.>-) args.-< (else binOp args.-< ( iter args.>- ))
 
 
 

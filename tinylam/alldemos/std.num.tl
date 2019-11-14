@@ -11,7 +11,10 @@ max x y         := if (x.GT y) x (else y)
 isEven n        := EQ 0 (n.MOD 2)
 isOdd n         := EQ (if n.LT 0 -1 1) (n.MOD 2)
 
-parse str       := digits.iter digits.len.decr
+parseUnsigned s := if !s (ERR "empty input") (else digits.iter digits.len.decr)
+  digits        := s.each chartodigit
   iter l n      := ADD (l.-<.MUL (pow n 10)) (if !l.>- 0 (else iter l.>- n.decr))
-  digits        := ?str (str.each chartodigit) (ERR "num.parse: empty input")
   chartodigit c := (and (c.GT 47) (c.LT 58)) (c.SUB 48) (ERR ({c} " isn't between 0-9") )
+
+parseSigned str := if !str (ERR "empty input") (else str.parsed)
+  parsed s      := if (EQ '-' s.-<) (neg (parsed s.>-)) (else s.parseUnsigned)
