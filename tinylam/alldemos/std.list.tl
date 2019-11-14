@@ -1,6 +1,7 @@
 
--<                      := _ true   // head of list / fst of tuple / car
->-                      := _ false  // tail of list / snd of tuple / cdr
+-<                      := _ [] True
+
+>-                      := _ [] False
 
 len list                := if (!list) 0 (else incr (len list.>-))
 
@@ -31,12 +32,12 @@ countWhere list isMatch := list.iter
 has list item           := list.hasSome (EQ _ item)
 
 hasSome list isMatch    := list.iter
-  iter l                := if (!l) false (else or (l.-<.isMatch) (iter l.>-))
+  iter l                := if (!l) False (else or (l.-<.isMatch) (iter l.>-))
 
 hasNone list isMatch    := list.hasOnly (not: isMatch)
 
 hasOnly list isMatch    := and ?list list.iter
-  iter l                := if (not l.-<.isMatch) false (else or (!l.>-) (iter l.>-))
+  iter l                := if (not l.-<.isMatch) False (else or (!l.>-) (iter l.>-))
 
 sortedBy list isLess    := list.iter
   iter l                := if (!l) [] (else concat (iter (filt self l)) {l.-< (iter (filt not l))} )

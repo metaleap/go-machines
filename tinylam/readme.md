@@ -8,13 +8,12 @@
 ```go
 const (
 	StdModuleName               = "std"
-	StdRequiredDefs_true        = StdModuleName + "." + "true"
-	StdRequiredDefs_false       = StdModuleName + "." + "false"
-	StdRequiredDefs_pairCons    = StdModuleName + "." + "__tlPairCons"
-	StdRequiredDefs_listNil     = StdModuleName + "." + "__tlListNil"
-	StdRequiredDefs_listIsNil   = StdModuleName + "." + "__tlIsNil"
-	StdRequiredDefs_listIsntNil = StdModuleName + "." + "__tlIsntNil"
-	StdRequiredDefs_tagCons     = StdModuleName + "." + "__tlTagCons"
+	StdRequiredDefs_true        = StdModuleName + "." + "True"
+	StdRequiredDefs_false       = StdModuleName + "." + "False"
+	StdRequiredDefs_listCons    = StdModuleName + "." + "Cons"
+	StdRequiredDefs_listNil     = StdModuleName + "." + "Nil"
+	StdRequiredDefs_listIsNil   = StdModuleName + "." + "__tlListIsNil"
+	StdRequiredDefs_listIsntNil = StdModuleName + "." + "__tlListIsntNil"
 )
 ```
 
@@ -34,12 +33,6 @@ func ValueBytes(it Value) ([]byte, bool)
 
 ```go
 func ValueNum(it Value) (int, bool)
-```
-
-#### func  ValueTag
-
-```go
-func ValueTag(it Value) (string, bool)
 ```
 
 #### type Expr
@@ -97,21 +90,6 @@ type ExprLitNum struct {
 
 ```go
 func (me *ExprLitNum) String() string
-```
-
-#### type ExprLitTag
-
-```go
-type ExprLitTag struct {
-	TagVal string
-}
-```
-
-
-#### func (*ExprLitTag) String
-
-```go
-func (me *ExprLitTag) String() string
 ```
 
 #### type ExprName

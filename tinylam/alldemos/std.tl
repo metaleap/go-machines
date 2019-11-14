@@ -1,14 +1,17 @@
 
-true t f  := t
-false t f := f
+Bool      := True | False
+May t     := No | Ok t
+Enum t t2 := Foo | Bar t | Baz t2
+Tuple x y := Pair x y
+List t    := Nil | Cons t (List t)
 
 self it   := it   // I combinator aka 'id' / identity
-ever      := true // K combinator aka 'konst'
+ever      := True // K combinator aka 'konst'
 
-and b1 b2 := b1 b2 false
-or b1 b2  := b1 true b2
+and b1 b2 := b1 b2 False
+or b1 b2  := b1 True b2
 xor b1 b2 := b1 b2.not b2
-not       := _ false true   // alternative which works only in --lazy mode: not p a b := p b a
+not       := _ False True   // alternative which works only in --lazy mode: not p a b := p b a
 not:      := <· not
 
 if        := self
@@ -51,10 +54,7 @@ lEQ v1 v2 := or (v1.LT v2) (v1.EQ v2)
 
 //begin interpreter-required internal defs used for syntax sugars
 
-__tlPairCons head tail                :=  _ head tail
-__tlListNil                           := ever ever
-__tlIsNil                             := _ (_ _ -> false)
-__tlIsntNil                           := not: __tlIsNil
-__tlTagCons tag value                 := t ok -> (EQ t tag) (ok value)
+__tlListIsNil list    := list True (_ _ -> False)
+__tlListIsntNil list  := list False (_ _ -> True)
 
 //end

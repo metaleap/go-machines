@@ -39,14 +39,6 @@ type ExprLitNum struct {
 func (me *ExprLitNum) replaceName(string, string) bool { return false }
 func (me *ExprLitNum) String() string                  { return strconv.FormatInt(int64(me.NumVal), 10) }
 
-type ExprLitTag struct {
-	*nodeLocInfo
-	TagVal string
-}
-
-func (me *ExprLitTag) replaceName(string, string) bool { return false }
-func (me *ExprLitTag) String() string                  { return me.TagVal }
-
 type ExprName struct {
 	*nodeLocInfo
 	NameVal    string
@@ -87,7 +79,6 @@ func (me *ExprFunc) String() string                          { return "{ " + me.
 type Value interface {
 	isClosure() *valClosure
 	isNum() *valNum
-	isTag() *valTag
 	force() Value
 	String() string
 }
@@ -100,17 +91,7 @@ func (me valNum) eq(cmp Value) bool      { it := cmp.isNum(); return it != nil &
 func (me valNum) force() Value           { return me }
 func (me valNum) isClosure() *valClosure { return nil }
 func (me valNum) isNum() *valNum         { return &me }
-func (me valNum) isTag() *valTag         { return nil }
 func (me valNum) String() string         { return strconv.FormatInt(int64(me), 10) }
-
-type valTag string
-
-func (me valTag) eq(cmp Value) bool      { it := cmp.isTag(); return it != nil && me == *it }
-func (me valTag) force() Value           { return me }
-func (me valTag) isClosure() *valClosure { return nil }
-func (me valTag) isNum() *valNum         { return nil }
-func (me valTag) isTag() *valTag         { return &me }
-func (me valTag) String() string         { return string(me) }
 
 type valClosure struct {
 	env   Values
@@ -121,7 +102,6 @@ type valClosure struct {
 func (me *valClosure) force() Value           { return me }
 func (me *valClosure) isClosure() *valClosure { return me }
 func (me *valClosure) isNum() *valNum         { return nil }
-func (me *valClosure) isTag() *valTag         { return nil }
 func (me *valClosure) String() (r string) {
 	if r = "closureEnv#" + strconv.Itoa(len(me.env)) + "#"; me.body != nil {
 		r += me.body.String()
@@ -144,7 +124,6 @@ func (me *valThunk) eq(cmp Value) bool {
 }
 func (me *valThunk) isClosure() *valClosure { return me.force().isClosure() }
 func (me *valThunk) isNum() *valNum         { return me.force().isNum() }
-func (me *valThunk) isTag() *valTag         { return me.force().isTag() }
 func (me *valThunk) String() string         { return me.force().String() }
 func (me *valThunk) force() (r Value) {
 	if r, _ = me.val.(Value); r == nil {
@@ -162,8 +141,6 @@ func (me *Prog) Eval(expr Expr, env Values) Value {
 	switch it := expr.(type) {
 	case *ExprLitNum:
 		return valNum(it.NumVal)
-	case *ExprLitTag:
-		return valTag(it.TagVal)
 	case *ExprFunc:
 		return &valClosure{body: it.Body, env: env.shallowCopy()}
 	case *ExprName:

@@ -15,7 +15,7 @@ type Prog struct {
 	exprBoolTrue             *ExprFunc
 	exprBoolFalse            *ExprFunc
 	exprBoolTrueBodyBody     Expr
-	exprPairConsBodyBodyBody Expr
+	exprListConsBodyBodyBody Expr
 }
 
 func (me *Prog) RunAsMain(mainFuncExpr Expr, osProcArgs []string) (ret Value) {
@@ -44,9 +44,9 @@ func (me *Prog) RunAsMain(mainFuncExpr Expr, osProcArgs []string) (ret Value) {
 }
 
 func (me *Prog) newCons(loc *nodeLocInfo, head Expr, tail Expr) Expr {
-	cons := me.TopDefs[StdRequiredDefs_pairCons]
+	cons := me.TopDefs[StdRequiredDefs_listCons]
 	if cons == nil {
-		cons = &ExprName{loc, StdRequiredDefs_pairCons, 0}
+		cons = &ExprName{loc, StdRequiredDefs_listCons, 0}
 	}
 	return &ExprCall{loc, &ExprCall{loc, cons, head}, tail}
 }
@@ -75,7 +75,7 @@ func (me *Prog) value(it Value) Value {
 			it = valFinalBool(istrue)
 		} else if cl.body == me.exprBoolTrueBodyBody {
 			it = valFinalList(nil)
-		} else if cl.body == me.exprPairConsBodyBodyBody {
+		} else if cl.body == me.exprListConsBodyBodyBody {
 			it = &valTempCons{me.value(cl.env[len(cl.env)-2]), me.value(cl.env[len(cl.env)-1])}
 		}
 	}
@@ -135,18 +135,12 @@ func ValueSlice(it Value) (Values, bool) {
 	return Values(v), ok
 }
 
-func ValueTag(it Value) (string, bool) {
-	v, ok := it.(valTag)
-	return string(v), ok
-}
-
 type valFinalBool bool
 
 func (me valFinalBool) eq(cmp Value) bool      { it, ok := cmp.(valFinalBool); return ok && me == it }
 func (me valFinalBool) force() Value           { return me }
 func (me valFinalBool) isClosure() *valClosure { return nil }
 func (me valFinalBool) isNum() *valNum         { return nil }
-func (me valFinalBool) isTag() *valTag         { return nil }
 func (me valFinalBool) String() string         { return strconv.FormatBool(bool(me)) }
 
 type valFinalBytes []byte
@@ -154,7 +148,6 @@ type valFinalBytes []byte
 func (me valFinalBytes) force() Value           { return me }
 func (me valFinalBytes) isClosure() *valClosure { return nil }
 func (me valFinalBytes) isNum() *valNum         { return nil }
-func (me valFinalBytes) isTag() *valTag         { return nil }
 func (me valFinalBytes) String() string         { return strconv.Quote(string(me)) }
 
 type valFinalList Values
@@ -171,7 +164,6 @@ func (me valFinalList) force() Value {
 }
 func (me valFinalList) isClosure() *valClosure { return nil }
 func (me valFinalList) isNum() *valNum         { return nil }
-func (me valFinalList) isTag() *valTag         { return nil }
 func (me valFinalList) String() string {
 	str := "["
 	for i, pref := 0, ""; i < len(me); i, pref = i+1, " " {
@@ -198,5 +190,4 @@ func (me *valTempCons) eq(cmp Value) bool {
 func (me *valTempCons) force() Value           { me.head.force(); me.tail.force(); return me }
 func (me *valTempCons) isClosure() *valClosure { return nil }
 func (me *valTempCons) isNum() *valNum         { return nil }
-func (me *valTempCons) isTag() *valTag         { return nil }
 func (me *valTempCons) String() string         { return "{" + me.head.String() + " " + me.tail.String() + "}" }
