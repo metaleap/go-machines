@@ -1,7 +1,6 @@
 
 Bool      := True | False
 May t     := No | Ok t
-Enum t t2 := Foo | Bar t | Baz t2
 Tuple x y := Pair x y
 List t    := Nil | Cons t (List t)
 

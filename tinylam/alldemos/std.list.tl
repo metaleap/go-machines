@@ -1,14 +1,13 @@
 
--<                      := _ [] True
+-<                      := _ (ERR "forgot nil check before -<") True
+>-                      := _ (ERR "forgot nil check before >-") False
 
->-                      := _ [] False
-
-len list                := if (!list) 0 (else incr (len list.>-))
+len list                := list 0 (_ tl -> incr (len tl))
 
 at list i               := if (EQ 0 i) list.-< (else at list.>- i.decr)
 
 each list fn            := list.iter
-  iter l                := if (!l) [] (else {l.-<.fn (iter l.>-)})
+  iter l                := l [] (hd tl -> {hd.fn (iter tl)})
 
 slice list start length := take (list.drop start) length
 
