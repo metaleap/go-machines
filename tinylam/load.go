@@ -287,7 +287,9 @@ func (me *ctxParse) populateNames(expr Expr, binders map[string]int, curModule m
 		}
 		binders[it.ArgName] = 1
 		it.Body = me.populateNames(it.Body, binders, curModule, locHintTopDefName)
-		fixinstrval(it.Body)
+		if fixinstrval(it.Body); !it.Body.replaceName(it.ArgName, it.ArgName) {
+			it.ArgName = ""
+		}
 		delete(binders, it.ArgName) // must delete, not just zero (because of our map-ranging incrs/decrs)
 		for k, v := range binders {
 			binders[k] = v - 1
@@ -320,15 +322,7 @@ func (me *ctxParse) extractBrackets(loc *nodeLocInfo, ln string, lnOrig string, 
 func (me *Prog) preResolveExprs(expr Expr, topDefQName string, topDefBody Expr) Expr {
 	switch it := expr.(type) {
 	case *ExprFunc:
-		if it.Body = me.preResolveExprs(it.Body, topDefQName, topDefBody); it != me.exprBoolFalse && it != me.exprBoolTrue {
-			if it.isBoolishOf(true) {
-				println("TRUE\t", it.String())
-				return me.exprBoolTrue
-			} else if it.isBoolishOf(false) {
-				println("FALSE\t", it.String())
-				return me.exprBoolFalse
-			}
-		}
+		it.Body = me.preResolveExprs(it.Body, topDefQName, topDefBody)
 	case *ExprCall:
 		it.CallArg, it.Callee = me.preResolveExprs(it.CallArg, topDefQName, topDefBody), me.preResolveExprs(it.Callee, topDefQName, topDefBody)
 		if call, _ := it.Callee.(*ExprCall); call != nil {
@@ -379,15 +373,6 @@ func (me *Prog) preResolveExprs(expr Expr, topDefQName string, topDefBody Expr) 
 func (me *ExprFunc) isIdentity() bool {
 	name, ok := me.Body.(*ExprName)
 	return ok && name.idxOrInstr == -1
-}
-
-func (me *ExprFunc) isBoolishOf(b bool) bool {
-	if fn, _ := me.Body.(*ExprFunc); fn != nil {
-		if name, _ := fn.Body.(*ExprName); name != nil {
-			return (b && name.NameVal == me.ArgName) || ((!b) && name.NameVal == fn.ArgName)
-		}
-	}
-	return false
 }
 
 func (me *ExprCall) ifConstNumArithOpInstrThenPreCalcInto(rhs *ExprLitNum, parent *ExprCall) (ok bool) {

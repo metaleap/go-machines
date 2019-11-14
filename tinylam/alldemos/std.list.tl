@@ -2,7 +2,9 @@
 -<                      := _ (ERR "forgot nil check before -<") True
 >-                      := _ (ERR "forgot nil check before >-") False
 
-len list                := list 0 (_ tl -> incr (len tl))
+len list                := list caseNil caseCons
+  caseNil               := 0
+  caseCons _ tl         := incr (len tl)
 
 at list i               := if (EQ 0 i) list.-< (else at list.>- i.decr)
 

@@ -1,4 +1,5 @@
 
+Enum x y  := Foo x | Bar | Baz y
 Bool      := True | False
 May t     := No | Ok t
 Tuple x y := Pair x y
