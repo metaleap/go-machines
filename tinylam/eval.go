@@ -27,7 +27,7 @@ var (
 
 type Expr interface {
 	locInfo() *nodeLocInfo
-	replaceName(string, string) bool
+	replaceName(string, string) int
 	String() string
 }
 
@@ -36,8 +36,8 @@ type ExprLitNum struct {
 	NumVal int
 }
 
-func (me *ExprLitNum) replaceName(string, string) bool { return false }
-func (me *ExprLitNum) String() string                  { return strconv.FormatInt(int64(me.NumVal), 10) }
+func (me *ExprLitNum) replaceName(string, string) int { return 0 }
+func (me *ExprLitNum) String() string                 { return strconv.FormatInt(int64(me.NumVal), 10) }
 
 type ExprName struct {
 	*nodeLocInfo
@@ -45,9 +45,9 @@ type ExprName struct {
 	idxOrInstr int // if <0 then De Bruijn index, if >0 then instrCode
 }
 
-func (me *ExprName) replaceName(nameOld string, nameNew string) (didReplace bool) {
-	if didReplace = (me.NameVal == nameOld); didReplace { // even if nameOld==nameNew, by design: as we use it also to check "refersTo" by doing `replaceName("foo", "foo")`
-		me.NameVal = nameNew
+func (me *ExprName) replaceName(nameOld string, nameNew string) (didReplace int) {
+	if me.NameVal == nameOld { // even if nameOld==nameNew, by design: as we use it also to check "refersTo" by doing `replaceName("foo", "foo")`
+		didReplace, me.NameVal = 1, nameNew
 	}
 	return
 }
@@ -59,9 +59,8 @@ type ExprCall struct {
 	CallArg Expr
 }
 
-func (me *ExprCall) replaceName(nameOld string, nameNew string) bool {
-	bc, ba := me.Callee.replaceName(nameOld, nameNew), me.CallArg.replaceName(nameOld, nameNew)
-	return bc || ba
+func (me *ExprCall) replaceName(nameOld string, nameNew string) int {
+	return me.Callee.replaceName(nameOld, nameNew) + me.CallArg.replaceName(nameOld, nameNew)
 }
 func (me *ExprCall) String() string {
 	return "(" + me.Callee.String() + " " + me.CallArg.String() + ")"
@@ -71,10 +70,12 @@ type ExprFunc struct {
 	*nodeLocInfo
 	ArgName string
 	Body    Expr
+
+	numArgUses int
 }
 
-func (me *ExprFunc) replaceName(old string, new string) bool { return me.Body.replaceName(old, new) }
-func (me *ExprFunc) String() string                          { return "{ " + me.ArgName + " -> " + me.Body.String() + " }" }
+func (me *ExprFunc) replaceName(old string, new string) int { return me.Body.replaceName(old, new) }
+func (me *ExprFunc) String() string                         { return "{ " + me.ArgName + " -> " + me.Body.String() + " }" }
 
 type Value interface {
 	isClosure() *valClosure
@@ -143,7 +144,7 @@ func (me *Prog) Eval(expr Expr, env Values) Value {
 	case *ExprLitNum:
 		return valNum(it.NumVal)
 	case *ExprFunc:
-		return &valClosure{body: it.Body, env: env.shallowCopy(), argDrop: it.ArgName == ""}
+		return &valClosure{body: it.Body, env: env.shallowCopy(), argDrop: it.numArgUses == 0}
 	case *ExprName:
 		if it.idxOrInstr > 0 { // it's never 0 thanks to prior & completed `Prog.preResolveNames`
 			return &valClosure{instr: instr(-it.idxOrInstr), env: env.shallowCopy()}

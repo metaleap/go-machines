@@ -58,7 +58,7 @@ func (me *Prog) ParseModules(modules map[string][]byte) {
 	me.exprBoolTrueBodyBody, me.exprListConsBodyBodyBody = me.exprBoolTrue.Body.(*ExprFunc).Body, me.TopDefs[StdRequiredDefs_listCons].(*ExprFunc).Body.(*ExprFunc).Body.(*ExprFunc).Body
 	me.TopDefs[StdModuleName+".!"], me.TopDefs[StdModuleName+".?"] = me.TopDefs[StdRequiredDefs_listIsNil], me.TopDefs[StdRequiredDefs_listIsntNil]
 	for instrname, instrcode := range instrs {
-		me.TopDefs[StdModuleName+".//op"+instrname] = &ExprFunc{nil, "//" + instrname, &ExprCall{nil, &ExprName{nil, instrname, int(instrcode)}, &ExprName{nil, "//" + instrname, -1}}}
+		me.TopDefs[StdModuleName+".//op"+instrname] = &ExprFunc{nil, "//" + instrname, &ExprCall{nil, &ExprName{nil, instrname, int(instrcode)}, &ExprName{nil, "//" + instrname, -1}}, -1}
 	}
 	for topdefqname, topdefbody := range me.TopDefs {
 		me.TopDefs[topdefqname] = me.preResolveExprs(topdefbody, topdefqname, topdefbody)
@@ -126,22 +126,22 @@ func (me *ctxParse) parseTopDef(lines []string, idxStart int, idxEnd int) (topDe
 				panic(loc.locStr() + "illegal  local def name '" + localname + "' in:\n" + lnorig)
 			} else {
 				localbody := me.hoistArgs(me.parseExpr(rhs, lnorig, loc), lhs[1:])
-				if localbody.replaceName(localname, "//recur3//"+localname) {
+				if 0 < localbody.replaceName(localname, "//recur3//"+localname) {
 					localbody = me.rewriteForRecursion(localname, localbody, "recur")
 				}
-				topDefBody = &ExprCall{loc, &ExprFunc{loc, localname, topDefBody}, localbody}
+				topDefBody = &ExprCall{loc, &ExprFunc{loc, localname, topDefBody, -1}, localbody}
 			}
 		}
 	}
 	topDefBody = me.hoistArgs(topDefBody, topdefargs)
-	if topDefBody != nil && topDefBody.replaceName(topDefName, topDefName) /* aka "refers to"*/ {
+	if topDefBody != nil && 0 < topDefBody.replaceName(topDefName, topDefName) /* aka "refers to"*/ {
 		topDefBody = me.rewriteForRecursion(topDefName, topDefBody, "Recur")
 	}
 	return
 }
 
 func (me *ctxParse) rewriteForRecursion(defName string, defBody Expr, dynNamePref string) Expr {
-	return &ExprCall{defBody.locInfo(), &ExprFunc{defBody.locInfo(), "//" + dynNamePref + "1//" + defName, &ExprCall{defBody.locInfo(), &ExprName{defBody.locInfo(), "//" + dynNamePref + "1//" + defName, 0}, &ExprName{defBody.locInfo(), "//" + dynNamePref + "1//" + defName, 0}}}, &ExprFunc{defBody.locInfo(), "//" + dynNamePref + "2//" + defName, defBody}}
+	return &ExprCall{defBody.locInfo(), &ExprFunc{defBody.locInfo(), "//" + dynNamePref + "1//" + defName, &ExprCall{defBody.locInfo(), &ExprName{defBody.locInfo(), "//" + dynNamePref + "1//" + defName, 0}, &ExprName{defBody.locInfo(), "//" + dynNamePref + "1//" + defName, 0}}, -1}, &ExprFunc{defBody.locInfo(), "//" + dynNamePref + "2//" + defName, defBody, -1}}
 }
 
 func (me *ctxParse) parseExpr(toks []string, locHintLn string, locInfo *nodeLocInfo) (expr Expr) {
@@ -235,7 +235,7 @@ func (*ctxParse) hoistArgs(expr Expr, argNames []string) Expr {
 			if argname = argNames[i]; argname == "_" {
 				argname = strconv.Itoa(i)
 			}
-			expr = &ExprFunc{expr.locInfo(), argname, expr}
+			expr = &ExprFunc{expr.locInfo(), argname, expr, -1}
 		}
 	}
 	return expr
@@ -287,9 +287,8 @@ func (me *ctxParse) populateNames(expr Expr, binders map[string]int, curModule m
 		}
 		binders[it.ArgName] = 1
 		it.Body = me.populateNames(it.Body, binders, curModule, locHintTopDefName)
-		if fixinstrval(it.Body); !it.Body.replaceName(it.ArgName, it.ArgName) {
-			it.ArgName = ""
-		}
+		fixinstrval(it.Body)
+		it.numArgUses = it.Body.replaceName(it.ArgName, it.ArgName)
 		delete(binders, it.ArgName) // must delete, not just zero (because of our map-ranging incrs/decrs)
 		for k, v := range binders {
 			binders[k] = v - 1
@@ -329,12 +328,8 @@ func (me *Prog) preResolveExprs(expr Expr, topDefQName string, topDefBody Expr) 
 			if numlit, _ := it.CallArg.(*ExprLitNum); numlit != nil && call.ifConstNumArithOpInstrThenPreCalcInto(numlit, it) {
 				return numlit
 			}
-		} else if fn, _ := it.Callee.(*ExprFunc); fn != nil {
-			if fn.isIdentity() {
-				return it.CallArg
-				// } else if !fn.Body.replaceName(fn.ArgName, fn.ArgName) {
-				// 	return fn.Body // branch commented because it never seems to occur for now, review later with more sizable code-base inputs
-			}
+		} else if fn, _ := it.Callee.(*ExprFunc); fn != nil && fn.isIdentity() {
+			return it.CallArg
 		}
 	case *ExprName:
 		if it.idxOrInstr <= 0 {
