@@ -10,6 +10,7 @@ const (
 	StdModuleName               = "std"
 	StdRequiredDefs_true        = StdModuleName + "." + "True"
 	StdRequiredDefs_false       = StdModuleName + "." + "False"
+	StdRequiredDefs_tupCons     = StdModuleName + "." + "Pair"
 	StdRequiredDefs_listCons    = StdModuleName + "." + "Cons"
 	StdRequiredDefs_listNil     = StdModuleName + "." + "Nil"
 	StdRequiredDefs_listIsNil   = StdModuleName + "." + "__tlListIsNil"

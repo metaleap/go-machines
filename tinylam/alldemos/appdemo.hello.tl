@@ -1,2 +1,2 @@
 main args := ** concat ["Hello " name "!"]
-  name    := args.findWhere (_ -> True) "World" // if !args "World" (else ** concat ["'" (args.@ 0) "'"])
+  name    := if (!args) "World" (else args.-<)

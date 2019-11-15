@@ -10,6 +10,7 @@ const (
 	StdModuleName               = "std"
 	StdRequiredDefs_true        = StdModuleName + "." + "True"
 	StdRequiredDefs_false       = StdModuleName + "." + "False"
+	StdRequiredDefs_tupCons     = StdModuleName + "." + "Pair"
 	StdRequiredDefs_listCons    = StdModuleName + "." + "Cons"
 	StdRequiredDefs_listNil     = StdModuleName + "." + "Nil"
 	StdRequiredDefs_listIsNil   = StdModuleName + "." + "__tlListIsNil"
@@ -199,13 +200,13 @@ func (me *ctxParse) parseExpr(toks []string, locHintLn string, locInfo *nodeLocI
 		}
 	} else if subexpr, ok = me.curTopDef.bracketsCurlies[tok]; ok {
 		if items := strings.Fields(subexpr); len(items) == 0 {
-			expr = &ExprName{locInfo, StdRequiredDefs_listCons, 0}
+			expr = &ExprName{locInfo, StdRequiredDefs_tupCons, 0}
 		} else if len(items) == 1 {
-			expr = &ExprCall{locInfo, &ExprName{locInfo, StdRequiredDefs_listCons, 0}, me.parseExpr(items, locHintLn, locInfo)}
+			expr = &ExprCall{locInfo, &ExprName{locInfo, StdRequiredDefs_tupCons, 0}, me.parseExpr(items, locHintLn, locInfo)}
 		} else {
 			expr = me.parseExpr(items[len(items)-1:], locHintLn, locInfo)
 			for i := len(items) - 2; i >= 0; i-- {
-				expr = &ExprCall{locInfo, &ExprCall{locInfo, &ExprName{locInfo, StdRequiredDefs_listCons, 0}, me.parseExpr(items[i:i+1], locHintLn, locInfo)}, expr}
+				expr = &ExprCall{locInfo, &ExprCall{locInfo, &ExprName{locInfo, StdRequiredDefs_tupCons, 0}, me.parseExpr(items[i:i+1], locHintLn, locInfo)}, expr}
 			}
 		}
 	} else {

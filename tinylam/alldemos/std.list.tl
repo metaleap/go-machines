@@ -73,9 +73,12 @@ reverse list            := acc [] list
   acc cur l             := l cur (hd tl -> acc (hd.+> cur) tl)
 
 mGet m key              := m.iter
-  iter l                := l self (hd tl -> if (hd.-<.EQ key) hd.>-.ever (else iter tl))
+  iter l                := l self (hd tl -> hd (k v ->  if (k.EQ key) v.ever (else iter tl)))
 
 mDrop m key             := m.iter
-  iter l                := l [] (hd tl -> (if (hd.-<.EQ key) self (else hd.+>)) (iter tl))
+  iter l                := l [] (hd tl -> hd (k _ -> (if (k.EQ key) self (else hd.+>))) (iter tl))
 
 mWith m key value       := +> {key value} (m.mDrop key)
+
+mHasKeyWhere m isMatch  := m.hasSome (Tuple (k v -> k.isMatch))
+mHasValWhere m isMatch  := m.hasSome (Tuple (k v -> v.isMatch))
