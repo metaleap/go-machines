@@ -73,17 +73,17 @@ func (me *Prog) newListOfStrs(loc *nodeLocInfo, vals []string) Expr {
 
 func (me *Prog) value(it Value) Value {
 	if cl := it.isClosure(); cl != nil {
-		if fn, _ := cl.body.(*ExprFunc); fn != nil && strings.HasPrefix(fn.ArgName, "__") && strings.Contains(fn.ArgName, "Of") {
-			println(fn.ArgName + fmt.Sprintf("\t%T", cl.body) + "=\t" + cl.body.String() + "\nENV\t" + fmt.Sprintf("%v", cl.env))
-			for fnsub, _ := fn.Body.(*ExprFunc); fnsub != nil; fnsub, _ = fn.Body.(*ExprFunc) {
-				fn = fnsub
-			}
-		} else if isfalse, istrue := (cl.body == me.exprBoolFalse.Body), (cl.body == me.exprBoolTrue.Body); isfalse || istrue {
+		if isfalse, istrue := (cl.body == me.exprBoolFalse.Body), (cl.body == me.exprBoolTrue.Body); isfalse || istrue {
 			it = valFinalBool(istrue)
 		} else if cl.body == me.exprListNil.Body {
 			it = valFinalList(nil)
 		} else if cl.body == me.exprListConsCtorBody {
 			it = &valTempCons{me.value(cl.env[len(cl.env)-2]), me.value(cl.env[len(cl.env)-1])}
+		} else if fn, _ := cl.body.(*ExprFunc); fn != nil && strings.HasPrefix(fn.ArgName, "__") && strings.Contains(fn.ArgName, "Of") {
+			println(fn.ArgName + fmt.Sprintf("\t%T", cl.body) + "=\t" + cl.body.String() + "\nENV\t" + fmt.Sprintf("%v", cl.env))
+			for fnsub, _ := fn.Body.(*ExprFunc); fnsub != nil; fnsub, _ = fn.Body.(*ExprFunc) {
+				fn = fnsub
+			}
 		}
 	}
 	return it
