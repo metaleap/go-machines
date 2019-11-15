@@ -1,9 +1,9 @@
 
-Bool      := True | False
-May t     := None | That t
-Try a b   := Ok a | Fail b
-Tuple a b := Pair a b
-List t    := Nil | Cons t (List t)
+Bool          := True | False
+Could t       := None | That t
+Fallible o f  := Ok o | Fail f
+Tuple l r     := Pair l r
+List t        := Nil | Cons t (List t)
 
 self it   := it   // I combinator aka 'id' / identity
 ever      := True // K combinator aka 'konst'

@@ -80,7 +80,6 @@ func (me *ctxParse) parseModule(src string) map[string]Expr {
 								str += " __caseOf" + ctorstr[:strings.IndexByte(ctorstr, ' ')]
 							}
 							str += " -> __caseOf" + cpart
-							println(str)
 							lines = append(lines, "", str, "")
 						}
 					}
@@ -253,6 +252,10 @@ func (me *ctxParse) populateNames(expr Expr, binders map[string]int, curModule m
 		it.Callee = me.populateNames(it.Callee, binders, curModule, locHintTopDefName)
 		it.CallArg = me.populateNames(it.CallArg, binders, curModule, locHintTopDefName)
 		fixinstrval(it.CallArg)
+		if fn, _ := it.Callee.(*ExprFunc); fn != nil && 1 == fn.replaceName(fn.ArgName, fn.ArgName) {
+			expr = fn.Body.rewriteName(fn.ArgName, it.CallArg.rewriteName(fn.ArgName, nil))
+			return me.populateNames(expr, binders, curModule, locHintTopDefName)
+		}
 	case *ExprName:
 		if it.NameVal == locHintTopDefName {
 			return me.populateNames(&ExprCall{it.locInfo(), &ExprName{it.locInfo(), "//Recur2//" + it.NameVal, 0}, &ExprName{it.locInfo(), "//Recur2//" + it.NameVal, 0}}, binders, curModule, locHintTopDefName)
@@ -349,7 +352,7 @@ func (me *Prog) preResolveExprs(expr Expr, topDefQName string, topDefBody Expr) 
 					}
 				}
 				if topdefbody == nil {
-					panic("in '" + topDefQName + "', line " + strconv.Itoa(it.srcLocLineNr) + ": name '" + it.NameVal + "' unresolvable in: " + topDefBody.String())
+					panic("in '" + topDefQName + "', line " + strconv.Itoa(it.srcLocLineNr) + ": name '" + it.NameVal + "' unresolvable")
 				} else if it.NameVal == topDefQName {
 					panic(it.locStr() + "NEW BUG in `Prog.preResolveExprs` for top-level def '" + it.NameVal + "' recursion")
 				} else if name, _ := topdefbody.(*ExprName); name != nil {
@@ -358,7 +361,7 @@ func (me *Prog) preResolveExprs(expr Expr, topDefQName string, topDefBody Expr) 
 					return topdefbody
 				}
 			} else if topdefbody != nil {
-				panic("in '" + topDefQName + "', line " + strconv.Itoa(it.srcLocLineNr) + ": local name '" + it.NameVal + "' already taken (no shadowing allowed), referred to in: " + it.String())
+				panic("in '" + topDefQName + "', line " + strconv.Itoa(it.srcLocLineNr) + ": local name '" + it.NameVal + "' already taken (no shadowing allowed)")
 			}
 		}
 	}

@@ -28,6 +28,7 @@ var (
 type Expr interface {
 	locInfo() *nodeLocInfo
 	replaceName(string, string) int
+	rewriteName(string, Expr) Expr
 	String() string
 }
 
@@ -36,6 +37,7 @@ type ExprLitNum struct {
 	NumVal int
 }
 
+func (me *ExprLitNum) rewriteName(string, Expr) Expr  { return me }
 func (me *ExprLitNum) replaceName(string, string) int { return 0 }
 func (me *ExprLitNum) String() string                 { return strconv.FormatInt(int64(me.NumVal), 10) }
 
@@ -45,13 +47,21 @@ type ExprName struct {
 	idxOrInstr int // if <0 then De Bruijn index, if >0 then instrCode
 }
 
+func (me *ExprName) rewriteName(name string, with Expr) Expr {
+	if me.NameVal == name {
+		return with
+	} else if me.idxOrInstr < 0 {
+		me.idxOrInstr = 0
+	}
+	return me
+}
 func (me *ExprName) replaceName(nameOld string, nameNew string) (didReplace int) {
 	if me.NameVal == nameOld { // even if nameOld==nameNew, by design: as we use it also to check "refersTo" by doing `replaceName("foo", "foo")`
 		didReplace, me.NameVal = 1, nameNew
 	}
 	return
 }
-func (me *ExprName) String() string { return me.NameVal }
+func (me *ExprName) String() string { return me.NameVal + ":" + strconv.Itoa(me.idxOrInstr) }
 
 type ExprCall struct {
 	*nodeLocInfo
@@ -59,6 +69,10 @@ type ExprCall struct {
 	CallArg Expr
 }
 
+func (me *ExprCall) rewriteName(name string, with Expr) Expr {
+	me.Callee, me.CallArg = me.Callee.rewriteName(name, with), me.CallArg.rewriteName(name, with)
+	return me
+}
 func (me *ExprCall) replaceName(nameOld string, nameNew string) int {
 	return me.Callee.replaceName(nameOld, nameNew) + me.CallArg.replaceName(nameOld, nameNew)
 }
@@ -74,6 +88,10 @@ type ExprFunc struct {
 	numArgUses int
 }
 
+func (me *ExprFunc) rewriteName(name string, with Expr) Expr {
+	me.Body = me.Body.rewriteName(name, with)
+	return me
+}
 func (me *ExprFunc) replaceName(old string, new string) int { return me.Body.replaceName(old, new) }
 func (me *ExprFunc) String() string                         { return "{ " + me.ArgName + " -> " + me.Body.String() + " }" }
 
