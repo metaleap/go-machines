@@ -1,80 +1,81 @@
 
--<                      := _ (ERR "forgot nil check before -<") True
->-                      := _ (ERR "forgot nil check before >-") False
+-< list                 := list (ERR "forgot nil check before -<") True
+>- list                 := list (ERR "forgot nil check before >-") False
++>                      := Cons
 
-len list                := list 0 (_ tl -> incr (len tl))
+len list                := list 0 (_ tail -> incr (len tail))
 
 at list i               := if (EQ 0 i) list.-< (else at list.>- i.decr)
 
 each list fn            := list.iter
-  iter l                := l [] (hd tl -> { hd.fn (iter tl) })
+  iter l                := l [] (head tail -> head.fn.+> (iter tail))
 
 slice list start length := take (list.drop start) length
 
 drop list n             := if (EQ 0 n) list (else drop list.>- n.decr)
 
-take list n             := if (EQ 0 n) [] (else {list.-< (take list.>- n.decr)})
+take list n             := if (EQ 0 n) [] (else list.-<.+> (take list.>- n.decr))
 
 where list isMatch      := list.iter
-  iter l                := if (!l) [] (else (if l.-<.isMatch {l.-<} (else self)) (iter l.>-))
+  iter l                := l [] (head tail -> (if head.isMatch (head.+>) (else self)) (iter tail))
 
 whereNot list isMatch   := list.where (not: isMatch)
 
-without list item       := list.where (nEQ _ item)
+without list item       := list.where (nEQ item)
 
 findWhere list isMatch  := list.iter
-  iter l                := if (!l) self (else if l.-<.isMatch l.-<.ever (else iter l.>-))
+  iter l                := l self (head tail -> if (head.isMatch) head.ever (else iter tail))
 
 countWhere list isMatch := list.iter
-  iter l                := if (!l) 0 (else (ADD (l.-<.isMatch 1 0) (iter l.>-)))
+  iter l                := l 0 (head tail -> ADD (head.isMatch 1 0) (iter tail))
 
-has list item           := list.hasSome (EQ _ item)
+has list item           := list.hasSome (EQ item)
 
 hasSome list isMatch    := list.iter
-  iter l                := if (!l) False (else or (l.-<.isMatch) (iter l.>-))
+  iter l                := l False (head tail -> or (head.isMatch) (iter tail))
 
 hasNone list isMatch    := list.hasOnly (not: isMatch)
 
-hasOnly list isMatch    := and ?list list.iter
+hasOnly list isMatch    := list False list.iter
   iter l                := if (not l.-<.isMatch) False (else or (!l.>-) (iter l.>-))
 
 sortedBy list isLess    := list.iter
-  iter l                := if (!l) [] (else concat (iter (filt self l)) {l.-< (iter (filt not l))} )
-  filt how l            := l.>-.where (item -> how (isLess item l.-<))
+  iter l                := l [] (hd tl -> concat (iter (filt self hd tl)) (hd.+> (iter (filt not hd tl))))
+  filt how hd tl        := tl.where (item -> how (isLess item hd))
 
-partitionedBy list test := { (each (elemsmarked.where >-) -<) (each (elemsmarked.whereNot >-) -<) }
+partitionedBy list test := /> (each (elemsmarked.where >-) -<) +> (each (elemsmarked.whereNot >-) -<)
   elemsmarked           := list.iter
-  iter l                := if (!l) [] (else {{l.-< l.-<.test} (iter l.>-)})
+  iter l                := l [] (hd tl -> +> (hd.+> hd.test) (iter tl) )
 
 deduped list            := list.iter
-  iter l                := if (!l) [] (else (if (l.>-.has l.-<) self (else {l.-<})) (iter l.>-))
+  iter l                := l [] (hd tl -> (if (tl.has hd) self (else hd.+>)) (iter tl))
 
-last list               := if (!list.>-) list.-< (else last list.>-)
+last list               := list.>- list.-< (_ _ -> last list.>-)
 
 indexed list            := pairUp list.indices list
 
 indices list            := list.iter 0
-  iter l i              := if (!l) [] (else {i (iter l.>- i.incr)})
+  iter l i              := l [] (hd tl -> i.+> (iter tl i.incr))
 
-pairUp l1 l2            := ifboth {{l1.-< l2.-<} (pairUp l1.>- l2.>-)}
-  ifboth                := if (or !l1 !l2) []
+pairUp l1 l2            := l1 [] (hd1 tl1 -> l2 [] (result hd1 tl1))
+  result h1 t1 h2 t2    := +> {h1 h2} (pairUp t1 t2)
 
-concat l1 l2            := if (!l2) l1 (else l1.prepend)
-  prepend l             := if (!l) l2 ( else {l.-< (prepend l.>-)} )
+concat l1 l2            := l2 l1 (_ _ -> l1.prepend)
+  prepend l             := l l2 (hd tl -> hd.+> (prepend tl))
 
 forth list z binOp      := list.acc z
-  acc l cur             := if (!l) cur (else acc l.>- (binOp cur l.-<))
+  acc l cur             := l cur (hd tl -> acc tl (binOp cur hd))
 
 from list z binOp       := list.acc
-  acc l                 := if (!l) z (else binOp l.-< (acc l.>-))
+  acc l                 := l z (hd tl -> binOp hd (acc tl))
 
-reverse list            := list.acc []
-  acc l cur             := if (!l) cur (else acc l.>- {l.-< cur})
+reverse list            := acc [] list
+  acc cur l             := l cur (hd tl -> acc (hd.+> cur) tl)
 
 mGet m key              := m.iter
-  iter l                := if (!l) self (else if (l.-<.-<.EQ key) l.-<.>-.ever (else iter l.>-))
+  iter l                := l self (hd tl -> if (hd.-<.EQ key) hd.>-.ever (else iter tl))
 
 mDrop m key             := m.iter
-  iter l                := if (!l) [] (else ((l.-<.-<.EQ key) self {l.-<}) (iter l.>-))
+  iter l                := l [] (hd tl -> (if (hd.-<.EQ key) self (else hd.+>)) (iter tl))
 
-mWith m key value       := {{key value} (mDrop m key)}
+mWith m key value       := +> {key value} (m.mDrop key)

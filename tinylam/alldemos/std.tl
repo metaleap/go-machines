@@ -11,6 +11,9 @@ ever      := True // K combinator aka 'konst'
 and b1 b2 := b1 b2 False
 or b1 b2  := b1 True b2
 xor b1 b2 := b1 b2.not b2
+
+// xor := b1 -> b2 -> (b1 (not b2)) b2
+
 not       := _ False True   // alternative which works only in --lazy mode: not p a b := p b a
 not:      := <· not
 
@@ -24,9 +27,12 @@ lEQ v1 v2 := or (v1.LT v2) (v1.EQ v2)
 
 
 
-/> it fn      := fn it
 
->> it fns   := if (!fns) it (else ( >> (fns.-< it) fns.>- ))
+
+
+/> it fn    := fn it
+
+>> it fns   := fns it (hd tl -> ( >> (hd it) tl ))
 
 // flip args for `fn`
 <> fn       := a1 a2 -> fn a2 a1

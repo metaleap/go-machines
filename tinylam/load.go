@@ -71,7 +71,7 @@ func (me *ctxParse) parseModule(src string) map[string]Expr {
 		for l, i := len(lines), 0; i < l; i++ {
 			if ln := lines[i]; len(ln) > 0 && ln[0] >= 'A' && ln[0] <= 'Z' {
 				if idx := strings.Index(ln, ":="); idx > 0 {
-					if tparts, cparts := strings.Fields(ln[:idx]), strings.Split(me.extractBrackets(nil, strings.TrimSpace(ln[idx+2:]), ln, true), " | "); len(tparts) > 0 && len(cparts) > 0 && len(cparts[0]) > 0 {
+					if tparts, cparts := strings.Fields(ln[:idx]), strings.Split(me.extractBrackets(nil, strings.TrimSpace(ln[idx+2:]), ln, 1), " | "); len(tparts) > 0 && len(cparts) > 0 && len(cparts[0]) > 0 {
 						lines[i] = "//" + lines[i]
 						for _, cpart := range cparts {
 							str := cpart + " :="
@@ -80,8 +80,15 @@ func (me *ctxParse) parseModule(src string) map[string]Expr {
 								str += " __caseOf" + ctorstr[:strings.IndexByte(ctorstr, ' ')]
 							}
 							str += " -> __caseOf" + cpart
-							lines = append(lines, "", str, "")
+							lines = append(lines, str)
 						}
+						str, strcases := tparts[0], ""
+						for _, cpart := range cparts {
+							cpart += " "
+							strcases += " caseOf" + cpart[:strings.IndexByte(cpart, ' ')]
+						}
+						str += strcases + " scrutinee" + tparts[0] + " := scrutinee" + tparts[0] + strcases
+						lines = append(lines, str)
 					}
 				}
 			}
@@ -113,7 +120,7 @@ func (me *ctxParse) parseTopDef(lines []string, idxStart int, idxEnd int) (topDe
 			for idx := strings.IndexByte(ln, '\''); idx >= 0 && (idx+3) <= len(ln); idx = strings.IndexByte(ln, '\'') {
 				ln = ln[:idx] + " " + strconv.FormatUint(uint64(ln[idx+1]), 10) + " " + ln[idx+3:]
 			}
-			ln = me.extractBrackets(loc, ln, lnorig, false)
+			ln = me.extractBrackets(loc, ln, lnorig, 0)
 			if idx := strings.Index(ln, ":="); idx < 0 {
 				panic(loc.locStr() + "expected ':=' in:\n" + lnorig)
 			} else if sl, sr := strings.TrimSpace(ln[:idx]), strings.TrimSpace(ln[idx+2:]); sl == "" || sr == "" {
@@ -296,11 +303,16 @@ func (me *ctxParse) populateNames(expr Expr, binders map[string]int, curModule m
 		for k, v := range binders {
 			binders[k] = v - 1
 		}
+		if call, _ := it.Body.(*ExprCall); call != nil {
+			if arg, _ := call.CallArg.(*ExprName); arg != nil && arg.NameVal == it.ArgName && 0 == call.Callee.replaceName(it.ArgName, it.ArgName) {
+				return me.populateNames(call.Callee.rewriteName(it.ArgName, nil), binders, curModule, locHintTopDefName)
+			}
+		}
 	}
 	return expr
 }
 
-func (me *ctxParse) extractBrackets(loc *nodeLocInfo, ln string, lnOrig string, needLegalName bool) string {
+func (me *ctxParse) extractBrackets(loc *nodeLocInfo, ln string, lnOrig string, needLegalName int) string {
 	for str, b, idx, m, ip, ic, is := "", byte(0), 0, map[string]string(nil), strings.IndexByte(ln, ')'), strings.IndexByte(ln, '}'), strings.IndexByte(ln, ']'); ip > 0 || ic > 0 || is > 0; me.counter, ip, ic, is = me.counter+1, strings.IndexByte(ln, ')'), strings.IndexByte(ln, '}'), strings.IndexByte(ln, ']') {
 		if p, c, s := ip > 0 && (ic <= 0 || ip < ic) && (is <= 0 || ip < is), ic > 0 && (ip <= 0 || ic < ip) && (is <= 0 || ic < is), is > 0 && (ic <= 0 || is < ic) && (ip <= 0 || is < ip); p {
 			str, b, idx, m = "//bp//", '(', ip, me.curTopDef.bracketsParens
@@ -312,8 +324,8 @@ func (me *ctxParse) extractBrackets(loc *nodeLocInfo, ln string, lnOrig string, 
 		if name, pos := str+strconv.Itoa(me.counter), strings.LastIndexByte(ln[:idx], b); pos < 0 {
 			panic(loc.locStr() + "missing opening '" + string(b) + "' bracket in:\n" + lnOrig)
 		} else {
-			if needLegalName {
-				name = "_" + strings.Replace(ln[pos+1:idx], " ", "_", -1) + "_"
+			if needLegalName > 0 {
+				needLegalName, name = needLegalName+1, "_"+strings.Replace(ln[pos+1:idx], " ", "_", -1)+"_"+strconv.Itoa(needLegalName)
 			}
 			ln, m[name] = ln[:pos]+" "+name+" "+ln[idx+1:], ln[pos+1:idx]
 		}
