@@ -1,7 +1,7 @@
 
 -< list                 := list (ERR "forgot nil check before -<") True
 >- list                 := list (ERR "forgot nil check before >-") False
-+>                      := Cons
++>                      := ListLink
 
 len list                := list 0 (_ tail -> incr (len tail))
 
@@ -17,14 +17,14 @@ drop list n             := if (EQ 0 n) list (else drop list.>- n.decr)
 take list n             := if (EQ 0 n) [] (else list.-<.+> (take list.>- n.decr))
 
 where list isMatch      := list.iter
-  iter l                := l [] (head tail -> (if head.isMatch (head.+>) (else self)) (iter tail))
+  iter l                := l [] (h t -> (if h.isMatch (h.+>) (else same)) (iter t))
 
 whereNot list isMatch   := list.where (not: isMatch)
 
 without list item       := list.where (nEQ item)
 
 findWhere list isMatch  := list.iter
-  iter l                := l self (head tail -> if (head.isMatch) head.ever (else iter tail))
+  iter l                := l same (h t -> if (h.isMatch) h.ever (else iter t))
 
 countWhere list isMatch := list.iter
   iter l                := l 0 (head tail -> ADD (head.isMatch 1 0) (iter tail))
@@ -40,15 +40,19 @@ hasOnly list isMatch    := list False list.iter
   iter l                := if (not l.-<.isMatch) False (else or (!l.>-) (iter l.>-))
 
 sortedBy list isLess    := list.iter
-  iter l                := l [] (hd tl -> concat (iter (filt self hd tl)) (hd.+> (iter (filt not hd tl))))
+  iter l                := l [] (hd tl -> concat (iter (filt same hd tl)) (hd.+> (iter (filt not hd tl))))
   filt how hd tl        := tl.where (item -> how (isLess item hd))
 
-partitionedBy list test := /> (each (elemsmarked.where >-) -<) +> (each (elemsmarked.whereNot >-) -<)
-  elemsmarked           := list.iter
-  iter l                := l [] (hd tl -> +> (hd.+> hd.test) (iter tl) )
+one tup                 := tup (l r -> l)
+two tup                 := tup (l r -> r)
+
+dividedBy list isMatch  := { (items where) (items whereNot) }
+  items how             := each (tagged.how two) one
+  tagged                := list.iter
+  iter l                := l [] (hd tl -> +> {hd hd.isMatch} (iter tl) )
 
 deduped list            := list.iter
-  iter l                := l [] (hd tl -> (if (tl.has hd) self (else hd.+>)) (iter tl))
+  iter l                := l [] (hd tl -> (if (tl.has hd) same (else hd.+>)) (iter tl))
 
 last list               := list.>- list.-< (_ _ -> last list.>-)
 
@@ -73,10 +77,10 @@ reverse list            := acc [] list
   acc cur l             := l cur (hd tl -> acc (hd.+> cur) tl)
 
 mGet m key              := m.iter
-  iter l                := l self (hd tl -> hd (k v ->  if (k.EQ key) v.ever (else iter tl)))
+  iter l                := l same (hd tl -> hd (k v ->  if (k.EQ key) v.ever (else iter tl)))
 
 mDrop m key             := m.iter
-  iter l                := l [] (hd tl -> hd (k _ -> (if (k.EQ key) self (else hd.+>))) (iter tl))
+  iter l                := l [] (hd tl -> hd (k _ -> (if (k.EQ key) same (else hd.+>))) (iter tl))
 
 mWith m key value       := +> {key value} (m.mDrop key)
 

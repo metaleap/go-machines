@@ -1,12 +1,12 @@
 
 Enum          := Foo | Bar | Baz
 Bool          := True | False
-Could t       := None | That t
-Fallible o f  := Ok o | Fail f
-Tuple l r     := Pair l r
-List t        := Nil | Cons t (List t)
+May t         := None | That t
+Tried yay nay := Yay yay | Nay nay
+Tuple one two := Pair one two
+List t        := ListNil | ListLink t (List t)
 
-self it   := it   // I combinator aka 'id' / identity
+same it   := it   // I combinator aka 'id' / identity
 ever      := True // K combinator aka 'konst'
 
 and b1 b2 := b1 b2 False
@@ -16,8 +16,8 @@ xor b1 b2 := b1 b2.not b2
 not       := _ False True
 not:      := <· not
 
-if        := self
-else      := self
+if        := same
+else      := same
 
 nEQ v1 v2 := not (v1.EQ v2)
 gEQ v1 v2 := or (v1.GT v2) (v1.EQ v2)

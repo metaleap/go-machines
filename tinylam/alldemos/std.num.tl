@@ -11,6 +11,7 @@ pow exp n       := if (exp.LT 0) (ERR exp) (else n_pow exp)
 isEven n        := EQ 0 (n.MOD 2)
 isOdd n         := EQ (if n.LT 0 -1 1) (n.MOD 2)
 factorial i     := if (i.EQ 0) 1 (else i.MUL (factorial (i.SUB 1)))
+fibonacci i     := if (i.LT 2) 1 (else ADD (fibonacci (i.SUB 1)) (fibonacci (i.SUB 2)))
 
 parseUnsigned s := if !s (ERR "empty input") (else digits.iter digits.len.decr)
   digits        := s.each chartodigit

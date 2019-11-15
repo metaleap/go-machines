@@ -11,8 +11,8 @@ const (
 	StdRequiredDefs_true        = StdModuleName + "." + "True"
 	StdRequiredDefs_false       = StdModuleName + "." + "False"
 	StdRequiredDefs_tupCons     = StdModuleName + "." + "Pair"
-	StdRequiredDefs_listCons    = StdModuleName + "." + "Cons"
-	StdRequiredDefs_listNil     = StdModuleName + "." + "Nil"
+	StdRequiredDefs_listCons    = StdModuleName + "." + "ListLink"
+	StdRequiredDefs_listNil     = StdModuleName + "." + "ListNil"
 	StdRequiredDefs_listIsNil   = StdModuleName + "." + "__tlListIsNil"
 	StdRequiredDefs_listIsntNil = StdModuleName + "." + "__tlListIsntNil"
 )
@@ -69,31 +69,30 @@ func (me *Prog) ParseModules(modules map[string][]byte) {
 
 func (me *ctxParse) parseModule(src string) map[string]Expr {
 	lines, module := strings.Split(src, "\n"), make(map[string]Expr, 32)
-	if me.pseudoSumTypes = map[string][]string{}; strings.IndexByte(src, '|') > 0 {
-		for l, i := len(lines), 0; i < l; i++ {
-			if ln := lines[i]; len(ln) > 0 && ln[0] >= 'A' && ln[0] <= 'Z' {
-				if idx := strings.Index(ln, ":="); idx > 0 {
-					if tparts, cparts := strings.Fields(ln[:idx]), strings.Split(me.extractBrackets(nil, strings.TrimSpace(ln[idx+2:]), ln, 1), " | "); len(tparts) > 0 && len(cparts) > 0 && len(cparts[0]) > 0 {
-						lines[i] = "//" + lines[i]
-						for _, cpart := range cparts {
-							str := cpart + " :="
-							for _, ctorstr := range cparts {
-								ctorstr += " "
-								str += " __" + tparts[0] + "Of" + ctorstr[:strings.IndexByte(ctorstr, ' ')]
-							}
-							str += " -> __" + tparts[0] + "Of" + cpart
-							lines = append(lines, str)
+	me.pseudoSumTypes = map[string][]string{}
+	for l, i := len(lines), 0; i < l; i++ {
+		if ln := lines[i]; len(ln) > 0 && ln[0] >= 'A' && ln[0] <= 'Z' {
+			if idx := strings.Index(ln, ":="); idx > 0 {
+				if tparts, cparts := strings.Fields(ln[:idx]), strings.Split(me.extractBrackets(nil, strings.TrimSpace(ln[idx+2:]), ln, 1), " | "); len(tparts) > 0 && len(cparts) > 0 && len(cparts[0]) > 0 {
+					lines[i] = "//" + lines[i]
+					for _, cpart := range cparts {
+						str := cpart + " :="
+						for _, ctorstr := range cparts {
+							ctorstr += " "
+							str += " __" + tparts[0] + "Of" + ctorstr[:strings.IndexByte(ctorstr, ' ')]
 						}
-						str, strcases := tparts[0], ""
-						for _, cpart := range cparts {
-							cpart += " "
-							ctorname := cpart[:strings.IndexByte(cpart, ' ')]
-							me.pseudoSumTypes[tparts[0]] = append(me.pseudoSumTypes[tparts[0]], ctorname)
-							strcases += " caseOf" + ctorname
-						}
-						str += strcases + " scrutinee" + tparts[0] + " := scrutinee" + tparts[0] + strcases
+						str += " -> __" + tparts[0] + "Of" + cpart
 						lines = append(lines, str)
 					}
+					str, strcases := tparts[0], ""
+					for _, cpart := range cparts {
+						cpart += " "
+						ctorname := cpart[:strings.IndexByte(cpart, ' ')]
+						me.pseudoSumTypes[tparts[0]] = append(me.pseudoSumTypes[tparts[0]], ctorname)
+						strcases += " caseOf" + ctorname
+					}
+					str += strcases + " scrutinee" + tparts[0] + " := scrutinee" + tparts[0] + strcases
+					lines = append(lines, str)
 				}
 			}
 		}
