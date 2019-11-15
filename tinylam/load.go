@@ -79,9 +79,9 @@ func (me *ctxParse) parseModule(src string) map[string]Expr {
 							str := cpart + " :="
 							for _, ctorstr := range cparts {
 								ctorstr += " "
-								str += " __caseOf" + ctorstr[:strings.IndexByte(ctorstr, ' ')]
+								str += " __" + tparts[0] + "Of" + ctorstr[:strings.IndexByte(ctorstr, ' ')]
 							}
-							str += " -> __caseOf" + cpart
+							str += " -> __" + tparts[0] + "Of" + cpart
 							lines = append(lines, str)
 						}
 						str, strcases := tparts[0], ""

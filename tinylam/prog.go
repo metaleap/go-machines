@@ -1,9 +1,11 @@
 package tinylam
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"strconv"
+	"strings"
 )
 
 type Prog struct {
@@ -71,7 +73,12 @@ func (me *Prog) newListOfStrs(loc *nodeLocInfo, vals []string) Expr {
 
 func (me *Prog) value(it Value) Value {
 	if cl := it.isClosure(); cl != nil {
-		if isfalse, istrue := (cl.body == me.exprBoolFalse.Body), (cl.body == me.exprBoolTrue.Body); isfalse || istrue {
+		if fn, _ := cl.body.(*ExprFunc); fn != nil && strings.HasPrefix(fn.ArgName, "__") && strings.Contains(fn.ArgName, "Of") {
+			println(fn.ArgName + fmt.Sprintf("\t%T", cl.body) + "=\t" + cl.body.String() + "\nENV\t" + fmt.Sprintf("%v", cl.env))
+			for fnsub, _ := fn.Body.(*ExprFunc); fnsub != nil; fnsub, _ = fn.Body.(*ExprFunc) {
+				fn = fnsub
+			}
+		} else if isfalse, istrue := (cl.body == me.exprBoolFalse.Body), (cl.body == me.exprBoolTrue.Body); isfalse || istrue {
 			it = valFinalBool(istrue)
 		} else if cl.body == me.exprListNil.Body {
 			it = valFinalList(nil)
@@ -190,4 +197,6 @@ func (me *valTempCons) eq(cmp Value) bool {
 func (me *valTempCons) force() Value           { me.head.force(); me.tail.force(); return me }
 func (me *valTempCons) isClosure() *valClosure { return nil }
 func (me *valTempCons) isNum() *valNum         { return nil }
-func (me *valTempCons) String() string         { return "{" + me.head.String() + " " + me.tail.String() + "}" }
+func (me *valTempCons) String() string {
+	return "(+> " + me.head.String() + " " + me.tail.String() + ")"
+}

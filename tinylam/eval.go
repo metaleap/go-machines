@@ -208,8 +208,10 @@ func (me *Prog) Eval(expr Expr, env Values) Value {
 			var retbool *ExprFunc
 			if closure.instr >= instrEQ && lnum != nil && rnum != nil {
 				retbool = me.newBool(closure.instr.callCmp(it.locInfo(), *lnum, *rnum))
-			} else if eq, _ := me.value(lhs).(valEq); closure.instr == instrEQ && eq != nil {
-				retbool = me.newBool(eq.eq(me.value(rhs)))
+			} else if closure.instr == instrEQ {
+				if eq, _ := me.value(lhs).(valEq); eq != nil {
+					retbool = me.newBool(eq.eq(me.value(rhs)))
+				}
 			}
 			if retbool == nil {
 				panic(it.locStr() + "invalid operands for '" + instrNames[closure.instr] + "' instruction: `" + lhs.String() + "` and `" + rhs.String() + "`, in: `" + it.String() + "`")

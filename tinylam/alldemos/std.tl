@@ -1,4 +1,5 @@
 
+Enum          := Foo | Bar | Baz
 Bool          := True | False
 Could t       := None | That t
 Fallible o f  := Ok o | Fail f
