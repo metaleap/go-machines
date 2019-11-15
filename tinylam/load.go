@@ -26,6 +26,7 @@ type ctxParse struct {
 		bracketsCurlies map[string]string
 		bracketsSquares map[string]string
 	}
+	pseudoSumTypes map[string][]string
 }
 
 type nodeLocInfo struct {
@@ -67,7 +68,7 @@ func (me *Prog) ParseModules(modules map[string][]byte) {
 
 func (me *ctxParse) parseModule(src string) map[string]Expr {
 	lines, module := strings.Split(src, "\n"), make(map[string]Expr, 32)
-	if strings.IndexByte(src, '|') > 0 {
+	if me.pseudoSumTypes = map[string][]string{}; strings.IndexByte(src, '|') > 0 {
 		for l, i := len(lines), 0; i < l; i++ {
 			if ln := lines[i]; len(ln) > 0 && ln[0] >= 'A' && ln[0] <= 'Z' {
 				if idx := strings.Index(ln, ":="); idx > 0 {
@@ -85,7 +86,9 @@ func (me *ctxParse) parseModule(src string) map[string]Expr {
 						str, strcases := tparts[0], ""
 						for _, cpart := range cparts {
 							cpart += " "
-							strcases += " caseOf" + cpart[:strings.IndexByte(cpart, ' ')]
+							ctorname := cpart[:strings.IndexByte(cpart, ' ')]
+							me.pseudoSumTypes[tparts[0]] = append(me.pseudoSumTypes[tparts[0]], ctorname)
+							strcases += " caseOf" + ctorname
 						}
 						str += strcases + " scrutinee" + tparts[0] + " := scrutinee" + tparts[0] + strcases
 						lines = append(lines, str)
@@ -152,7 +155,7 @@ func (me *ctxParse) rewriteForRecursion(defName string, defBody Expr, dynNamePre
 
 func (me *ctxParse) parseExpr(toks []string, locHintLn string, locInfo *nodeLocInfo) (expr Expr) {
 	if len(toks) == 0 {
-		expr = &ExprCall{locInfo, &ExprName{locInfo, "ERR", int(instrERR)}, me.prog.newStr(locInfo, locInfo.locStr()+"abyss")}
+		expr = &ExprCall{locInfo, &ExprName{locInfo, "ERR", int(instrERR)}, &ExprName{locInfo, StdRequiredDefs_listNil, 0}}
 	} else if tok, islambda, lamsplit := toks[0], 0, 0; len(toks) > 1 {
 		me.counter++
 		for i := range toks {
@@ -259,7 +262,7 @@ func (me *ctxParse) populateNames(expr Expr, binders map[string]int, curModule m
 		it.Callee = me.populateNames(it.Callee, binders, curModule, locHintTopDefName)
 		it.CallArg = me.populateNames(it.CallArg, binders, curModule, locHintTopDefName)
 		fixinstrval(it.CallArg)
-		if fn, _ := it.Callee.(*ExprFunc); fn != nil && 1 == fn.replaceName(fn.ArgName, fn.ArgName) {
+		if fn, _ := it.Callee.(*ExprFunc); fn != nil && 1 == fn.replaceName(fn.ArgName, fn.ArgName) && 0 == it.CallArg.replaceName(fn.ArgName, fn.ArgName) {
 			expr = fn.Body.rewriteName(fn.ArgName, it.CallArg.rewriteName(fn.ArgName, nil))
 			return me.populateNames(expr, binders, curModule, locHintTopDefName)
 		}
