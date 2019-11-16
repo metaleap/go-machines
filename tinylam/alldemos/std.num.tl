@@ -14,11 +14,11 @@ sign i          := if (i.LT 0) -1 (else 1)
 factorial i     := if (i.EQ 0) 1 (else i.MUL (factorial (i.SUB 1)))
 fibonacci i     := if (i.LT 2) 1 (else ADD (fibonacci (i.SUB 1)) (fibonacci (i.SUB 2)))
 
-parseSigned str := if !str (ERR "empty input") (else signdropped)
+parseSigned str := if (! str) (ERR "empty input") (else signdropped)
   signdropped   := if (EQ '-' str.-<) (neg (parseSigned str.>-)) (else unsigned)
   unsigned      := str.parseUnsigned
 
-parseUnsigned s := if !s (ERR "empty input") (else digits.more s.len.decr)
+parseUnsigned s := if (! s) (ERR "empty input") (else digits.more s.len.decr)
   digits        := s.each chartodigit
   more l n      := ADD (l.-<.MUL (pow 10 n)) (l.>- 0 (_ _ -> more l.>- n.decr))
   chartodigit c := (and (c.GT 47) (c.LT 58)) (c.SUB 48) (ERR (c.+> " isn't between 0-9") )

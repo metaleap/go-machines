@@ -87,8 +87,8 @@ func (me *ctxParse) parseModule(src string) map[string]Expr {
 							for _, ctorarg := range parts[1:] {
 								if strdtor := ctorarg + "Of" + tparts[0] + parts[0]; len(ctorarg) > 1 && ctorarg[0] != '_' {
 									strdtor += " a" + tparts[0] + "Of" + parts[0] + " := a" + tparts[0] + "Of" + parts[0]
-									for cccccc := range cparts {
-										if strdtor += " ("; cccccc != cidx {
+									for cidx2 := range cparts {
+										if strdtor += " ("; cidx2 != cidx {
 											strdtor += ")"
 										} else {
 											for _, ca := range parts[1:] {
@@ -114,7 +114,7 @@ func (me *ctxParse) parseModule(src string) map[string]Expr {
 		}
 		if nonempty := (len(lines[i]) > 0); i == 0 || (nonempty && lines[i][0] != ' ' && lines[i][0] != '\t') {
 			if topdefname, topdefbody, firstln := me.parseTopDef(lines, i, last); topdefname != "" && topdefbody != nil {
-				if module[topdefname] != nil || topdefname == "_" || strings.IndexByte(topdefname, '.') >= 0 || (len(topdefname) > 1 && (topdefname[0] == '?' || topdefname[0] == '!')) {
+				if module[topdefname] != nil || topdefname == "_" || strings.IndexByte(topdefname, '.') >= 0 || strings.IndexByte(topdefname, '?') >= 0 {
 					panic("in '" + me.curModule.name + "', line " + strconv.Itoa(i+1) + ": illegal or duplicate global def name '" + topdefname + "' in:\n" + firstln)
 				}
 				module[topdefname] = topdefbody
@@ -142,7 +142,7 @@ func (me *ctxParse) parseTopDef(lines []string, idxStart int, idxEnd int) (topDe
 			} else if lhs, rhs := strings.Fields(sl), strings.Fields(sr); firstLn == "" {
 				firstLn, topDefName, loc.srcLocTopDefName, topdefargs = lnorig, lhs[0], lhs[0], lhs[1:]
 				topDefBody = me.parseExpr(rhs, lnorig, loc)
-			} else if localname := lhs[0]; localname == "_" || strings.IndexByte(localname, '.') >= 0 || (len(localname) > 1 && (localname[0] == '!' || localname[0] == '?')) {
+			} else if localname := lhs[0]; localname == "_" || strings.IndexByte(localname, '.') >= 0 || strings.IndexByte(localname, '?') >= 0 {
 				panic(loc.locStr() + "illegal  local def name '" + localname + "' in:\n" + lnorig)
 			} else {
 				localbody := me.hoistArgs(me.parseExpr(rhs, lnorig, loc), lhs[1:])
@@ -289,9 +289,7 @@ func (me *ctxParse) populateNames(expr Expr, binders map[string]int, curModule m
 			it.NameVal = it.NameVal[len("//recur3//"):]
 			return me.populateNames(&ExprCall{it.locInfo(), &ExprName{it.locInfo(), "//recur2//" + it.NameVal, 0}, &ExprName{it.locInfo(), "//recur2//" + it.NameVal, 0}}, binders, curModule, locHintTopDefName)
 		}
-		if len(it.NameVal) > 1 && (it.NameVal[0] == '?' || it.NameVal[0] == '!') {
-			return me.populateNames(&ExprCall{it.nodeLocInfo, &ExprName{it.nodeLocInfo, string(it.NameVal[0]), 0}, &ExprName{it.nodeLocInfo, it.NameVal[1:], 0}}, binders, curModule, locHintTopDefName)
-		} else if posdot := strings.LastIndexByte(it.NameVal, '.'); posdot > 0 && nil == me.srcs[it.NameVal[:posdot]] && (nil == me.srcs[stdpref+it.NameVal[:posdot]] || 0 != binders[it.NameVal[:posdot]]) {
+		if posdot := strings.LastIndexByte(it.NameVal, '.'); posdot > 0 && nil == me.srcs[it.NameVal[:posdot]] && (nil == me.srcs[stdpref+it.NameVal[:posdot]] || 0 != binders[it.NameVal[:posdot]]) {
 			dotpath := strings.Split(it.NameVal, ".") // desugar a.b.c into (c (b a))
 			var ret Expr = &ExprName{it.nodeLocInfo, dotpath[0], 0}
 			for i := 1; i < len(dotpath); i++ {

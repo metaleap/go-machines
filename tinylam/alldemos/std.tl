@@ -19,7 +19,7 @@ or b1 b2  := b1 True b2
 xor b1 b2 := b1 b2.not b2
 
 not       := _ False True
-not:      := <· not
+not·      := <· not
 
 if        := same
 else      := same
@@ -37,7 +37,7 @@ lEQ v1 v2 := or (v1.LT v2) (v1.EQ v2)
 >> it fns   := fns it (item rest -> >> (item it) rest)
 
 // flip args for `fn`
-<> fn       := a1 a2 -> fn a2 a1
+<> fn a1 a2 := fn a2 a1
 
 // compose right to left
 <· f2 f1 a  := f2 (f1 a)
@@ -46,6 +46,6 @@ lEQ v1 v2 := or (v1.LT v2) (v1.EQ v2)
 ·> f1 f2 a  := f2 (f1 a)
 
 // see std.num.sum or std.num.product for the point of this =)
-** f2 args  := args.>-.forth args.-< f2
+** f args  := args.>-.forth args.-< f
 
 __msgPanic  := "forced crash via `()`"

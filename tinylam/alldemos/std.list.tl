@@ -4,7 +4,7 @@
 +>                      := ListLink
 -| list                 := list []
 ! list                  := list True (_ _ -> False)
-? list                  := list False (_ _ -> True)
+// ? list                  := list False (_ _ -> True)
 
 len list                := list 0 (_ rest -> incr (len rest))
 
@@ -22,7 +22,7 @@ take list n             := if (EQ 0 n) [] (else list.-<.+> (take list.>- n.decr)
 where list isMatch      := list.more
   more l                := l.-| (item rest -> (if item.isMatch (item.+>) (else same)) (more rest))
 
-whereNot list isMatch   := list.where (not: isMatch)
+whereNot list isMatch   := list.where (not· isMatch)
 
 without list item       := list.where (nEQ item)
 
@@ -37,7 +37,7 @@ has list item           := list.hasSome (EQ item)
 hasSome list isMatch    := list.more
   more l                := l False (item rest -> or (item.isMatch) (more rest))
 
-hasNone list isMatch    := list.hasOnly (not: isMatch)
+hasNone list isMatch    := list.hasOnly (not· isMatch)
 
 hasOnly list isMatch    := list False more
   more item rest        := and item.isMatch (rest True more)
@@ -78,10 +78,10 @@ reverse list            := more [] list
   more cur l            := l cur (item rest -> more (item.+> cur) rest)
 
 mGet m key              := m.more
-  more l                := l same (item rest -> item (k v ->  if (k.EQ key) v.ever (else more rest)))
+  more l                := l None (item rest -> item (k v ->  if (k.EQ key) v.Ok (else more rest)))
 
 mDrop m key             := m.more
-  more l                := l.-| (item rest -> item (k _ -> (if (k.EQ key) same (else item.+>))) (more rest))
+  more l                := l.-| (item rest -> item (k v -> (if (k.EQ key) same (else item.+>))) (more rest))
 
 mWith m key value       := +> {key, value} (m.mDrop key)
 
