@@ -195,7 +195,7 @@ func (me valFinalList) isClosure() *valClosure { return nil }
 func (me valFinalList) isNum() *valNum         { return nil }
 func (me valFinalList) String() string {
 	str := "["
-	for i, pref := 0, ""; i < len(me); i, pref = i+1, " " {
+	for i, pref := 0, ""; i < len(me); i, pref = i+1, ", " {
 		str = str + pref + me[i].String()
 	}
 	return str + "]"

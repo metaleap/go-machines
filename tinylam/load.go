@@ -166,7 +166,7 @@ func (me *ctxParse) rewriteForRecursion(defName string, defBody Expr, dynNamePre
 
 func (me *ctxParse) parseExpr(toks []string, locHintLn string, locInfo *nodeLocInfo) (expr Expr) {
 	if len(toks) == 0 {
-		expr = &ExprCall{locInfo, &ExprName{locInfo, "ERR", int(instrERR)}, &ExprName{locInfo, "__msgPanic", 0}}
+		panic(locInfo.locStr() + " expression expected before / after comma in:\n" + locHintLn)
 	} else if tok, islambda, lamsplit := toks[0], 0, 0; len(toks) > 1 {
 		me.counter++
 		for i := range toks {
@@ -201,15 +201,20 @@ func (me *ctxParse) parseExpr(toks []string, locHintLn string, locInfo *nodeLocI
 			expr = &ExprLitNum{locInfo, int(numint)}
 		}
 	} else if subexpr, ok := me.curTopDef.bracketsParens[tok]; ok {
-		expr = me.parseExpr(strings.Fields(subexpr), locHintLn, locInfo)
+		if subexpr = strings.TrimSpace(subexpr); subexpr == "" {
+			expr = &ExprCall{locInfo, &ExprName{locInfo, "ERR", int(instrERR)}, &ExprName{locInfo, "__msgPanic", 0}}
+		} else {
+			expr = me.parseExpr(strings.Fields(subexpr), locHintLn, locInfo)
+		}
 	} else if subexpr, ok = me.curTopDef.bracketsSquares[tok]; ok {
 		expr = &ExprName{locInfo, StdRequiredDefs_listNil, 0}
-		items := strings.Fields(subexpr)
-		for i := len(items) - 1; i >= 0; i-- {
-			expr = &ExprCall{locInfo, &ExprCall{locInfo, &ExprName{locInfo, StdRequiredDefs_listCons, 0}, me.parseExpr(items[i:i+1], locHintLn, locInfo)}, expr}
+		if items := strings.Split(strings.Trim(strings.TrimSpace(subexpr), ","), ","); len(items) > 0 && items[0] != "" {
+			for i := len(items) - 1; i >= 0; i-- {
+				expr = &ExprCall{locInfo, &ExprCall{locInfo, &ExprName{locInfo, StdRequiredDefs_listCons, 0}, me.parseExpr(strings.Fields(items[i]), locHintLn, locInfo)}, expr}
+			}
 		}
 	} else if subexpr, ok = me.curTopDef.bracketsCurlies[tok]; ok {
-		if items := strings.Split(strings.TrimSpace(strings.Trim(subexpr, ",")), ","); len(items) == 0 || (len(items) == 1 && items[0] == "") {
+		if items := strings.Split(strings.Trim(strings.TrimSpace(subexpr), ","), ","); len(items) == 0 || (len(items) == 1 && items[0] == "") {
 			expr = &ExprName{locInfo, StdRequiredDefs_tupCons, 0}
 		} else if len(items) == 1 {
 			expr = &ExprCall{locInfo, &ExprName{locInfo, StdRequiredDefs_tupCons, 0}, me.parseExpr(strings.Fields(items[0]), locHintLn, locInfo)}
@@ -241,7 +246,7 @@ func (me *ctxParse) rewriteStrLitsToIntLists(src []byte, name string) string {
 				if b == 0 {
 					b = '"'
 				}
-				inner = append(append(inner, strconv.FormatUint(uint64(b), 10)...), ' ')
+				inner = append(append(inner, strconv.FormatUint(uint64(b), 10)...), ',')
 			}
 			src = append(pref, append(inner, suff...)...)
 		}
