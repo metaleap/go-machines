@@ -18,14 +18,14 @@ drop list n             := if (EQ 0 n) list (else drop list.>- n.decr)
 take list n             := if (EQ 0 n) [] (else list.-<.+> (take list.>- n.decr))
 
 where list isMatch      := list.more
-  more l                := l.-| (h t -> (if h.isMatch (h.+>) (else same)) (more t))
+  more l                := l.-| (item rest -> (if item.isMatch (item.+>) (else same)) (more rest))
 
 whereNot list isMatch   := list.where (not: isMatch)
 
 without list item       := list.where (nEQ item)
 
 findWhere list isMatch  := list.more
-  more l                := l same (h t -> if (h.isMatch) h.ever (else more t))
+  more l                := l same (item rest -> if (item.isMatch) item.ever (else more rest))
 
 countWhere list isMatch := list.more
   more l                := l 0 (item rest -> ADD (item.isMatch 1 0) (more rest))
@@ -44,20 +44,18 @@ sortedBy list isLess    := list.more
   more l                := l.-| (i r -> (lts gts -> concat lts (i.+> gts)) (more (filt same i r)) (more (filt not i r)))
   filt how item rest    := rest.where (comparee -> how (isLess comparee item))
 
-bisectedBy list isMatch := { (items where tagged) (items whereNot tagged) }
-  items how what        := each (what.how two) one
+bisectedBy list isMatch := { (extract where tagged) (extract whereNot tagged) }
+  extract filt tups     := each (tups.filt sndOfTuplePair) fstOfTuplePair
   tagged                := list.more
   more l                := l.-| (item rest -> +> {item item.isMatch} (more rest) )
-  // TO-DO              : auto-generate (at the top level) destructors like these 2 below for all pseudo-sum-types
-  one tup               := tup (l r -> l)
-  two tup               := tup (l r -> r)
 
 deduped list            := list.more
   more l                := l.-| (item rest -> item.+> (more (rest.without item)))
 
 last list               := list.>- list.-< (_ _ -> last list.>-)
 
-indexed list            := list.indices.pairedUpWith list
+indexed list            := list.more 0
+  more l i              := l.-| (item rest -> +> {i item} (more rest i.incr))
 
 indices list            := list.more 0
   more l i              := l.-| (_ rest -> i.+> (more rest i.incr))

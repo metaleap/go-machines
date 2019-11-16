@@ -18,7 +18,7 @@ parseSigned str := if !str (ERR "empty input") (else signdropped)
   signdropped   := if (EQ '-' str.-<) (neg (parseSigned str.>-)) (else unsigned)
   unsigned      := str.parseUnsigned
 
-parseUnsigned s := if !s (ERR "empty input") (else digits.iter digits.len.decr)
+parseUnsigned s := if !s (ERR "empty input") (else digits.more s.len.decr)
   digits        := s.each chartodigit
-  iter l n      := ADD (l.-<.MUL (pow 10 n)) (l.>- 0 (_ _ -> iter l.>- n.decr))
+  more l n      := ADD (l.-<.MUL (pow 10 n)) (l.>- 0 (_ _ -> more l.>- n.decr))
   chartodigit c := (and (c.GT 47) (c.LT 58)) (c.SUB 48) (ERR (c.+> " isn't between 0-9") )

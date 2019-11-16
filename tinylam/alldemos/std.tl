@@ -1,10 +1,9 @@
 
-Enum          := Foo | Bar | Baz
-Bool          := True | False
-May t         := None | That t
-Tried yay nay := Even yay | Odd nay
-Tuple one two := Pair one two
-List t        := ListNil | ListLink t (List t)
+Bool      := True | False
+Maybe     := None | Ok value
+Tried     := Even even | Odd odd
+Tuple     := Pair fst snd
+List      := ListNil | ListLink h (List t)
 
 same it   := it   // I combinator aka 'id' / identity
 ever      := True // K combinator aka 'konst'

@@ -71,7 +71,7 @@ func (me *ctxParse) parseModule(src string) map[string]Expr {
 	for l, i := len(lines), 0; i < l; i++ {
 		if ln := lines[i]; len(ln) > 0 && ln[0] >= 'A' && ln[0] <= 'Z' {
 			if idx := strings.Index(ln, ":="); idx > 0 {
-				if tparts, cparts := strings.Fields(ln[:idx]), strings.Split(me.extractBrackets(nil, strings.TrimSpace(ln[idx+2:]), ln, 1), " | "); len(tparts) > 0 && len(cparts) > 0 && len(cparts[0]) > 0 {
+				if tparts, cparts := strings.Fields(ln[:idx]), strings.Split(me.extractBrackets(nil, strings.TrimSpace(ln[idx+2:]), ln, 1), " | "); len(tparts) == 1 && len(cparts) > 0 && len(cparts[0]) > 0 {
 					lines[i] = "//" + lines[i]
 					for _, cpart := range cparts {
 						str := cpart + " :="
@@ -83,11 +83,27 @@ func (me *ctxParse) parseModule(src string) map[string]Expr {
 						lines = append(lines, str)
 					}
 					tqname, strcases := me.curModule.name+"."+tparts[0], ""
-					for _, cpart := range cparts {
-						cpart += " "
-						ctorname := cpart[:strings.IndexByte(cpart, ' ')]
-						me.prog.pseudoSumTypes[tqname] = append(me.prog.pseudoSumTypes[tqname], ctorname)
-						strcases += " caseOf" + ctorname
+					for cidx, cpart := range cparts {
+						parts := strings.Fields(cpart)
+						me.prog.pseudoSumTypes[tqname] = append(me.prog.pseudoSumTypes[tqname], parts[0])
+						if strcases += " caseOf" + parts[0]; len(parts) > 1 {
+							for _, ctorarg := range parts[1:] {
+								if strdtor := ctorarg + "Of" + tparts[0] + parts[0]; len(ctorarg) > 1 && ctorarg[0] != '_' {
+									strdtor += " a" + tparts[0] + "Of" + parts[0] + " := a" + tparts[0] + "Of" + parts[0]
+									for cccccc := range cparts {
+										if strdtor += " ("; cccccc != cidx {
+											strdtor += ")"
+										} else {
+											for _, ca := range parts[1:] {
+												strdtor += ca + " "
+											}
+											strdtor += "-> " + ctorarg + ")"
+										}
+									}
+									lines = append(lines, strdtor)
+								}
+							}
+						}
 					}
 					str := tparts[0] + strcases + " scrutinee" + tparts[0] + " := scrutinee" + tparts[0] + strcases
 					lines = append(lines, str)
@@ -261,7 +277,6 @@ func (me *ctxParse) populateNames(expr Expr, binders map[string]int, curModule m
 		it.CallArg = me.populateNames(it.CallArg, binders, curModule, locHintTopDefName)
 		fixinstrval(it.CallArg)
 		if fn, _ := it.Callee.(*ExprFunc); fn != nil && 1 == fn.replaceName(fn.ArgName, fn.ArgName) && 0 == it.CallArg.replaceName(fn.ArgName, fn.ArgName) {
-			println(len(binders), locHintTopDefName, fn.ArgName)
 			expr = fn.Body.rewriteName(fn.ArgName, it.CallArg.rewriteName(fn.ArgName, nil))
 			return me.populateNames(expr, binders, curModule, locHintTopDefName)
 		}
