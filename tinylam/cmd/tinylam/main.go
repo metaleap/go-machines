@@ -74,7 +74,8 @@ func main() {
 			defer func() { err = recover() }()
 			modules["<repl>"] = []byte("<input> := " + ln)
 			prog.ParseModules(modules) // _technically_ very inefficient to reload-it-all on every single input but "works smoothly enough for me for now" --- the goal of tinylam is to stay tiny in terms of LoCs
-			retval = prog.Value(prog.Eval(prog.TopDefs["<repl>.<input>"], nil))
+			val := prog.Eval(prog.TopDefs["<repl>.<input>"], nil)
+			retval = prog.Value(val)
 			println("STEPS", prog.NumEvalSteps)
 			return
 		}

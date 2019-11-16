@@ -44,8 +44,8 @@ sortedBy list isLess    := list.more
   more l                := l.-| (i r -> (lts gts -> concat lts (i.+> gts)) (more (filt same i r)) (more (filt not i r)))
   filt how item rest    := rest.where (comparee -> how (isLess comparee item))
 
-bisectedBy list isMatch := { (items where) (items whereNot) }
-  items how             := each (tagged.how two) one
+bisectedBy list isMatch := { (items where tagged) (items whereNot tagged) }
+  items how what        := each (what.how two) one
   tagged                := list.more
   more l                := l.-| (item rest -> +> {item item.isMatch} (more rest) )
   // TO-DO              : auto-generate (at the top level) destructors like these 2 below for all pseudo-sum-types

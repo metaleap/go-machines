@@ -113,18 +113,28 @@ func (me *Prog) Value(it Value) (retVal Value) {
 		}
 	} else if cl := retVal.isClosure(); cl != nil {
 		var name *ExprName
-		for name, _ = cl.body.(*ExprName); name == nil; name, _ = cl.body.(*ExprName) {
+		var args []*ExprName
+		for name, _ = cl.body.(*ExprName); name == nil && cl.body != nil; name, _ = cl.body.(*ExprName) {
 			if call, _ := cl.body.(*ExprCall); call != nil {
 				cl.body = call.Callee
+				if argname, _ := call.CallArg.(*ExprName); argname == nil {
+					break
+				} else {
+					args = append(args, argname)
+				}
 			} else if fn, _ := cl.body.(*ExprFunc); fn != nil {
 				cl.body = fn.Body
 			}
 		}
 		if str := ""; name != nil && strings.HasPrefix(name.NameVal, "__") && strings.Contains(name.NameVal, "_Of_") {
-			if str = strings.TrimPrefix(name.NameVal[strings.Index(name.NameVal, "_Of_")+len("_Of_"):], "__"); len(cl.env) > 0 {
+			if str = strings.TrimPrefix(name.NameVal[strings.Index(name.NameVal, "_Of_")+len("_Of_"):], "__"); len(args) > 0 {
 				str = "(" + str
-				for i := range cl.env {
-					str += " " + me.Value(cl.env[i]).String()
+				for i := len(args) - 1; i >= 0; i-- {
+					if idx := (len(cl.env) - 1) - i; idx >= 0 && idx < len(cl.env) && cl.env[idx] != nil {
+						str += " " + me.Value(cl.env[idx]).String()
+					} else {
+						str += " ‹?›"
+					}
 				}
 				str += ")"
 			}

@@ -28,10 +28,9 @@ lEQ v1 v2 := or (v1.LT v2) (v1.EQ v2)
 
 
 
-
 /> it fn    := fn it
 
->> it fns   := fns it (hd tl -> >> (hd it) tl)
+>> it fns   := fns it (item rest -> >> (item it) rest)
 
 // flip args for `fn`
 <> fn       := a1 a2 -> fn a2 a1

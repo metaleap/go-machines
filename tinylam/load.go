@@ -261,6 +261,7 @@ func (me *ctxParse) populateNames(expr Expr, binders map[string]int, curModule m
 		it.CallArg = me.populateNames(it.CallArg, binders, curModule, locHintTopDefName)
 		fixinstrval(it.CallArg)
 		if fn, _ := it.Callee.(*ExprFunc); fn != nil && 1 == fn.replaceName(fn.ArgName, fn.ArgName) && 0 == it.CallArg.replaceName(fn.ArgName, fn.ArgName) {
+			println(len(binders), locHintTopDefName, fn.ArgName)
 			expr = fn.Body.rewriteName(fn.ArgName, it.CallArg.rewriteName(fn.ArgName, nil))
 			return me.populateNames(expr, binders, curModule, locHintTopDefName)
 		}
@@ -304,7 +305,7 @@ func (me *ctxParse) populateNames(expr Expr, binders map[string]int, curModule m
 		for k, v := range binders {
 			binders[k] = v - 1
 		}
-		if call, _ := it.Body.(*ExprCall); call != nil {
+		if call, _ := it.Body.(*ExprCall); call != nil && locHintTopDefName != "main" {
 			if arg, _ := call.CallArg.(*ExprName); arg != nil && arg.NameVal == it.ArgName && 0 == call.Callee.replaceName(it.ArgName, it.ArgName) {
 				return me.populateNames(call.Callee.rewriteName(it.ArgName, nil), binders, curModule, locHintTopDefName)
 			}
