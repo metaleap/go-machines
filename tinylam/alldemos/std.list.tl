@@ -2,6 +2,7 @@
 -< list                 := list (ERR "forgot nil check before -<") True
 >- list                 := list (ERR "forgot nil check before >-") False
 +>                      := ListLink
+-| list                 := list []
 
 len list                := list 0 (_ tail -> incr (len tail))
 
@@ -46,7 +47,7 @@ sortedBy list isLess    := list.iter
 one tup                 := tup (l r -> l)
 two tup                 := tup (l r -> r)
 
-dividedBy list isMatch  := { (items where) (items whereNot) }
+bisectedBy list isMatch := { (items where) (items whereNot) }
   items how             := each (tagged.how two) one
   tagged                := list.iter
   iter l                := l [] (hd tl -> +> {hd hd.isMatch} (iter tl) )
