@@ -47,3 +47,5 @@ lEQ v1 v2 := or (v1.LT v2) (v1.EQ v2)
 
 // see std.num.sum or std.num.product for the point of this =)
 ** f2 args  := args.>-.forth args.-< f2
+
+__msgPanic  := "forced crash via `()`"
