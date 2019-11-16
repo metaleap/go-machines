@@ -2,7 +2,7 @@
 Enum          := Foo | Bar | Baz
 Bool          := True | False
 May t         := None | That t
-Tried yay nay := Yay yay | Nay nay
+Tried yay nay := Even yay | Odd nay
 Tuple one two := Pair one two
 List t        := ListNil | ListLink t (List t)
 

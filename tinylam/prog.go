@@ -1,7 +1,6 @@
 package tinylam
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -18,6 +17,7 @@ type Prog struct {
 	exprBoolFalse        *ExprFunc
 	exprListNil          *ExprFunc
 	exprListConsCtorBody Expr
+	pseudoSumTypes       map[string][]string
 }
 
 func (me *Prog) RunAsMain(mainFuncExpr Expr, osProcArgs []string) (ret Value) {
@@ -73,17 +73,10 @@ func (me *Prog) newListOfStrs(loc *nodeLocInfo, vals []string) Expr {
 
 func (me *Prog) value(it Value) Value {
 	if cl := it.isClosure(); cl != nil {
-		if isfalse, istrue := (cl.body == me.exprBoolFalse.Body), (cl.body == me.exprBoolTrue.Body); isfalse || istrue {
-			it = valFinalBool(istrue)
-		} else if cl.body == me.exprListNil.Body {
+		if cl.body == me.exprListNil.Body {
 			it = valFinalList(nil)
 		} else if cl.body == me.exprListConsCtorBody {
 			it = &valTempCons{me.value(cl.env[len(cl.env)-2]), me.value(cl.env[len(cl.env)-1])}
-		} else if fn, _ := cl.body.(*ExprFunc); fn != nil && strings.HasPrefix(fn.ArgName, "__") && strings.Contains(fn.ArgName, "Of") {
-			println(fn.ArgName + fmt.Sprintf("\t%T", cl.body) + "=\t" + cl.body.String() + "\nENV\t" + fmt.Sprintf("%v", cl.env))
-			for fnsub, _ := fn.Body.(*ExprFunc); fnsub != nil; fnsub, _ = fn.Body.(*ExprFunc) {
-				fn = fnsub
-			}
 		}
 	}
 	return it
@@ -118,18 +111,42 @@ func (me *Prog) Value(it Value) (retVal Value) {
 				retVal = allbytes
 			}
 		}
+	} else if cl := retVal.isClosure(); cl != nil {
+		var name *ExprName
+		for name, _ = cl.body.(*ExprName); name == nil; name, _ = cl.body.(*ExprName) {
+			if call, _ := cl.body.(*ExprCall); call != nil {
+				cl.body = call.Callee
+			} else if fn, _ := cl.body.(*ExprFunc); fn != nil {
+				cl.body = fn.Body
+			}
+		}
+		if str := ""; name != nil && strings.HasPrefix(name.NameVal, "__") && strings.Contains(name.NameVal, "_Of_") {
+			if str = strings.TrimPrefix(name.NameVal[strings.Index(name.NameVal, "_Of_")+len("_Of_"):], "__"); len(cl.env) > 0 {
+				str = "(" + str
+				for i := range cl.env {
+					str += " " + me.Value(cl.env[i]).String()
+				}
+				str += ")"
+			}
+			retVal = valFinalOther(str)
+		}
 	}
 	return
 }
 
 func ValueBool(it Value) (bool, bool) {
-	v, ok := it.(valFinalBool)
-	return bool(v), ok
+	v, _ := it.(valFinalOther)
+	return v == "True", v == "True" || v == "False"
 }
 
 func ValueBytes(it Value) ([]byte, bool) {
 	v, ok := it.(valFinalBytes)
 	return []byte(v), ok
+}
+
+func ValueOther(it Value) (string, bool) {
+	v, ok := it.(valFinalOther)
+	return string(v), ok
 }
 
 func ValueNum(it Value) (int, bool) {
@@ -142,13 +159,12 @@ func ValueSlice(it Value) (Values, bool) {
 	return Values(v), ok
 }
 
-type valFinalBool bool
+type valFinalOther string
 
-func (me valFinalBool) eq(cmp Value) bool      { it, ok := cmp.(valFinalBool); return ok && me == it }
-func (me valFinalBool) force() Value           { return me }
-func (me valFinalBool) isClosure() *valClosure { return nil }
-func (me valFinalBool) isNum() *valNum         { return nil }
-func (me valFinalBool) String() string         { return strconv.FormatBool(bool(me)) }
+func (me valFinalOther) force() Value           { return me }
+func (me valFinalOther) isClosure() *valClosure { return nil }
+func (me valFinalOther) isNum() *valNum         { return nil }
+func (me valFinalOther) String() string         { return string(me) }
 
 type valFinalBytes []byte
 

@@ -36,6 +36,12 @@ func ValueBytes(it Value) ([]byte, bool)
 func ValueNum(it Value) (int, bool)
 ```
 
+#### func  ValueOther
+
+```go
+func ValueOther(it Value) (string, bool)
+```
+
 #### type Expr
 
 ```go

@@ -27,7 +27,6 @@ type ctxParse struct {
 		bracketsCurlies map[string]string
 		bracketsSquares map[string]string
 	}
-	pseudoSumTypes map[string][]string
 }
 
 type nodeLocInfo struct {
@@ -47,7 +46,7 @@ func (me *nodeLocInfo) locStr() string {
 func (me *Prog) ParseModules(modules map[string][]byte) {
 	ctx := ctxParse{prog: me, srcs: modules}
 	ctx.curTopDef.bracketsParens, ctx.curTopDef.bracketsCurlies, ctx.curTopDef.bracketsSquares = make(map[string]string, 16), make(map[string]string, 2), make(map[string]string, 4) // reset every top-def, potentially needed earlier for type-spec top-defs
-	me.NumEvalSteps, me.TopDefs = 0, map[string]Expr{}
+	me.NumEvalSteps, me.TopDefs, me.pseudoSumTypes = 0, map[string]Expr{}, map[string][]string{}
 
 	for modulename, modulesrc := range modules {
 		ctx.curModule.name = modulename
@@ -69,7 +68,6 @@ func (me *Prog) ParseModules(modules map[string][]byte) {
 
 func (me *ctxParse) parseModule(src string) map[string]Expr {
 	lines, module := strings.Split(src, "\n"), make(map[string]Expr, 32)
-	me.pseudoSumTypes = map[string][]string{}
 	for l, i := len(lines), 0; i < l; i++ {
 		if ln := lines[i]; len(ln) > 0 && ln[0] >= 'A' && ln[0] <= 'Z' {
 			if idx := strings.Index(ln, ":="); idx > 0 {
@@ -79,19 +77,19 @@ func (me *ctxParse) parseModule(src string) map[string]Expr {
 						str := cpart + " :="
 						for _, ctorstr := range cparts {
 							ctorstr += " "
-							str += " __" + tparts[0] + "Of" + ctorstr[:strings.IndexByte(ctorstr, ' ')]
+							str += " __" + tparts[0] + "_Of_" + ctorstr[:strings.IndexByte(ctorstr, ' ')]
 						}
-						str += " -> __" + tparts[0] + "Of" + cpart
+						str += " -> __" + tparts[0] + "_Of_" + cpart
 						lines = append(lines, str)
 					}
-					str, strcases := tparts[0], ""
+					tqname, strcases := me.curModule.name+"."+tparts[0], ""
 					for _, cpart := range cparts {
 						cpart += " "
 						ctorname := cpart[:strings.IndexByte(cpart, ' ')]
-						me.pseudoSumTypes[tparts[0]] = append(me.pseudoSumTypes[tparts[0]], ctorname)
+						me.prog.pseudoSumTypes[tqname] = append(me.prog.pseudoSumTypes[tqname], ctorname)
 						strcases += " caseOf" + ctorname
 					}
-					str += strcases + " scrutinee" + tparts[0] + " := scrutinee" + tparts[0] + strcases
+					str := tparts[0] + strcases + " scrutinee" + tparts[0] + " := scrutinee" + tparts[0] + strcases
 					lines = append(lines, str)
 				}
 			}
