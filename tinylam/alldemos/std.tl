@@ -5,6 +5,7 @@ Maybe     := Ok value | None
 Dual      := Neat neat | Weak weak
 Tuple     := Pair fst snd
 List      := ListEnd | ListLink h (List t)
+ToString  := StrNum n | StrOther o
 
 // Enum toString it := it "Foo" "Bar" "Baz"
 // Bool toString it := it "True" "False"
@@ -26,7 +27,6 @@ else      := same
 nEQ v1 v2 := not (v1.EQ v2)
 gEQ v1 v2 := or (v1.GT v2) (v1.EQ v2)
 lEQ v1 v2 := or (v1.LT v2) (v1.EQ v2)
-
 
 
 
