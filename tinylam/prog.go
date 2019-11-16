@@ -45,24 +45,20 @@ func (me *Prog) RunAsMain(mainFuncExpr Expr, osProcArgs []string) (ret Value) {
 	return me.Value(me.Eval(expr2eval, nil))
 }
 
-func (me *Prog) newCons(loc *nodeLocInfo, head Expr, tail Expr) Expr {
-	cons := me.TopDefs[StdRequiredDefs_listCons]
-	if cons == nil {
-		cons = &ExprName{loc, StdRequiredDefs_listCons, 0}
-	}
-	return &ExprCall{loc, &ExprCall{loc, cons, head}, tail}
-}
-
 func (me *Prog) newStr(loc *nodeLocInfo, str string) Expr {
 	return me.newList(loc, len(str), func(i int) Expr { return &ExprLitNum{loc, int(str[i])} })
 }
 
 func (me *Prog) newList(loc *nodeLocInfo, length int, next func(int) Expr) (list Expr) {
+	cons := me.TopDefs[StdRequiredDefs_listCons]
+	if cons == nil {
+		cons = &ExprName{loc, StdRequiredDefs_listCons, 0}
+	}
 	if list = me.TopDefs[StdRequiredDefs_listNil]; list == nil {
 		list = &ExprName{loc, StdRequiredDefs_listNil, 0}
 	}
 	for i := length - 1; i >= 0; i-- {
-		list = me.newCons(loc, next(i), list)
+		list = &ExprCall{loc, &ExprCall{loc, cons, next(i)}, list}
 	}
 	return
 }

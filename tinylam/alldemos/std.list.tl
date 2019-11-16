@@ -46,7 +46,7 @@ sortedBy list isLess    := list.more
   more l                := l.-| (i r -> (lts gts -> concat lts (i.+> gts)) (more (filt same i r)) (more (filt not i r)))
   filt how item rest    := rest.where (comparee -> how (isLess comparee item))
 
-bisectedBy list isMatch := { extract where tagged, extract whereNot tagged }
+bisectedBy list isMatch := {extract where tagged, extract whereNot tagged}
   extract filt tups     := each (tups.filt sndOfTuplePair) fstOfTuplePair
   tagged                := list.more
   more l                := l.-| (item rest -> +> {item, item.isMatch} (more rest) )

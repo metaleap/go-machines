@@ -71,7 +71,7 @@ func main() {
 	{ /* REPL */
 		os.Stdout.WriteString("Ctrl+C to quit this REPL." + strdividerline + "\n")
 		readln, eval := bufio.NewScanner(os.Stdin), func(ln string) (retval tl.Value, err interface{}) {
-			defer func() { err = recover() }()
+			// defer func() { err = recover() }()
 			modules["<repl>"] = []byte("<input> := " + ln)
 			prog.ParseModules(modules) // _technically_ very inefficient to reload-it-all on every single input but "works smoothly enough for me for now" --- the goal of tinylam is to stay tiny in terms of LoCs
 			val := prog.Eval(prog.TopDefs["<repl>.<input>"], nil)

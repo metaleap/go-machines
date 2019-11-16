@@ -204,9 +204,9 @@ func (me *ctxParse) parseExpr(toks []string, locHintLn string, locInfo *nodeLocI
 		expr = me.parseExpr(strings.Fields(subexpr), locHintLn, locInfo)
 	} else if subexpr, ok = me.curTopDef.bracketsSquares[tok]; ok {
 		expr = &ExprName{locInfo, StdRequiredDefs_listNil, 0}
-		items := strings.Fields(subexpr)
+		items := strings.Split(strings.TrimSpace(strings.Trim(subexpr, ",")), ",")
 		for i := len(items) - 1; i >= 0; i-- {
-			expr = &ExprCall{locInfo, &ExprCall{locInfo, &ExprName{locInfo, StdRequiredDefs_listCons, 0}, me.parseExpr(items[i:i+1], locHintLn, locInfo)}, expr}
+			expr = &ExprCall{locInfo, &ExprCall{locInfo, &ExprName{locInfo, StdRequiredDefs_listCons, 0}, me.parseExpr(strings.Fields(items[i]), locHintLn, locInfo)}, expr}
 		}
 	} else if subexpr, ok = me.curTopDef.bracketsCurlies[tok]; ok {
 		if items := strings.Split(strings.TrimSpace(strings.Trim(subexpr, ",")), ","); len(items) == 0 || (len(items) == 1 && items[0] == "") {
@@ -241,7 +241,7 @@ func (me *ctxParse) rewriteStrLitsToIntLists(src []byte, name string) string {
 				if b == 0 {
 					b = '"'
 				}
-				inner = append(append(inner, strconv.FormatUint(uint64(b), 10)...), ' ')
+				inner = append(append(inner, strconv.FormatUint(uint64(b), 10)...), ',')
 			}
 			src = append(pref, append(inner, suff...)...)
 		}
