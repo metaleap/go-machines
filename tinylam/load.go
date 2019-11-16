@@ -7,14 +7,12 @@ import (
 )
 
 const (
-	StdModuleName               = "std"
-	StdRequiredDefs_true        = StdModuleName + "." + "True"
-	StdRequiredDefs_false       = StdModuleName + "." + "False"
-	StdRequiredDefs_tupCons     = StdModuleName + "." + "Pair"
-	StdRequiredDefs_listCons    = StdModuleName + "." + "ListLink"
-	StdRequiredDefs_listNil     = StdModuleName + "." + "ListNil"
-	StdRequiredDefs_listIsNil   = StdModuleName + "." + "__tlListIsNil"
-	StdRequiredDefs_listIsntNil = StdModuleName + "." + "__tlListIsntNil"
+	StdModuleName            = "std"
+	StdRequiredDefs_true     = StdModuleName + "." + "True"
+	StdRequiredDefs_false    = StdModuleName + "." + "False"
+	StdRequiredDefs_tupCons  = StdModuleName + "." + "Pair"
+	StdRequiredDefs_listCons = StdModuleName + "." + "ListLink"
+	StdRequiredDefs_listNil  = StdModuleName + "." + "ListEnd"
 )
 
 type ctxParse struct {
@@ -57,7 +55,6 @@ func (me *Prog) ParseModules(modules map[string][]byte) {
 	}
 	me.exprBoolTrue, me.exprBoolFalse = me.TopDefs[StdRequiredDefs_true].(*ExprFunc), me.TopDefs[StdRequiredDefs_false].(*ExprFunc)
 	me.exprListNil, me.exprListConsCtorBody = me.TopDefs[StdRequiredDefs_listNil].(*ExprFunc), me.TopDefs[StdRequiredDefs_listCons].(*ExprFunc).Body.(*ExprFunc).Body.(*ExprFunc).Body
-	me.TopDefs[StdModuleName+".!"], me.TopDefs[StdModuleName+".?"] = me.TopDefs[StdRequiredDefs_listIsNil], me.TopDefs[StdRequiredDefs_listIsntNil]
 	for instrname, instrcode := range instrs {
 		me.TopDefs[StdModuleName+".//op"+instrname] = &ExprFunc{nil, "//" + instrname, &ExprCall{nil, &ExprName{nil, instrname, int(instrcode)}, &ExprName{nil, "//" + instrname, -1}}, -1}
 	}
@@ -129,7 +126,7 @@ func (me *ctxParse) parseModule(src string) map[string]Expr {
 }
 
 func (me *ctxParse) parseTopDef(lines []string, idxStart int, idxEnd int) (topDefName string, topDefBody Expr, firstLn string) {
-	topDefName, me.curTopDef.bracketsParens, me.curTopDef.bracketsCurlies, me.curTopDef.bracketsSquares = "?", make(map[string]string, 16), make(map[string]string, 2), make(map[string]string, 4)
+	topDefName, me.curTopDef.bracketsParens, me.curTopDef.bracketsCurlies, me.curTopDef.bracketsSquares = "<unknown>", make(map[string]string, 16), make(map[string]string, 2), make(map[string]string, 4)
 	var topdefargs []string
 	for i, ln := range lines[idxStart:idxEnd] {
 		if ln = strings.TrimSpace(ln); ln != "" {
@@ -212,14 +209,14 @@ func (me *ctxParse) parseExpr(toks []string, locHintLn string, locInfo *nodeLocI
 			expr = &ExprCall{locInfo, &ExprCall{locInfo, &ExprName{locInfo, StdRequiredDefs_listCons, 0}, me.parseExpr(items[i:i+1], locHintLn, locInfo)}, expr}
 		}
 	} else if subexpr, ok = me.curTopDef.bracketsCurlies[tok]; ok {
-		if items := strings.Fields(subexpr); len(items) == 0 {
+		if items := strings.Split(strings.TrimSpace(strings.Trim(subexpr, ",")), ","); len(items) == 0 || (len(items) == 1 && items[0] == "") {
 			expr = &ExprName{locInfo, StdRequiredDefs_tupCons, 0}
 		} else if len(items) == 1 {
-			expr = &ExprCall{locInfo, &ExprName{locInfo, StdRequiredDefs_tupCons, 0}, me.parseExpr(items, locHintLn, locInfo)}
+			expr = &ExprCall{locInfo, &ExprName{locInfo, StdRequiredDefs_tupCons, 0}, me.parseExpr(strings.Fields(items[0]), locHintLn, locInfo)}
 		} else {
-			expr = me.parseExpr(items[len(items)-1:], locHintLn, locInfo)
+			expr = me.parseExpr(strings.Fields(items[len(items)-1]), locHintLn, locInfo)
 			for i := len(items) - 2; i >= 0; i-- {
-				expr = &ExprCall{locInfo, &ExprCall{locInfo, &ExprName{locInfo, StdRequiredDefs_tupCons, 0}, me.parseExpr(items[i:i+1], locHintLn, locInfo)}, expr}
+				expr = &ExprCall{locInfo, &ExprCall{locInfo, &ExprName{locInfo, StdRequiredDefs_tupCons, 0}, me.parseExpr(strings.Fields(items[i]), locHintLn, locInfo)}, expr}
 			}
 		}
 	} else {

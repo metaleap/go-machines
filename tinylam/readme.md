@@ -7,14 +7,12 @@
 
 ```go
 const (
-	StdModuleName               = "std"
-	StdRequiredDefs_true        = StdModuleName + "." + "True"
-	StdRequiredDefs_false       = StdModuleName + "." + "False"
-	StdRequiredDefs_tupCons     = StdModuleName + "." + "Pair"
-	StdRequiredDefs_listCons    = StdModuleName + "." + "ListLink"
-	StdRequiredDefs_listNil     = StdModuleName + "." + "ListNil"
-	StdRequiredDefs_listIsNil   = StdModuleName + "." + "__tlListIsNil"
-	StdRequiredDefs_listIsntNil = StdModuleName + "." + "__tlListIsntNil"
+	StdModuleName            = "std"
+	StdRequiredDefs_true     = StdModuleName + "." + "True"
+	StdRequiredDefs_false    = StdModuleName + "." + "False"
+	StdRequiredDefs_tupCons  = StdModuleName + "." + "Pair"
+	StdRequiredDefs_listCons = StdModuleName + "." + "ListLink"
+	StdRequiredDefs_listNil  = StdModuleName + "." + "ListEnd"
 )
 ```
 

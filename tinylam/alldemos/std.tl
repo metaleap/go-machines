@@ -1,9 +1,14 @@
 
+Enum      := Foo | Bar | Baz
 Bool      := True | False
-Maybe     := None | Ok value
-Tried     := Even even | Odd odd
+Maybe     := Ok value | None
+Dual      := Neat neat | Weak weak
 Tuple     := Pair fst snd
-List      := ListNil | ListLink h (List t)
+List      := ListEnd | ListLink h (List t)
+
+// Enum toString it := it "Foo" "Bar" "Baz"
+// Bool toString it := it "True" "False"
+// Tuple toString it := it (pair -> pair (fst snd -> ** concat ["(Pair " fst.toString " " snd.toString ")"]))
 
 same it   := it   // I combinator aka 'id' / identity
 ever      := True // K combinator aka 'konst'
@@ -42,21 +47,3 @@ lEQ v1 v2 := or (v1.LT v2) (v1.EQ v2)
 
 // see std.num.sum or std.num.product for the point of this =)
 ** f2 args  := args.>-.forth args.-< f2
-
-
-
-
-
-
-
-
-
-
-
-
-//begin interpreter-required internal defs used for syntax sugars
-
-__tlListIsNil list    := list True (_ _ -> False)
-__tlListIsntNil list  := list False (_ _ -> True)
-
-//end

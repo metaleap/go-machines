@@ -3,6 +3,8 @@
 >- list                 := list (ERR "forgot nil check before >-") False
 +>                      := ListLink
 -| list                 := list []
+! list                  := list True (_ _ -> False)
+? list                  := list False (_ _ -> True)
 
 len list                := list 0 (_ rest -> incr (len rest))
 
@@ -37,17 +39,17 @@ hasSome list isMatch    := list.more
 
 hasNone list isMatch    := list.hasOnly (not: isMatch)
 
-hasOnly list isMatch    := list False list.more
-  more l                := if (not l.-<.isMatch) False (else or (!l.>-) (more l.>-))
+hasOnly list isMatch    := list False more
+  more item rest        := and item.isMatch (rest True more)
 
 sortedBy list isLess    := list.more
   more l                := l.-| (i r -> (lts gts -> concat lts (i.+> gts)) (more (filt same i r)) (more (filt not i r)))
   filt how item rest    := rest.where (comparee -> how (isLess comparee item))
 
-bisectedBy list isMatch := { (extract where tagged) (extract whereNot tagged) }
+bisectedBy list isMatch := { extract where tagged, extract whereNot tagged }
   extract filt tups     := each (tups.filt sndOfTuplePair) fstOfTuplePair
   tagged                := list.more
-  more l                := l.-| (item rest -> +> {item item.isMatch} (more rest) )
+  more l                := l.-| (item rest -> +> {item, item.isMatch} (more rest) )
 
 deduped list            := list.more
   more l                := l.-| (item rest -> item.+> (more (rest.without item)))
@@ -55,13 +57,13 @@ deduped list            := list.more
 last list               := list.>- list.-< (_ _ -> last list.>-)
 
 indexed list            := list.more 0
-  more l i              := l.-| (item rest -> +> {i item} (more rest i.incr))
+  more l i              := l.-| (item rest -> +> {i, item} (more rest i.incr))
 
 indices list            := list.more 0
   more l i              := l.-| (_ rest -> i.+> (more rest i.incr))
 
 pairedUpWith list list2 := list.-| (item1 rest1 -> list2.-| (result item1 rest1))
-  result i1 r1 i2 r2    := +> {i1 i2} (pairedUpWith r1 r2)
+  result i1 r1 i2 r2    := +> {i1, i2} (pairedUpWith r1 r2)
 
 concat l1 l2            := l2 l1 (_ _ -> l1.prepend)
   prepend l             := l l2 (item rest -> item.+> (prepend rest))
@@ -81,7 +83,7 @@ mGet m key              := m.more
 mDrop m key             := m.more
   more l                := l.-| (item rest -> item (k _ -> (if (k.EQ key) same (else item.+>))) (more rest))
 
-mWith m key value       := +> {key value} (m.mDrop key)
+mWith m key value       := +> {key, value} (m.mDrop key)
 
 mHasKeyWhere m isMatch  := m.hasSome (Tuple (k v -> k.isMatch))
 mHasValWhere m isMatch  := m.hasSome (Tuple (k v -> v.isMatch))
