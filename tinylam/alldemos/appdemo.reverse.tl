@@ -1,1 +1,1 @@
-main stdin := stdin.reverse
+main stdin := reverse stdin

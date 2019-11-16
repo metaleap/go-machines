@@ -20,5 +20,5 @@ parseSigned str := if !str (ERR "empty input") (else signdropped)
 
 parseUnsigned s := if !s (ERR "empty input") (else digits.iter digits.len.decr)
   digits        := s.each chartodigit
-  iter l n      := ADD (l.-<.MUL (n.pow 10)) (l.>- 0 (_ _ -> iter l.>- n.decr))
+  iter l n      := ADD (l.-<.MUL (pow 10 n)) (l.>- 0 (_ _ -> iter l.>- n.decr))
   chartodigit c := (and (c.GT 47) (c.LT 58)) (c.SUB 48) (ERR (c.+> " isn't between 0-9") )

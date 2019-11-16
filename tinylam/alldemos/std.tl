@@ -42,9 +42,8 @@ lEQ v1 v2 := or (v1.LT v2) (v1.EQ v2)
 // compose left to right
 ·> f1 f2 a  := f2 (f1 a)
 
-// like a fold/reduce without an initial zero val, hence assumes a non-nil `l`
-** binOp l  := l.iter
-  iter args := args.>- args.-< (_ _ -> binOp args.-< ( iter args.>- ))
+// see std.num.sum or std.num.product for the point of this =)
+** f2 args  := args.>-.forth args.-< f2
 
 
 
