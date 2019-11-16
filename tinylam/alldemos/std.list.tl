@@ -17,7 +17,17 @@ slice list start length := take (list.drop start) length
 
 drop list n             := if (EQ 0 n) list (else drop list.>- n.decr)
 
+dropWhile list isMatch  := list.more
+  more l                := l.-| (item rest -> if item.isMatch (more rest) (else l))
+
+dropUntil list isMatch  := list.dropWhile isMatch.not·
+
 take list n             := if (EQ 0 n) [] (else list.-<.+> (take list.>- n.decr))
+
+takeUntil list isMatch  := list.more
+  more l                := l.-| (item rest -> if (item.isMatch) [] (else item.+> (more rest)))
+
+takeWhile list isMatch  := list.takeUntil isMatch.not·
 
 where list isMatch      := list.more
   more l                := l.-| (item rest -> (if item.isMatch (item.+>) (else same)) (more rest))
@@ -27,7 +37,7 @@ whereNot list isMatch   := list.where (not· isMatch)
 without list item       := list.where (nEQ item)
 
 findWhere list isMatch  := list.more
-  more l                := l same (item rest -> if (item.isMatch) item.ever (else more rest))
+  more l                := l None (item rest -> if (item.isMatch) item.Ok (else more rest))
 
 countWhere list isMatch := list.more
   more l                := l 0 (item rest -> ADD (item.isMatch 1 0) (more rest))
@@ -62,8 +72,26 @@ indexed list            := list.more 0
 indices list            := list.more 0
   more l i              := l.-| (_ rest -> i.+> (more rest i.incr))
 
+brokenUpOn list isMatch := list.more []
+  more l acc            := l None (item rest -> item.isMatch (Ok {acc, rest}) (more rest (concat acc [item])))
+
 pairedUpWith list list2 := list.-| (item1 rest1 -> list2.-| (result item1 rest1))
   result i1 r1 i2 r2    := +> {i1, i2} (pairedUpWith r1 r2)
+
+intersperse list value  := list.more
+  more l                := l.-| (item rest -> item.+> (rest.-| (_ _ -> value.+> (more rest))))
+
+splitUpOn list isMatch  := list.-| (_ _ -> list.more)
+  more l                := (l.brokenUpOn isMatch) (caseOk more) (else l.+> [])
+  caseOk next           := _ (item rest -> item.+> (next rest))
+
+join list sep           := concat.** (list.intersperse sep)
+
+trimStart list items    := list.dropWhile items.has
+
+trimEnd list items      := reverse (list.reverse.dropWhile items.has)
+
+trim list items         := trimEnd (list.trimStart items) items
 
 concat l1 l2            := l2 l1 (_ _ -> l1.prepend)
   prepend l             := l l2 (item rest -> item.+> (prepend rest))

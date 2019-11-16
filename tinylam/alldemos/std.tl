@@ -1,15 +1,13 @@
 
-Enum      := Foo | Bar | Baz
 Bool      := True | False
 Maybe     := Ok value | None
 Dual      := Neat neat | Weak weak
 Tuple     := Pair fst snd
 List      := ListEnd | ListLink h (List t)
-ToString  := StrNum n | StrOther o
 
-// Enum toString it := it "Foo" "Bar" "Baz"
-// Bool toString it := it "True" "False"
-// Tuple toString it := it (pair -> pair (fst snd -> ** concat ["(Pair " fst.toString " " snd.toString ")"]))
+
+// foo d                 := d Dual? (Neat: n -> ever n) (Weak: w -> same)
+
 
 same it   := it   // I combinator aka 'id' / identity
 ever      := True // K combinator aka 'konst'
