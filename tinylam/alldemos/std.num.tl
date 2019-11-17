@@ -23,5 +23,6 @@ parseUnsigned s := if (! s) (ERR "empty input") (else digits.more s.len.decr)
   more l n      := ADD (l.-<.MUL (pow 10 n)) (l.>- 0 (_ _ -> more l.>- n.decr))
   chartodigit c := (and (c.GT 47) (c.LT 58)) (c.SUB 48) (ERR (c.+> " isn't between 0-9") )
 
-toString i      := if (i.LT 10) i.digitchar (else concat (toString (i.DIV 10)) (digitchar (i.MOD 10)))
+toString n      := if (n.LT 0) (+> '-' n.abs.tostring) (else n.tostring)
+  tostring i    := if (i.LT 10) i.digitchar (else concat (tostring (i.DIV 10)) (digitchar (i.MOD 10)))
   digitchar d   := [d.ADD 48]

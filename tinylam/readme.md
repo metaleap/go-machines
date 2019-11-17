@@ -11,6 +11,7 @@ const (
 	StdRequiredDefs_true     = StdModuleName + "." + "True"
 	StdRequiredDefs_false    = StdModuleName + "." + "False"
 	StdRequiredDefs_tupCons  = StdModuleName + "." + "Pair"
+	StdRequiredDefs_list     = StdModuleName + "." + "List"
 	StdRequiredDefs_listCons = StdModuleName + "." + "ListLink"
 	StdRequiredDefs_listNil  = StdModuleName + "." + "ListEnd"
 )

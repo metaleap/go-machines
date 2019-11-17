@@ -11,6 +11,7 @@ const (
 	StdRequiredDefs_true     = StdModuleName + "." + "True"
 	StdRequiredDefs_false    = StdModuleName + "." + "False"
 	StdRequiredDefs_tupCons  = StdModuleName + "." + "Pair"
+	StdRequiredDefs_list     = StdModuleName + "." + "List"
 	StdRequiredDefs_listCons = StdModuleName + "." + "ListLink"
 	StdRequiredDefs_listNil  = StdModuleName + "." + "ListEnd"
 )
@@ -178,45 +179,49 @@ func (me *ctxParse) rewriteForRecursion(defName string, defBody Expr, dynNamePre
 func (me *ctxParse) parseExpr(src string, locHintLn string, locInfo *nodeLocInfo) (expr Expr) {
 	if idx := strings.Index(src, "? "); idx > 0 {
 		if pos := strings.LastIndexByte(src[:idx], ' '); pos > 0 {
-			if tname := src[pos+1 : idx]; tname != "" {
-				ctors := me.prog.pseudoSumTypes[tname]
-				if len(ctors) == 0 {
-					ctors = me.prog.pseudoSumTypes[me.curModule.name+"."+tname]
-				}
-				if len(ctors) == 0 {
-					ctors = me.prog.pseudoSumTypes[StdModuleName+"."+tname]
-				}
-				if len(ctors) > 0 {
-					scases := strings.Split(src[idx+1:], " | ")
-					mcases := make(map[string]string, len(scases))
-					for _, scase := range scases {
-						scase = strings.TrimSpace(scase)
-						if idxcol := strings.IndexByte(scase, ':'); idxcol > 0 {
-							casename := strings.TrimSpace(scase[:idxcol])
+			tname := src[pos+1 : idx]
+			if tname == "" {
+				tname = StdRequiredDefs_list
+			}
+			ctors := me.prog.pseudoSumTypes[tname]
+			if len(ctors) == 0 {
+				ctors = me.prog.pseudoSumTypes[me.curModule.name+"."+tname]
+			}
+			if len(ctors) == 0 {
+				ctors = me.prog.pseudoSumTypes[StdModuleName+"."+tname]
+			}
+			if len(ctors) > 0 {
+				scases := strings.Split(src[idx+1:], " | ")
+				mcases := make(map[string]string, len(scases))
+				for _, scase := range scases {
+					scase = strings.TrimSpace(scase)
+					if idxcol := strings.Index(scase, "=>"); idxcol > 0 {
+						casename := strings.TrimSpace(scase[:idxcol])
+						if tname == StdRequiredDefs_list {
 							if emptysquarebrackets, ok := me.curTopDef.bracketsSquares[casename]; ok && len(emptysquarebrackets) == 0 {
 								casename = StdRequiredDefs_listNil
-							} else if casename == "+>" {
+							} else if casename == "+>" || casename == "_" || (ok && emptysquarebrackets == ",") {
 								casename = StdRequiredDefs_listCons
 							}
-							mcases[casename[strings.LastIndexByte(casename, '.')+1:]] = strings.TrimSpace(scase[idxcol+1:])
-						} else {
-							panic(locInfo.locStr() + "for scrutinizing `" + tname + "`, expected `:` in case:\n" + scase)
 						}
-					}
-					for _, ctorname := range ctors {
-						if mcases[ctorname] == "" {
-							panic(locInfo.locStr() + "for scrutinizing `" + tname + "`, a case for `" + ctorname + "` is required")
-						}
-					}
-					if len(mcases) != len(ctors) {
-						panic(locInfo.locStr() + "for scrutinizing `" + tname + "`, expected " + strconv.Itoa(len(ctors)) + " cases but found (effectively) " + strconv.Itoa(len(mcases)) + ", in:\n" + src)
+						mcases[casename[strings.LastIndexByte(casename, '.')+1:]] = strings.TrimSpace(scase[idxcol+2:])
 					} else {
-						src = src[:pos] + " "
-						for _, ctorname := range ctors {
-							tmpname := "__case__of__" + ctorname
-							me.curTopDef.bracketsParens[tmpname] = mcases[ctorname]
-							src += " " + tmpname
-						}
+						panic(locInfo.locStr() + "for scrutinizing `" + tname + "`, expected `:` in case:\n" + scase)
+					}
+				}
+				for _, ctorname := range ctors {
+					if mcases[ctorname] == "" {
+						panic(locInfo.locStr() + "for scrutinizing `" + tname + "`, a case for `" + ctorname + "` is required")
+					}
+				}
+				if len(mcases) != len(ctors) {
+					panic(locInfo.locStr() + "for scrutinizing `" + tname + "`, expected " + strconv.Itoa(len(ctors)) + " cases but found (effectively) " + strconv.Itoa(len(mcases)) + ", in:\n" + src)
+				} else {
+					src = src[:pos] + " "
+					for _, ctorname := range ctors {
+						tmpname := "__case__of__" + ctorname
+						me.curTopDef.bracketsParens[tmpname] = mcases[ctorname]
+						src += " " + tmpname
 					}
 				}
 			}
@@ -241,9 +246,14 @@ func (me *ctxParse) parseExprToks(toks []string, locHintLn string, locInfo *node
 			}
 		}
 		if args := toks[:lamsplit]; lamsplit > 0 {
-			for i, tok := range toks[:lamsplit] {
-				if tok[0] == '/' {
-					me.counter, toks[i] = me.counter+1, "//"+strconv.Itoa(i)+"//"+strconv.Itoa(me.counter)
+			if tupdtor := strings.TrimSpace(me.curTopDef.bracketsCurlies[toks[0]]); tupdtor != "" && lamsplit == 1 {
+				me.curTopDef.bracketsParens["__"+toks[0]] = tupdtor + " -> " + strings.Join(toks[lamsplit+1:], " ")
+				args[0], toks = toks[0]+"__", []string{toks[0] + "__", "->", toks[0] + "__", "__" + toks[0]}
+			} else {
+				for i, tok := range toks[:lamsplit] {
+					if me.curTopDef.bracketsCurlies[tok] == "" && tok[0] == '/' {
+						me.counter, toks[i] = me.counter+1, "//"+strconv.Itoa(i)+"//"+strconv.Itoa(me.counter)
+					}
 				}
 			}
 			expr = me.hoistArgs(me.parseExprToks(toks[lamsplit+1:], locHintLn, locInfo), args)
