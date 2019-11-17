@@ -25,22 +25,22 @@ dropUntil list isMatch  := list.dropWhile isMatch.not·
 take list n             := if (EQ 0 n) [] (else list.-<.+> (take list.>- n.decr))
 
 takeUntil list isMatch  := list.more
-  more l                := l.-| (item rest -> if (item.isMatch) [] (else item.+> (more rest)))
+  more l                := l.-| (item rest -> item.isMatch [] (item.+> (more rest)))
 
 takeWhile list isMatch  := list.takeUntil isMatch.not·
 
 where list isMatch      := list.more
-  more l                := l.-| (item rest -> (if item.isMatch (item.+>) (else same)) (more rest))
+  more l                := l.-| (item rest -> (item.isMatch (item.+>) same) (more rest))
 
 whereNot list isMatch   := list.where (not· isMatch)
 
 without list item       := list.where (nEQ item)
 
 findWhere list isMatch  := list.more
-  more l                := l None (item rest -> if (item.isMatch) item.Ok (else more rest))
+  more l                := l None (item rest -> item.isMatch item.Ok (more rest))
 
 countWhere list isMatch := list.more
-  more l                := l 0 (item rest -> ADD (item.isMatch 1 0) (more rest))
+  more l                := l 0 (item rest -> item.isMatch (ADD 1 (more rest)) (more rest))
 
 has list item           := list.hasSome (EQ item)
 
@@ -52,14 +52,17 @@ hasNone list isMatch    := list.hasOnly (not· isMatch)
 hasOnly list isMatch    := list False more
   more item rest        := and item.isMatch (rest True more)
 
-sortedBy list isLess    := list.more
-  more l                := l.-| (i r -> (lts gts -> concat lts (i.+> gts)) (more (filt same i r)) (more (filt not i r)))
-  filt how item rest    := rest.where (comparee -> how (isLess comparee item))
+sortedBy list isLess    := list.sort
+  sort l                := l.-| (item rest -> item.joined (sort (rest.below item)) (sort (rest.above item)))
+  below                 := filt same
+  above                 := filt not
+  filt how rest item    := rest.where (comparee -> how (isLess comparee item))
+  joined cur pref suff  := concat pref (cur.+> suff)
 
 bisectedBy list isMatch := {extract where tagged, extract whereNot tagged}
-  extract filt tups     := each (tups.filt sndOfTuplePair) fstOfTuplePair
   tagged                := list.more
-  more l                := l.-| (item rest -> +> {item, item.isMatch} (more rest) )
+    more l              := l.-| (item rest -> +> {item, item.isMatch} (more rest) )
+  extract filt tups     := each (tups.filt sndOfTuplePair) fstOfTuplePair
 
 deduped list            := list.more
   more l                := l.-| (item rest -> item.+> (more (rest.without item)))
@@ -78,14 +81,14 @@ brokenUpOn list isMatch := list.more []
 pairedUpWith list list2 := list.-| (item1 rest1 -> list2.-| (result item1 rest1))
   result i1 r1 i2 r2    := +> {i1, i2} (pairedUpWith r1 r2)
 
-intersperse list value  := list.more
-  more l                := l.-| (item rest -> item.+> (rest.-| (_ _ -> value.+> (more rest))))
+intersperse list value  := list.-| (more False)
+  more +? item rest    := value.+? (item.+> (rest [] (more +>)))
 
 splitUpOn list isMatch  := list.-| (_ _ -> list.more)
   more l                := (l.brokenUpOn isMatch) (caseOk more) (else l.+> [])
-  caseOk next           := _ (item rest -> item.+> (next rest))
+  caseOk split          := _ (left right -> left.+> (split right))
 
-join list sep           := concat.** (list.intersperse sep)
+joinedVia list sep      := concat.** (list.intersperse sep)
 
 trimStart list items    := list.dropWhile items.has
 
@@ -96,14 +99,14 @@ trim list items         := trimEnd (list.trimStart items) items
 concat l1 l2            := l2 l1 (_ _ -> l1.prepend)
   prepend l             := l l2 (item rest -> item.+> (prepend rest))
 
-forth list z f2         := list.more z
-  more l accval         := l accval (item rest -> more rest (f2 accval item))
-
 from list z f2          := list.more
   more l                := l z (item rest -> f2 item (more rest))
 
+forth list z f2         := list.more z
+  more l accval         := l accval (item rest -> more rest (f2 accval item))
+
 reverse list            := more [] list
-  more cur l            := l cur (item rest -> more (item.+> cur) rest)
+  more acc l            := l acc (item rest -> more (item.+> acc) rest)
 
 mGet m key              := m.more
   more l                := l None (item rest -> item (k v ->  if (k.EQ key) v.Ok (else more rest)))

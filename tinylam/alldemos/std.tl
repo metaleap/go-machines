@@ -1,12 +1,11 @@
 
 Bool      := True | False
 Maybe     := Ok value | None
-Dual      := Neat neat | Weak weak
+Verdict   := Neat neat | Weak weak
 Tuple     := Pair fst snd
 List      := ListEnd | ListLink h (List t)
 
 
-// foo d                 := d Dual? (Neat: n -> ever n) (Weak: w -> same)
 
 
 same it   := it   // I combinator aka 'id' / identity
