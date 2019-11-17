@@ -15,12 +15,13 @@ factorial i     := if (i.EQ 0) 1 (else i.MUL (factorial (i.SUB 1)))
 fibonacci i     := if (i.LT 2) 1 (else ADD (fibonacci (i.SUB 1)) (fibonacci (i.SUB 2)))
 
 parseSigned str := str ? [] => Nay "empty input" | => unsign
-  unsign c rest := result (parseUnsigned (rest.when (c.EQ '-') (else str)))
-  result check  := check Result? Nay => Nay | Yay => n -> Yay (n.neg.when (str.-<.EQ '-') (else n))
+  unsign c rest := parsed (str.unless (c.EQ '-') (then rest))
+  parsed s      := s.parseUnsigned Result? Nay => Nay | Yay => ok
+  ok numval     := Yay (numval.neg.when (str.-<.EQ '-') (else numval))
 
 parseUnsigned s := s ? [] => Nay "empty input" | => _ _ -> checkresult
   checkresult   := havebadchar Could? None => Yay finalresult | Have => c -> Nay (c.abs.+> " isn't between 0-9")
-  havebadchar   := digits.findWhere (LT _ 0)
+  havebadchar   := digits.findWhere (LT _ 0) // bad chars are marked thusly by `chartodigit`
   finalresult   := digits.more s.len.decr
   digits        := s.each chartodigit
   more l n      := ADD (l.-<.MUL (pow 10 n)) (l.>- 0 (_ _ -> more l.>- n.decr))

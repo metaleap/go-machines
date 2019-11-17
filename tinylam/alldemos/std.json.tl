@@ -3,8 +3,8 @@ Token             := Ident | NumLit | StrLit | SepComma | SepColon | CurlyOpen |
 Value             := Null | Boolean _ | Int _ | Str _ | Arr (List _) | Obj (List (Pair k v))
 
 tokenized src     := src.more
-  more s          := s ? => cur rest -> if (cur.iswhitespace) (more rest) (else None)
-  iswhitespace c  := ** or [c.EQ 32 , and (c.GT 7) (c.LT 12) , c.EQ 13]
+  more s          := s ? [] => None | => cur rest -> if (cur.iswhitespace) (more rest) (else None)
+  iswhitespace c  := or (and (c.LT 12) (c.GT 7)) (or (c.EQ 32) (c.EQ 13))
 
 parse src         := src ? [] => Nay "empty input" | => _ _ -> src.tryparse
   tryparse s      := s.attempt [pnull, pbool, pnum]
