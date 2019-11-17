@@ -2,8 +2,6 @@
 -< list                 := list (ERR "forgot nil check before -<") True
 >- list                 := list (ERR "forgot nil check before >-") False
 +>                      := ListLink
--| list                 := list []
-! list                  := list True (_ _ -> False)
 
 len list                := list 0 (_ rest -> incr (len rest))
 
@@ -50,72 +48,71 @@ hasSome list isMatch    := list.more
 hasNone list isMatch    := list.hasOnly (not· isMatch)
 
 hasOnly list isMatch    := list False more
-  more item rest        := and item.isMatch (rest True more)
+  more item rest        := and item.isMatch (rest ? [] => True | => more)
 
 sortedBy list isLess    := list.sort
-  sort l                := l.-| (item rest -> item.joined (sort (rest.below item)) (sort (rest.above item)))
-  below                 := filt same
-  above                 := filt not
-  filt how rest item    := rest.where (comparee -> how (isLess comparee item))
-  joined cur pref suff  := concat pref (cur.+> suff)
+  sort l                := l ? => item rest -> concat (sort (rest.lt item)) (item.+> (sort (rest.geq item)))
+  lt                    := filt same
+  geq                   := filt not
+  filt how rest item    := rest.where (comparee -> how (comparee.isLess item))
 
 bisectedBy list isMatch := {extract where tagged, extract whereNot tagged}
   tagged                := list.more
-    more l              := l.-| (item rest -> +> {item, item.isMatch} (more rest) )
+    more l              := l ? => item rest -> +> {item, item.isMatch} (more rest)
   extract filt tups     := each (tups.filt sndOfTuplePair) fstOfTuplePair
 
 deduped list            := list.more
-  more l                := l.-| (item rest -> item.+> (more (rest.without item)))
+  more l                := l ? => item rest -> item.+> (more (rest.without item))
 
-last list               := list.>- list.-< (_ _ -> last list.>-)
+last list               := list.>- ? [] => list.-< | => _ _ -> last list.>-
 
 indexed list            := list.more 0
-  more l i              := l.-| (item rest -> +> {i, item} (more rest i.incr))
+  more l i              := l ? => item rest -> +> {i, item} (more rest i.incr)
 
 indices list            := list.more 0
-  more l i              := l.-| (_ rest -> i.+> (more rest i.incr))
+  more l i              := l ? => _ rest -> i.+> (more rest i.incr)
 
 brokenUpOn list isMatch := list.more []
   more l accum          := l ? [] => None | => ok more accum
-  ok next acc item rest := if item.isMatch (Ok {acc, rest}) (rest.next (acc.concat [item]))
+  ok cont acc item rest := if item.isMatch (Ok {acc, rest}) (else rest.cont (concat acc [item]))
 
-pairedUpWith list list2 := list ? => item1 rest1 -> list2.-| (result item1 rest1)
+pairedUpWith list list2 := list ? => item1 rest1 -> list2 ? => result item1 rest1
   result i1 r1 i2 r2    := +> {i1, i2} (pairedUpWith r1 r2)
 
-interspersed list value := list.-| (more False)
-  more useval item rest := value.useval (item.+> (rest [] (more +>)))
+interspersed list value := list ? => more False
+  more useval item rest := value.useval (item.+> (rest ? => more +>))
 
-splitUpOn list isMatch  := list.-| (_ _ -> list.more)
+splitUpOn list isMatch  := list ? => _ _ -> list.more
   more l                := (l.brokenUpOn isMatch) Maybe? Ok => ok more | None => [l]
-  ok split              := {left right} -> left.+> (split right)
+  ok cont               := {left right} -> left.+> (cont right)
 
 joinedVia list sep      := concat.** (list.interspersed sep)
 
 trimStart list items    := list.dropWhile items.has
 
-trimEnd list items      := reverse (list.reverse.dropWhile items.has)
+trimEnd list items      := reversed (list.reversed.dropWhile items.has)
 
 trim list items         := trimEnd (list.trimStart items) items
 
-concat l1 l2            := l2 l1 (_ _ -> l1.prepend)
-  prepend l             := l l2 (item rest -> item.+> (prepend rest))
+concat l1 l2            := l2 ? [] => l1 | => _ _ -> l1.prepend
+  prepend l             := l ? [] => l2 | => item rest -> item.+> (prepend rest)
 
 from list z f2          := list.more
-  more l                := l z (item rest -> f2 item (more rest))
+  more l                := l ? [] => z | => item rest -> f2 item (more rest)
 
 forth list z f2         := list.more z
-  more l accval         := l accval (item rest -> more rest (f2 accval item))
+  more l accval         := l ? [] => accval | => item rest -> more rest (f2 accval item)
 
-reverse list            := more [] list
-  more acc l            := l acc (item rest -> more (item.+> acc) rest)
+reversed list           := more [] list
+  more acc l            := l ? [] => acc | => item rest -> more (item.+> acc) rest
 
 mGet m key              := m.more
-  more l                := l None ({k v} rest -> v.Ok.when (k.EQ key) (else more rest))
+  more l                := l ? [] => None | => {k v} rest -> v.Ok.when (k.EQ key) (else more rest)
 
 mDrop m key             := m.more
-  more l                := l.-| ({k v} rest -> (unless (k.EQ key) (+> {k, v})) (more rest))
+  more l                := l ? => {k v} rest -> (unless (k.EQ key) (+> {k, v})) (more rest)
 
 mWith m key value       := +> {key, value} (m.mDrop key)
 
-mHasKeyWhere m isMatch  := m.hasSome (Tuple (k v -> k.isMatch))
-mHasValWhere m isMatch  := m.hasSome (Tuple (k v -> v.isMatch))
+mHasKeyWhere m isMatch  := m.hasSome ({k v} -> k.isMatch)
+mHasValWhere m isMatch  := m.hasSome ({k v} -> v.isMatch)

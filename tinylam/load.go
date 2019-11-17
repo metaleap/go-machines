@@ -126,7 +126,7 @@ func (me *ctxParse) parseModule(src string) map[string]Expr {
 		}
 		if nonempty := (len(lines[i]) > 0); i == 0 || (nonempty && lines[i][0] != ' ' && lines[i][0] != '\t') {
 			if topdefname, topdefbody, firstln := me.parseTopDef(lines, i, last); topdefname != "" && topdefbody != nil {
-				if module[topdefname] != nil || topdefname == "_" || strings.IndexByte(topdefname, '.') >= 0 || strings.IndexByte(topdefname, '?') >= 0 {
+				if module[topdefname] != nil || topdefname == "_" || strings.IndexByte(topdefname, '.') >= 0 {
 					panic("in '" + me.curModule.name + "', line " + strconv.Itoa(i+1) + ": illegal or duplicate global def name '" + topdefname + "' in:\n" + firstln)
 				}
 				module[topdefname] = topdefbody
@@ -154,7 +154,7 @@ func (me *ctxParse) parseTopDef(lines []string, idxStart int, idxEnd int) (topDe
 			} else if defsig := strings.Fields(lhs); firstLn == "" {
 				firstLn, topDefName, loc.srcLocTopDefName, topdefargs = lnorig, defsig[0], defsig[0], defsig[1:]
 				topDefBody = me.parseExpr(rhs, lnorig, loc)
-			} else if localname := defsig[0]; localname == "_" || strings.IndexByte(localname, '.') >= 0 || strings.IndexByte(localname, '?') >= 0 {
+			} else if localname := defsig[0]; localname == "_" || strings.IndexByte(localname, '.') >= 0 {
 				panic(loc.locStr() + "illegal  local def name '" + localname + "' in:\n" + lnorig)
 			} else {
 				localbody := me.hoistArgs(me.parseExpr(rhs, lnorig, loc), defsig[1:])
