@@ -6,7 +6,7 @@
 
 Bool        := True | False
 Could       := Have _ | None
-Verdict     := Yay _ | Nay _
+Result      := Yay _ | Nay _
 Tuple       := Pair fst snd
 List        := ListEnd | ListLink _ _
 
@@ -23,7 +23,7 @@ or b1 b2    := b1 True b2
 xor b1 b2   := b1 b2.not b2
 
 not         := _ False True
-not·        := <· not
+not·        := ·· not
 
 if          := same
 else        := same
@@ -40,7 +40,7 @@ lEQ v1 v2   := or (v1.LT v2) (v1.EQ v2)
 
 
 
-// helper for REPL sessions: given a Could or Verdict, force-crashes for the
+// helper for REPL sessions: given a Could or Result, force-crashes for the
 // failure case or extracts and returns the contained result of the success case
 !! := _ same ()
 
@@ -54,10 +54,7 @@ lEQ v1 v2   := or (v1.LT v2) (v1.EQ v2)
 <> fn a1 a2 := fn a2 a1
 
 // compose right to left
-<· f2 f1 a  := f2 (f1 a)
-
-// compose left to right
-·> f1 f2 a  := f2 (f1 a)
+·· f2 f1 a  := f2 (f1 a)
 
 // see std.num.sum or std.num.product for the point of this =)
 ** f args   := args.>-.forth args.-< f

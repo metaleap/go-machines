@@ -149,8 +149,12 @@ func (me *ctxParse) parseTopDef(lines []string, idxStart int, idxEnd int) (topDe
 	for i, ln := range lines[idxStart:idxEnd] {
 		if ln = strings.TrimSpace(ln); ln != "" {
 			lnorig, loc := ln, &nodeLocInfo{me.curModule.name, topDefName, 1 + i + idxStart}
-			for idx := strings.IndexByte(ln, '\''); idx >= 0 && (idx+3) <= len(ln); idx = strings.IndexByte(ln, '\'') {
-				ln = ln[:idx] + " " + strconv.FormatUint(uint64(ln[idx+1]), 10) + " " + ln[idx+3:]
+			for idx := strings.IndexByte(ln, '\''); idx >= 0 && idx < (len(ln)-1); idx = strings.IndexByte(ln, '\'') {
+				if (idx+3) <= len(ln) && ln[idx+2] == '\'' {
+					ln = ln[:idx] + " " + strconv.FormatUint(uint64(ln[idx+1]), 10) + " " + ln[idx+3:]
+				} else {
+					panic(loc.locStr() + "bad quoted-byte-literal " + ln[idx:idx+2] + " in line:\n" + lnorig)
+				}
 			}
 			ln = me.extractBrackets(loc, ln, lnorig, 0)
 			if idx := strings.Index(ln, ":="); idx < 0 {
@@ -473,7 +477,7 @@ func (me *Prog) preResolveExprs(expr Expr, topDefQName string, topDefBody Expr) 
 					}
 				}
 				if topdefbody == nil {
-					panic("in '" + topDefQName + "', line " + strconv.Itoa(it.srcLocLineNr) + ": name '" + it.NameVal + "' unresolvable")
+					panic("in '" + topDefQName + "', line " + strconv.Itoa(it.srcLocLineNr) + ": name '" + it.NameVal + "' unresolvable in:\n" + topDefBody.String())
 				} else if it.NameVal == topDefQName {
 					panic(it.locStr() + "NEW BUG in `Prog.preResolveExprs` for top-level def '" + it.NameVal + "' recursion")
 				} else if name, _ := topdefbody.(*ExprName); name != nil {
