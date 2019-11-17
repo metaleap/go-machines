@@ -20,11 +20,14 @@ not·      := <· not
 
 if        := same
 else      := same
+when      := <> if
 
 nEQ v1 v2 := not (v1.EQ v2)
 gEQ v1 v2 := or (v1.GT v2) (v1.EQ v2)
 lEQ v1 v2 := or (v1.LT v2) (v1.EQ v2)
 
+
+unless b  := b same
 
 
 

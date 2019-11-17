@@ -1,2 +1,2 @@
-main args   := if (! args) (ERR errmsg) (num.factorial (num.parseUnsigned (args.-<)))
-  errmsg    := "missing: int arg to factorial"
+main args   := args ? => fac | [] => ERR "missing: int arg to factorial"
+  fac arg _ := num.factorial (num.parseUnsigned arg)

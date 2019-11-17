@@ -195,23 +195,31 @@ func (me *ctxParse) parseExpr(src string, locHintLn string, locInfo *nodeLocInfo
 				mcases := make(map[string]string, len(scases))
 				for _, scase := range scases {
 					scase = strings.TrimSpace(scase)
-					if idxcol := strings.Index(scase, "=>"); idxcol > 0 {
+					if idxcol := strings.Index(scase, "=>"); idxcol < 0 {
+						panic(locInfo.locStr() + "for scrutinizing `" + tname + "`, expected `=>` in case:\n" + scase)
+					} else {
 						casename := strings.TrimSpace(scase[:idxcol])
 						if tname == StdRequiredDefs_list {
 							if emptysquarebrackets, ok := me.curTopDef.bracketsSquares[casename]; ok && len(emptysquarebrackets) == 0 {
 								casename = StdRequiredDefs_listNil
-							} else if casename == "+>" || casename == "_" || (ok && emptysquarebrackets == ",") {
+							} else if ok && emptysquarebrackets == "," {
 								casename = StdRequiredDefs_listCons
 							}
 						}
 						mcases[casename[strings.LastIndexByte(casename, '.')+1:]] = strings.TrimSpace(scase[idxcol+2:])
-					} else {
-						panic(locInfo.locStr() + "for scrutinizing `" + tname + "`, expected `:` in case:\n" + scase)
 					}
+				}
+				if tname == StdRequiredDefs_list && mcases[StdRequiredDefs_listCons] == "" && mcases[""] != "" {
+					mcases[StdRequiredDefs_listCons[strings.LastIndexByte(StdRequiredDefs_listCons, '.')+1:]] = mcases[""]
+					delete(mcases, "")
 				}
 				for _, ctorname := range ctors {
 					if mcases[ctorname] == "" {
-						panic(locInfo.locStr() + "for scrutinizing `" + tname + "`, a case for `" + ctorname + "` is required")
+						if tname == StdRequiredDefs_list && (ctorname == StdRequiredDefs_listNil || ctorname == StdRequiredDefs_listNil[strings.IndexByte(StdRequiredDefs_listNil, '.')+1:]) {
+							mcases[ctorname] = StdRequiredDefs_listNil
+						} else {
+							panic(locInfo.locStr() + "for scrutinizing `" + tname + "`, a case for `" + ctorname + "` is required")
+						}
 					}
 				}
 				if len(mcases) != len(ctors) {
@@ -246,15 +254,22 @@ func (me *ctxParse) parseExprToks(toks []string, locHintLn string, locInfo *node
 			}
 		}
 		if args := toks[:lamsplit]; lamsplit > 0 {
-			if tupdtor := strings.TrimSpace(me.curTopDef.bracketsCurlies[toks[0]]); tupdtor != "" && lamsplit == 1 {
-				me.curTopDef.bracketsParens["__"+toks[0]] = tupdtor + " -> " + strings.Join(toks[lamsplit+1:], " ")
-				args[0], toks = toks[0]+"__", []string{toks[0] + "__", "->", toks[0] + "__", "__" + toks[0]}
-			} else {
-				for i, tok := range toks[:lamsplit] {
-					if me.curTopDef.bracketsCurlies[tok] == "" && tok[0] == '/' {
-						me.counter, toks[i] = me.counter+1, "//"+strconv.Itoa(i)+"//"+strconv.Itoa(me.counter)
+			tupdtorpos := -1
+			for i, tok := range toks[:lamsplit] {
+				if "" != strings.TrimSpace(me.curTopDef.bracketsCurlies[tok]) {
+					if tupdtorpos >= 0 {
+						panic(locInfo.locStr() + "no multiple tuple-destructors per single lambda please:\n" + locHintLn)
 					}
+					tupdtorpos = i
+				} else if tok[0] == '/' {
+					me.counter, toks[i] = me.counter+1, "//"+strconv.Itoa(i)+"//"+strconv.Itoa(me.counter)
 				}
+			}
+			if tupdtorpos >= 0 {
+				tupdtor := me.curTopDef.bracketsCurlies[toks[tupdtorpos]]
+				me.curTopDef.bracketsParens["__"+toks[tupdtorpos]] = tupdtor + " -> " + strings.Join(toks[lamsplit+1:], " ")
+				toks = append(toks[:lamsplit+1], toks[tupdtorpos]+"__", "__"+toks[tupdtorpos])
+				args[tupdtorpos], toks[tupdtorpos] = toks[tupdtorpos]+"__", toks[tupdtorpos]+"__"
 			}
 			expr = me.hoistArgs(me.parseExprToks(toks[lamsplit+1:], locHintLn, locInfo), args)
 		} else if args = make([]string, islambda); islambda > 0 {
