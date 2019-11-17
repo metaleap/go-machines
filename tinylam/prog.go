@@ -26,16 +26,16 @@ func (me *Prog) RunAsMain(mainFuncExpr Expr, osProcArgs []string) (ret Value) {
 	for fn, _ := mainFuncExpr.(*ExprFunc); fn != nil; fn, _ = fn.Body.(*ExprFunc) {
 
 		if fn.ArgName == "args" {
-			expr2eval = fillarg(me.newListOfStrs(loc, osProcArgs))
+			expr2eval = fillarg(me.newListOfStrs(false, loc, osProcArgs))
 
 		} else if fn.ArgName == "env" {
-			expr2eval = fillarg(me.newListOfStrs(loc, os.Environ()))
+			expr2eval = fillarg(me.newListOfStrs(false, loc, os.Environ()))
 
 		} else if fn.ArgName == "stdin" {
 			if stdin, err := ioutil.ReadAll(os.Stdin); err != nil {
 				panic(err)
 			} else {
-				expr2eval = fillarg(me.newStr(loc, string(stdin)))
+				expr2eval = fillarg(me.newStr(false, loc, string(stdin)))
 			}
 
 		} else {
@@ -45,16 +45,16 @@ func (me *Prog) RunAsMain(mainFuncExpr Expr, osProcArgs []string) (ret Value) {
 	return me.Value(me.Eval(expr2eval, nil))
 }
 
-func (me *Prog) newStr(loc *nodeLocInfo, str string) Expr {
-	return me.newList(loc, len(str), func(i int) Expr { return &ExprLitNum{loc, int(str[i])} })
+func (me *Prog) newStr(forceNames bool, loc *nodeLocInfo, str string) Expr {
+	return me.newList(forceNames, loc, len(str), func(i int) Expr { return &ExprLitNum{loc, int(str[i])} })
 }
 
-func (me *Prog) newList(loc *nodeLocInfo, length int, next func(int) Expr) (list Expr) {
+func (me *Prog) newList(forceNames bool, loc *nodeLocInfo, length int, next func(int) Expr) (list Expr) {
 	cons := me.TopDefs[StdRequiredDefs_listCons]
-	if cons == nil {
+	if cons == nil || forceNames {
 		cons = &ExprName{loc, StdRequiredDefs_listCons, 0}
 	}
-	if list = me.TopDefs[StdRequiredDefs_listNil]; list == nil {
+	if list = me.TopDefs[StdRequiredDefs_listNil]; list == nil || forceNames {
 		list = &ExprName{loc, StdRequiredDefs_listNil, 0}
 	}
 	for i := length - 1; i >= 0; i-- {
@@ -63,8 +63,8 @@ func (me *Prog) newList(loc *nodeLocInfo, length int, next func(int) Expr) (list
 	return
 }
 
-func (me *Prog) newListOfStrs(loc *nodeLocInfo, vals []string) Expr {
-	return me.newList(loc, len(vals), func(i int) Expr { return me.newStr(loc, vals[i]) })
+func (me *Prog) newListOfStrs(forceNames bool, loc *nodeLocInfo, vals []string) Expr {
+	return me.newList(forceNames, loc, len(vals), func(i int) Expr { return me.newStr(forceNames, loc, vals[i]) })
 }
 
 func (me *Prog) value(it Value) Value {

@@ -288,7 +288,7 @@ func (me *ctxParse) parseExprToks(toks []string, locHintLn string, locInfo *node
 		}
 	} else if subexpr, ok := me.curTopDef.bracketsParens[tok]; ok {
 		if subexpr = strings.TrimSpace(subexpr); subexpr == "" {
-			expr = &ExprCall{locInfo, &ExprName{locInfo, "ERR", int(instrERR)}, &ExprName{locInfo, "__msgPanic", 0}}
+			expr = &ExprCall{locInfo, &ExprName{locInfo, "ERR", int(instrERR)}, me.prog.newStr(true, locInfo, "forced crash via `()`!")}
 		} else {
 			expr = me.parseExpr(subexpr, locHintLn, locInfo)
 		}

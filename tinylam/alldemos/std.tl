@@ -1,4 +1,9 @@
 
+// pseudo sum types: are not really "type-checked" but help signify intents
+// and data flows, and create additional representative constructor funcs
+// Scott-encoding these, plus allow for case-scrutinizing syntax-sugar with
+// constructor exhaustiveness checked.
+
 Bool      := True | False
 Maybe     := Ok value | None
 Verdict   := Neat neat | Weak weak
@@ -7,9 +12,11 @@ List      := ListEnd | ListLink h (List t)
 
 
 
+// I combinator aka 'id' / identity
+same it   := it
 
-same it   := it   // I combinator aka 'id' / identity
-ever      := True // K combinator aka 'konst'
+// K combinator aka 'konst'
+ever      := True
 
 and b1 b2 := b1 b2 False
 or b1 b2  := b1 True b2
@@ -20,14 +27,16 @@ not·      := <· not
 
 if        := same
 else      := same
+
+// when is like `if` with its first 2 args flipped, allowing for handy dot-notation
+// where sensible: `dis.when foo (else dat)` equiv. to `if foo dis (else dat)`
 when      := <> if
+
+
 
 nEQ v1 v2 := not (v1.EQ v2)
 gEQ v1 v2 := or (v1.GT v2) (v1.EQ v2)
 lEQ v1 v2 := or (v1.LT v2) (v1.EQ v2)
-
-
-unless b  := b same
 
 
 
@@ -47,5 +56,3 @@ unless b  := b same
 
 // see std.num.sum or std.num.product for the point of this =)
 ** f args  := args.>-.forth args.-< f
-
-__msgPanic  := "forced crash via `()`"

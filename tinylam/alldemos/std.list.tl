@@ -111,6 +111,7 @@ mGet m key              := m.more
 
 mDrop m key             := m.more
   more l                := l ? => {k v} rest -> (unless (k.EQ key) (+> {k, v})) (more rest)
+  unless                := _ same
 
 mWith m key value       := +> {key, value} (m.mDrop key)
 
