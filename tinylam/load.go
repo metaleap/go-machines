@@ -77,7 +77,13 @@ func (me *ctxParse) gatherPseudoSumTypesAndBasedOnTheirDefsAppendToSrcs(moduleSr
 			if idx := strings.Index(ln, ":="); idx > 0 && !strings.Contains(ln, " -> __") {
 				if tparts, cparts := strings.Fields(ln[:idx]), strings.Split(me.extractBrackets(nil, strings.TrimSpace(ln[idx+2:]), ln, 1), " | "); len(tparts) == 1 && len(cparts) > 0 && len(cparts[0]) > 0 {
 					lines[i] = "//" + lines[i]
-					for _, cpart := range cparts {
+					for i, cpart := range cparts {
+						cpart = " " + cpart + " "
+						for u, underscore := 0, strings.Index(cpart, " _ "); underscore > 0; u, underscore = u+1, strings.Index(cpart, " _ ") {
+							cpart = cpart[:underscore] + " __" + strings.ToLower(tparts[0]) + strconv.Itoa(u) + "__" + cpart[underscore+2:]
+						}
+						cpart = strings.TrimSpace(cpart)
+						cparts[i] = cpart
 						str := cpart + " :="
 						for _, ctorstr := range cparts {
 							ctorstr += " "

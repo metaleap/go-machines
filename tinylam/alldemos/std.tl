@@ -4,40 +4,45 @@
 // Scott-encoding these, plus allow for case-scrutinizing syntax-sugar with
 // constructor exhaustiveness checked.
 
-Bool      := True | False
-Maybe     := Ok value | None
-Verdict   := Neat neat | Weak weak
-Tuple     := Pair fst snd
-List      := ListEnd | ListLink h (List t)
+Bool        := True | False
+Could       := Have _ | None
+Verdict     := Yay _ | Nay _
+Tuple       := Pair fst snd
+List        := ListEnd | ListLink _ _
 
 
 
 // I combinator aka 'id' / identity
-same it   := it
+same it     := it
 
 // K combinator aka 'konst'
-ever      := True
+ever        := True
 
-and b1 b2 := b1 b2 False
-or b1 b2  := b1 True b2
-xor b1 b2 := b1 b2.not b2
+and b1 b2   := b1 b2 False
+or b1 b2    := b1 True b2
+xor b1 b2   := b1 b2.not b2
 
-not       := _ False True
-not·      := <· not
+not         := _ False True
+not·        := <· not
 
-if        := same
-else      := same
+if          := same
+else        := same
 
 // when is like `if` with its first 2 args flipped, allowing for handy dot-notation
 // where sensible: `dis.when foo (else dat)` equiv. to `if foo dis (else dat)`
-when      := <> if
+when        := <> if
 
 
 
-nEQ v1 v2 := not (v1.EQ v2)
-gEQ v1 v2 := or (v1.GT v2) (v1.EQ v2)
-lEQ v1 v2 := or (v1.LT v2) (v1.EQ v2)
+nEQ v1 v2   := not (v1.EQ v2)
+gEQ v1 v2   := or (v1.GT v2) (v1.EQ v2)
+lEQ v1 v2   := or (v1.LT v2) (v1.EQ v2)
 
+
+
+// helper for REPL sessions: given a Could or Verdict, force-crashes for the
+// failure case or extracts and returns the contained result of the success case
+!! := _ same ()
 
 
 
@@ -55,4 +60,4 @@ lEQ v1 v2 := or (v1.LT v2) (v1.EQ v2)
 ·> f1 f2 a  := f2 (f1 a)
 
 // see std.num.sum or std.num.product for the point of this =)
-** f args  := args.>-.forth args.-< f
+** f args   := args.>-.forth args.-< f

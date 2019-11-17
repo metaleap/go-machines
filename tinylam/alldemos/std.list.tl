@@ -34,7 +34,7 @@ whereNot list isMatch   := list.where (not· isMatch)
 without list item       := list.where (nEQ item)
 
 findWhere list isMatch  := list.more
-  more l                := l ? [] => None | => item rest -> item.Ok.when item.isMatch (else more rest)
+  more l                := l ? [] => None | => item rest -> item.Have.when item.isMatch (else more rest)
 
 countWhere list isMatch := list.more
   more l                := l ? [] => 0 | => item rest -> (check item.isMatch) (more rest)
@@ -74,7 +74,7 @@ indices list            := list.more 0
 
 brokenUpOn list isMatch := list.more []
   more l accum          := l ? [] => None | => ok more accum
-  ok cont acc item rest := if item.isMatch (Ok {acc, rest}) (else rest.cont (concat acc [item]))
+  ok cont acc item rest := if item.isMatch (Have {acc, rest}) (else rest.cont (concat acc [item]))
 
 pairedUpWith list list2 := list ? => item1 rest1 -> list2 ? => result item1 rest1
   result i1 r1 i2 r2    := +> {i1, i2} (pairedUpWith r1 r2)
@@ -83,7 +83,7 @@ interspersed list value := list ? => more False
   more useval item rest := value.useval (item.+> (rest ? => more +>))
 
 splitUpOn list isMatch  := list ? => _ _ -> list.more
-  more l                := (l.brokenUpOn isMatch) Maybe? Ok => ok more | None => [l]
+  more l                := (l.brokenUpOn isMatch) Could? Have => ok more | None => [l]
   ok cont               := {left right} -> left.+> (cont right)
 
 joinedVia list sep      := concat.** (list.interspersed sep)
@@ -107,7 +107,7 @@ reversed list           := more [] list
   more acc l            := l ? [] => acc | => item rest -> more (item.+> acc) rest
 
 mGet m key              := m.more
-  more l                := l ? [] => None | => {k v} rest -> v.Ok.when (k.EQ key) (else more rest)
+  more l                := l ? [] => None | => {k v} rest -> v.Have.when (k.EQ key) (else more rest)
 
 mDrop m key             := m.more
   more l                := l ? => {k v} rest -> (unless (k.EQ key) (+> {k, v})) (more rest)
