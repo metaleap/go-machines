@@ -177,12 +177,12 @@ func (me *Prog) Eval(expr Expr, env Values) Value {
 			panic(it.locStr() + "not callable: `" + it.Callee.String() + "`, which equates to `" + callee.String() + "`, in: " + it.String())
 		}
 		var argval Value
-		if closure.argDrop {
-			argval = nil // dummy val for the arg that WILL be discarded given the selector we're in
-		} else if me.LazyEval {
-			argval = &valThunk{val: func(set *valThunk) Value { ret := me.Eval(it.CallArg, env); set.val = ret; return ret }}
-		} else {
-			argval = me.Eval(it.CallArg, env)
+		if !closure.argDrop {
+			if me.LazyEval {
+				argval = &valThunk{val: func(set *valThunk) Value { ret := me.Eval(it.CallArg, env); set.val = ret; return ret }}
+			} else {
+				argval = me.Eval(it.CallArg, env)
+			}
 		}
 		if closure.instr < 0 {
 			closure.instr, closure.env = -closure.instr, append(closure.env, argval) // return &valClosure{instr: -closure.instr, env: append(closure.env.Copy(), argval)}

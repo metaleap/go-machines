@@ -47,7 +47,7 @@ lEQ v1 v2     := or (v1.LT v2) (v1.EQ v2)
 
 // helper for REPL sessions: given a Could or Result, force-crashes for the
 // failure case or extracts and returns the contained result of the success case
-!!            := _ same ()
+?!            := _ same ()
 
 
 
