@@ -1,5 +1,5 @@
 
-Token             := Ident | NumLit | StrLit | SepComma | SepColon | CurlyOpen | CurlyClose | SquareOpen | SquareClose
+Token             := Ident _ | NumLit _ | StrLit _ | Sep commaBool | Bracket openBool curlyBool
 Value             := Null | Boolean _ | Int _ | Str _ | Arr (List _) | Obj (List (Pair k v))
 
 tokenized src     := src.more
