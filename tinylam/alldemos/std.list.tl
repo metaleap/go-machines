@@ -67,6 +67,10 @@ deduped list            := list.more
 
 last list               := list.>- ? [] => list.-< | => _ _ -> last list.>-
 
+last2 list              := list ? => item rest -> (rest ? => item2 rest2 -> (rest2 ? [] => [item, item2] | =>  _ _ -> last2 rest))
+
+sansLast list           := list ? => item rest -> (rest ? => _ _ -> item.+> (sansLast rest))
+
 indexed list            := list.more 0
   more l i              := l ? => item rest -> +> {i, item} (more rest i.incr)
 
