@@ -1,26 +1,26 @@
 
--< list                 := list (ERR "forgot nil check before -<") True
->- list                 := list (ERR "forgot nil check before >-") False
+-< list                 := list ? [] => ERR "forgot nil check before -<" | => True
+>- list                 := list ? [] => ERR "forgot nil check before >-" | => False
 +>                      := ListLink
-! list                  := list True (_ _ -> False)
+! list                  := list ? [] => True | => _ _ -> False
 
-len list                := list 0 (_ rest -> incr (len rest))
+len list                := list ? [] => 0 | => _ rest -> incr (len rest)
 
-at list i               := if (EQ 0 i) list.-< (else at list.>- i.decr)
+at list i               := if (i.EQ 0) list.-< (else at list.>- i.decr)
 
 each list fn            := list.more
   more l                := l ? => item rest -> item.fn.+> (more rest)
 
 slice list start length := take (list.drop start) length
 
-drop list n             := if (EQ 0 n) list (else drop list.>- n.decr)
+drop list n             := if (n.EQ 0) list (else drop list.>- n.decr)
 
 dropWhile list isMatch  := list.more
   more l                := l ? => item rest -> if item.isMatch (more rest) (else l)
 
 dropUntil list isMatch  := list.dropWhile isMatch.not·
 
-take list n             := if (EQ 0 n) [] (else list.-<.+> (take list.>- n.decr))
+take list n             := if (n.EQ 0) [] (else list.-<.+> (take list.>- n.decr))
 
 takeUntil list isMatch  := list.more
   more l                := l ? => item rest -> item.isMatch [] (item.+> (more rest))
@@ -119,6 +119,3 @@ mDrop m key             := m.more
   unless                := _ same
 
 mWith m key value       := +> {key, value} (m.mDrop key)
-
-mHasKeyWhere m isMatch  := m.hasSome ({k v} -> k.isMatch)
-mHasValWhere m isMatch  := m.hasSome ({k v} -> v.isMatch)

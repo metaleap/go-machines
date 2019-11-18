@@ -3,6 +3,7 @@ Token := TSepColon | TSepComma | TBracketSq _ | TBracketCy _ | TNumLit _ | TStrL
 Value := VNull | VBoolean _ | VInt _ | VStr _ | VArr (List _) | VObj (List (Pair k v))
 
 
+
 parsed src        := src ? [] => Nay "empty input" | => src.tokenized.parse
   parse tok rest  := tok.+> rest
 
@@ -10,6 +11,8 @@ parsed src        := src ? [] => Nay "empty input" | => src.tokenized.parse
   parsenum tok    := (num.parseSigned tok) Result? Nay => Nay | Yay => n -> Yay (VInt n)
   parsestr tok    := tok ? => quotemark rest -> Yay rest.sansLast // caution, not handling escapes for now..
   parsearr        := []
+
+
 
 tokenized src     := src ? => more
   more chr rest   := (simple.cases chr) Could? Have => +>.<> (tokenized rest) | None => others chr rest
