@@ -27,6 +27,7 @@ var (
 
 type Expr interface {
 	locInfo() *nodeLocInfo
+	namesDeclared() []string
 	replaceName(string, string) int
 	rewriteName(string, Expr) Expr
 	String() string
@@ -37,6 +38,7 @@ type ExprLitNum struct {
 	NumVal int
 }
 
+func (me *ExprLitNum) namesDeclared() []string        { return nil }
 func (me *ExprLitNum) rewriteName(string, Expr) Expr  { return me }
 func (me *ExprLitNum) replaceName(string, string) int { return 0 }
 func (me *ExprLitNum) String() string                 { return strconv.FormatInt(int64(me.NumVal), 10) }
@@ -47,6 +49,7 @@ type ExprName struct {
 	idxOrInstr int // if <0 then De Bruijn index, if >0 then instrCode
 }
 
+func (me *ExprName) namesDeclared() []string { return nil }
 func (me *ExprName) rewriteName(name string, with Expr) Expr {
 	if me.NameVal == name {
 		return with
@@ -69,6 +72,9 @@ type ExprCall struct {
 	CallArg Expr
 }
 
+func (me *ExprCall) namesDeclared() []string {
+	return append(me.Callee.namesDeclared(), me.CallArg.namesDeclared()...)
+}
 func (me *ExprCall) rewriteName(name string, with Expr) Expr {
 	me.Callee, me.CallArg = me.Callee.rewriteName(name, with), me.CallArg.rewriteName(name, with)
 	return me
@@ -88,6 +94,7 @@ type ExprFunc struct {
 	numArgUses int
 }
 
+func (me *ExprFunc) namesDeclared() []string { return append(me.Body.namesDeclared(), me.ArgName) }
 func (me *ExprFunc) rewriteName(name string, with Expr) Expr {
 	me.Body = me.Body.rewriteName(name, with)
 	return me

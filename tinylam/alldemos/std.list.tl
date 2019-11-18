@@ -2,6 +2,7 @@
 -< list                 := list (ERR "forgot nil check before -<") True
 >- list                 := list (ERR "forgot nil check before >-") False
 +>                      := ListLink
+! list                  := list True (_ _ -> False)
 
 len list                := list 0 (_ rest -> incr (len rest))
 
@@ -73,8 +74,8 @@ indices list            := list.more 0
   more l i              := l ? => _ rest -> i.+> (more rest i.incr)
 
 brokenUpOn list isMatch := list.more []
-  more l accum          := l ? [] => None | => ok more accum
-  ok cont acc item rest := if item.isMatch (Have {acc, rest}) (else rest.cont (concat acc [item]))
+  more l accum          := l ? [] => {accum, []} | => ok more accum
+  ok cont acc item rest := if (isMatch acc item) {acc, item.+> rest} (else rest.cont (concat acc [item]))
 
 pairedUpWith list list2 := list ? => item1 rest1 -> list2 ? => result item1 rest1
   result i1 r1 i2 r2    := +> {i1, i2} (pairedUpWith r1 r2)
@@ -83,8 +84,8 @@ interspersed list value := list ? => more False
   more useval item rest := value.useval (item.+> (rest ? => more +>))
 
 splitUpOn list isMatch  := list ? => _ _ -> list.more
-  more l                := (l.brokenUpOn isMatch) Could? Have => ok more | None => [l]
-  ok cont               := {left right} -> left.+> (cont right)
+  more l                := (l.brokenUpOn (_ -> isMatch)) (andthen more)
+  andthen cont fst snd  := fst.+> (snd ? => _ rest -> rest.cont)
 
 joinedVia list sep      := concat.** (list.interspersed sep)
 

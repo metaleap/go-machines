@@ -33,15 +33,15 @@ else          := same
 // where sensible: `dis.when foo (else dat)` equiv. to `if foo dis (else dat)`
 when          := <> if
 
-// `unless` is another inverted `if` for occasional dot-notation convenience:
-// `foo.unless bar (then baz)` will be equivalent to `if (bar) baz (else foo)`
-unless vf chk := <> chk vf
-
 
 
 nEQ v1 v2     := not (v1.EQ v2)
 gEQ v1 v2     := or (v1.GT v2) (v1.EQ v2)
 lEQ v1 v2     := or (v1.LT v2) (v1.EQ v2)
+
+
+
+cases chks it := chks ? [] => None | => {chk ifso} rest -> it.chk (Have it.ifso) (cases rest it)
 
 
 

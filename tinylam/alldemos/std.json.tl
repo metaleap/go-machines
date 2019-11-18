@@ -1,15 +1,19 @@
 
-Token             := TIdent _ | TNumLit _ | TStrLit _ | TSep commaBool | TBracket openBool curlyBool
-Value             := VNull | VBoolean _ | VInt _ | VStr _ | VArr (List _) | VObj (List (Pair k v))
+Token := TSepColon | TSepComma | TBracketSq _ | TBracketCy _ | TNumLit _ | TStrLit _ | TIdent _
+Value := VNull | VBoolean _ | VInt _ | VStr _ | VArr (List _) | VObj (List (Pair k v))
 
-tokenized src     := src.more
-  more s          := s ? [] => None | => cur rest -> if (cur.iswhitespace) (more rest) (else None)
-  iswhitespace c  := or (and (c.LT 12) (c.GT 7)) (or (c.EQ 32) (c.EQ 13))
 
-parse src         := src ? [] => Nay "empty input" | => _ _ -> src.tryparse
-  tryparse s      := s.attempt [pnull, pbool, pnum]
-  attempt s trys  := trys ? [] => Nay (errmsg s) | => cur rest -> ((cur s) Could? Have => Yay | None => attempt s rest)
-  pnull toknull   := if (toknull.EQ "null") (Have VNull) (else None)
-  pbool tokb      := (tokb.EQ "true") (Have (VBoolean True)) ((tokb.EQ "false") (Have (VBoolean False)) None)
-  pnum toknum     := (num.parseSigned toknum) Result? Yay => ·· Have VInt | Nay => None
-  errmsg tokstr   := concat.** ["unrecognized token: `" , tokstr ,"`"]
+tokenized src     := src ? => more
+  more chr rest   := simple.cases chr Could? Have => +>.<> (tokenized rest) | None => others chr rest
+  simple          := [{EQ ',', TSepComma.ever}, {EQ '[', True.TBracketSq.ever}, {EQ ']', False.TBracketSq.ever}, {EQ '{', True.TBracketCy.ever}, {EQ '}', False.TBracketCy.ever}, {EQ ':', TSepColon.ever}]
+  others cur rest := cur.checknum (casenum cur rest) (cur.checkname (casename cur rest) (cur.checkstr (casestr cur rest) (tokenized rest)))
+  casenum c rest  := (rest.brokenUpOn (_ -> checknum.not·)) (fst snd -> +> (TNumLit (c.+> fst)) (tokenized snd))
+  casename c rest := (rest.brokenUpOn (_ -> checkname.not·)) (fst snd -> +> (TIdent (c.+> fst)) (tokenized snd))
+  casestr c rest  := (rest.brokenUpOn (a c´ -> and c´.checkstr (a ? [] => True | => _ _ -> nEQ 92 a.last))) (fst snd -> +> (TStrLit (concat (c.+> fst) [34])) (snd ? => _ r -> tokenized r))
+  checknum chr    := or (chr.EQ '-') (and (chr.GT 47) (chr.LT 58))
+  checkname chr   := and (chr.GT 96) (chr.LT 123)
+  checkstr chr    := chr.EQ 34
+
+
+parse src         := src ? [] => Nay "empty input" | => _ _ -> src.tokenized.tryparse
+  tryparse toks   := toks

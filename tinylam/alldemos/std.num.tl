@@ -19,7 +19,7 @@ toString n      := if (n.LT 0) (+> '-' n.abs.tostring) (else n.tostring)
   digitchar d   := [d.ADD 48] // d is always >= 0 and < 10, char-code for '0' is 48..
 
 parseSigned str := str ? [] => Nay "empty input" | => unsign
-  unsign c rest := parsed (str.unless (c.EQ '-') (then rest))
+  unsign c rest := parsed (if (c.EQ '-') rest (else str))
   parsed s      := s.parseUnsigned Result? Nay => Nay | Yay => ok
   ok numval     := Yay (numval.neg.when (str.-<.EQ '-') (else numval))
 
