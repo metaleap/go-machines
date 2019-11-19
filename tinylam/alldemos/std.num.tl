@@ -18,12 +18,12 @@ toString n      := if (n.LT 0) (+> '-' n.abs.tostring) (else n.tostring)
   tostring i    := if (i.LT 10) i.digitchar (else concat (tostring (i.DIV 10)) (digitchar (i.MOD 10)))
   digitchar d   := [d.ADD 48] // d is always >= 0 and < 10, char-code for '0' is 48..
 
-parseSigned str := str ? [] => Nay "empty input" | => unsign
+parseSigned str := str ? [] => Nay "empty input" | .. => unsign
   unsign c rest := parsed (if (c.EQ '-') rest (else str))
   parsed s      := s.parseUnsigned Result? Nay => Nay | Yay => ok
   ok numval     := Yay (numval.neg.when (str.-<.EQ '-') (else numval))
 
-parseUnsigned s := s ? [] => Nay "empty input" | => _ _ -> checkresult
+parseUnsigned s := s ? [] => Nay "empty input" | .. => _ _ -> checkresult
   checkresult   := badchar Could? None => Yay finalresult | Have => bad -> Nay (bad.neg.+> " isn't between 0-9")
   badchar       := digits.findWhere (LT _ 0) // bad chars are marked thusly by `chartodigit`
   finalresult   := digits.more s.len.decr

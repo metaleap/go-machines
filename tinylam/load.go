@@ -46,7 +46,7 @@ func (me *Prog) ParseModules(modules map[string][]byte) {
 	ctx := ctxParse{prog: me, srcs: modules}
 	ctx.curTopDef.bracketsParens, ctx.curTopDef.bracketsCurlies, ctx.curTopDef.bracketsSquares = make(map[string]string, 16), make(map[string]string, 2), make(map[string]string, 4) // reset every top-def, potentially needed earlier for type-spec top-defs
 	if me.NumEvalSteps, me.TopDefs = 0, map[string]Expr{}; me.pseudoSumTypes == nil {
-		me.pseudoSumTypes = map[string][]string{}
+		me.pseudoSumTypes = map[string][]pseudoSumTypeCtor{}
 	}
 
 	for modulename, modulesrc := range modules {
@@ -95,7 +95,7 @@ func (me *ctxParse) gatherPseudoSumTypesAndBasedOnTheirDefsAppendToSrcs(moduleSr
 					tqname, strcases := me.curModule.name+"."+tparts[0], ""
 					for cidx, cpart := range cparts {
 						parts := strings.Fields(cpart)
-						me.prog.pseudoSumTypes[tqname] = append(me.prog.pseudoSumTypes[tqname], parts[0])
+						me.prog.pseudoSumTypes[tqname] = append(me.prog.pseudoSumTypes[tqname], pseudoSumTypeCtor{parts[0], len(parts) - 1})
 						if strcases += " caseOf" + parts[0]; len(parts) > 1 {
 							for _, ctorarg := range parts[1:] {
 								if strdtor := ctorarg + "Of" + tparts[0] + parts[0]; len(ctorarg) > 1 && ctorarg[0] != '_' {
@@ -210,21 +210,23 @@ func (me *ctxParse) parseExpr(src string, locHintLn string, locInfo *nodeLocInfo
 					} else {
 						casename := strings.TrimSpace(scase[:idxcol])
 						if tname == StdRequiredDefs_list {
-							if emptysquarebrackets, ok := me.curTopDef.bracketsSquares[casename]; ok && len(emptysquarebrackets) == 0 {
+							if casename == "" {
+								panic(locInfo.locStr() + "fallback/default empty-case not supported for scrutinizing `" + tname + "`")
+							} else if emptysquarebrackets, ok := me.curTopDef.bracketsSquares[casename]; ok && len(emptysquarebrackets) == 0 {
 								casename = StdRequiredDefs_listNil
-							} else if ok && emptysquarebrackets == "," {
+							} else if casename == ".." || (ok && emptysquarebrackets == ",") {
 								casename = StdRequiredDefs_listCons
 							}
 						}
 						mcases[casename[strings.LastIndexByte(casename, '.')+1:]] = strings.TrimSpace(scase[idxcol+2:])
 					}
 				}
-				for _, ctorname := range ctors {
-					if mcases[ctorname] == "" {
-						if tname == StdRequiredDefs_list && (ctorname == StdRequiredDefs_listNil || ctorname == StdRequiredDefs_listNil[strings.IndexByte(StdRequiredDefs_listNil, '.')+1:]) {
-							mcases[ctorname] = StdRequiredDefs_listNil
+				for _, ctor := range ctors {
+					if mcases[ctor.name] == "" {
+						if tname == StdRequiredDefs_list && (ctor.name == StdRequiredDefs_listNil || ctor.name == StdRequiredDefs_listNil[strings.IndexByte(StdRequiredDefs_listNil, '.')+1:]) {
+							mcases[ctor.name] = StdRequiredDefs_listNil
 						} else if mcases[""] == "" {
-							panic(locInfo.locStr() + "for scrutinizing `" + tname + "`, a case for `" + ctorname + "` is required")
+							panic(locInfo.locStr() + "for scrutinizing `" + tname + "`, a case for `" + ctor.name + "` is required")
 						}
 					}
 				}
@@ -232,10 +234,11 @@ func (me *ctxParse) parseExpr(src string, locHintLn string, locInfo *nodeLocInfo
 					panic(locInfo.locStr() + "for scrutinizing `" + tname + "`, expected " + strconv.Itoa(len(ctors)) + " cases but found (effectively) " + strconv.Itoa(len(mcases)) + ", in:\n" + src)
 				} else {
 					src = src[:pos] + " "
-					for _, ctorname := range ctors {
-						tmpname, casecode := "__case__of__"+ctorname, mcases[ctorname]
+					for _, ctor := range ctors {
+						tmpname, casecode := "__case__of__"+ctor.name, mcases[ctor.name]
 						if me.curTopDef.bracketsParens[tmpname] = casecode; casecode == "" {
-							me.curTopDef.bracketsParens[tmpname] = mcases[""]
+							println(locInfo.locStr()+ctor.name, ctor.arity)
+							me.curTopDef.bracketsParens[tmpname] = strings.Repeat("_ -> ", ctor.arity) + mcases[""]
 						}
 						src += " " + tmpname
 					}

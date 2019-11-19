@@ -17,7 +17,12 @@ type Prog struct {
 	exprBoolFalse        *ExprFunc
 	exprListNil          *ExprFunc
 	exprListConsCtorBody Expr
-	pseudoSumTypes       map[string][]string
+	pseudoSumTypes       map[string][]pseudoSumTypeCtor
+}
+
+type pseudoSumTypeCtor = struct {
+	name  string
+	arity int
 }
 
 func (me *Prog) RunAsMain(mainFuncExpr Expr, osProcArgs []string) (ret Value) {

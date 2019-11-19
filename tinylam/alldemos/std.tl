@@ -41,7 +41,7 @@ lEQ v1 v2       := or (v1.LT v2) (v1.EQ v2)
 
 
 
-cases chks it   := chks ? [] => None | => {chk ifso} rest -> it.chk (Have it.ifso) (cases rest it)
+cases chks it   := chks ? [] => None | .. => {chk ifso} rest -> it.chk (Have it.ifso) (cases rest it)
 
 
 
