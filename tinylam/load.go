@@ -277,9 +277,15 @@ func (me *ctxParse) parseExprToks(toks []string, locHintLn string, locInfo *node
 			}
 			if tupdtorpos >= 0 {
 				tupdtor := me.curTopDef.bracketsCurlies[toks[tupdtorpos]]
-				me.curTopDef.bracketsParens["__"+toks[tupdtorpos]] = tupdtor + " -> " + strings.Join(toks[lamsplit+1:], " ")
-				toks = append(toks[:lamsplit+1], toks[tupdtorpos]+"__", "__"+toks[tupdtorpos])
-				args[tupdtorpos], toks[tupdtorpos] = toks[tupdtorpos]+"__", toks[tupdtorpos]+"__"
+				if tupdsplit := strings.Fields(tupdtor); len(tupdsplit) > 1 {
+					if len(tupdsplit) > 2 {
+						me.curTopDef.bracketsCurlies[toks[tupdtorpos]+"//"] = strings.Join(tupdsplit[1:], " ")
+						tupdtor = tupdsplit[0] + " " + toks[tupdtorpos] + "//"
+					}
+					me.curTopDef.bracketsParens["__"+toks[tupdtorpos]] = tupdtor + " -> " + strings.Join(toks[lamsplit+1:], " ")
+					toks = append(toks[:lamsplit+1], toks[tupdtorpos]+"__", "__"+toks[tupdtorpos])
+					args[tupdtorpos], toks[tupdtorpos] = toks[tupdtorpos]+"__", toks[tupdtorpos]+"__"
+				}
 			}
 			expr = me.hoistArgs(me.parseExprToks(toks[lamsplit+1:], locHintLn, locInfo), args)
 		} else if args = make([]string, islambda); islambda > 0 {

@@ -87,13 +87,20 @@ pairedUpWith list list2   := list ? .. => item1 rest1 -> list2 ? .. => result it
 interspersed list value   := list ? .. => more False
   more useval item rest   := value.useval (item.+> (rest ? .. => more +>))
 
-lastWhere list isMatch    := list.lastwhere []
+breakOnLast list isMatch  := list.lastwhere []
   lastwhere l acc         := l ? [] => None | .. => item rest -> pick item rest acc (lastwhere rest (concat acc [item]))
   pick item rest acc ret  := ret Could? Have => Have | None => if (item.isMatch) (Have {item, acc, rest}) (else None)
 
-rewritten list            := list.more []
-  more l acc              := l ? [] => acc | .. => item rest -> more rest (((item.EQ ']') handle same) (item.+> acc))
-  handle acc              := acc
+breakOnFirst list isMatch := list.firstwhere []
+  firstwhere l acc        := l ? [] => None | .. => item rest -> (item.maybe acc rest) (else firstwhere rest (concat acc [item]))
+  maybe item acc rest     := if (item.isMatch) (Have {item, acc, rest})
+
+// eg. call:              rewritten   "foo[z,z,z]bar[x[z,z]y]baz"   (EQ ']')   (EQ '[')   (x -> concat (+> '(' (x.whereNot (EQ ','))) ")")
+// result:                "foo(zzz)bar(x(zz)y)baz"
+rewritten list d1 d2 re   := list.more
+  more l                  := l.breakOnFirst d1 Could? None => l | Have => handle more l
+  handle m l              := {it pref suff} -> pref.breakOnLast d2 Could? None => l | Have => handle´ m suff
+  handle´ m suff´         := {_ pref suff} -> m (concat (concat pref suff.re) suff´)
 
 splitUpOn list isMatch    := list ? .. => _ _ -> list.more
   more l                  := (l.brokenUpOn (_ -> isMatch)) (andthen more)
