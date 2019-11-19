@@ -11,8 +11,9 @@ parsed src        := src.tokenized ? [] => Nay "empty input" | => ··· handle 
   pident r t      := { r, (t.EQ "null") (Yay VNull) ((t.EQ "true") (Yay True.VBoolean) ((t.EQ "false") (Yay False.VBoolean) (Nay t))) }
   pnum r t        := { r, t.parseSigned Result? Nay => Nay | Yay => ·· Yay VInt }
   pstr r t        := { r, t ? [] => Nay t | => quotemark rest -> Yay rest.sansLast.VStr } // caution, not handling escapes for now..
-  parr p r t      := if (t.not) {[], Nay "]"} (else arrmore p r)
-    arrmore p r   := r ? [] => {r, Nay "array non-terminated"} | => {[], Nay "todo"}
+  parr p r t      := if (t.not) {[], Nay "]"} (else arr p r) // r is all that follows opening `[`
+    arr p ts      := ts ? [] => {[], Nay "array non-terminated"} | => arr´ p
+    arr´ p t r    := t Token? => _ ->  {[], Nay "todo"} | TSepColon => {[], Nay ":"} | TSepComma => {[], Nay ","}
 
   pobj p r t      := { r, Nay "notyet" }
 
