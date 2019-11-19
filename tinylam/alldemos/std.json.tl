@@ -5,17 +5,21 @@ Value := VNull | VBoolean _ | VInt _ | VStr _ | VArr (List _) | VObj (List (Pair
 
 
 parsed src        := src.tokenized ? [] => Nay "empty input" | => parse
-  parse tok rest  := Yay (tok.+> rest)
+  parse tok rest  := tok Token? TBracketSq => p rest parr | TBracketCy => p rest pobj | TNumLit => p rest pnum | TStrLit => p rest pstr | TIdent => p rest pident | => Nay "unexpected token"
+  p rest f tokval := handle (tokval.f rest)
+  handle          := {tail ret} -> tail ? [] => ret | => _ _ -> Nay "trailing tokens remaining after completed expression"
 
-  parseident tok  := (tok.EQ "null") (Yay VNull) ((tok.EQ "true") (Yay True.VBoolean) ((tok.EQ "false") (Yay False.VBoolean) (Nay tok)))
-  parsenum tok    := (num.parseSigned tok) Result? Nay => Nay | Yay => n -> Yay (VInt n)
-  parsestr tok    := tok ? [] => Nay tok | => quotemark rest -> Yay rest.sansLast // caution, not handling escapes for now..
-  parsearr        := []
+  pident t r      := { r, (t.EQ "null") (Yay VNull) ((t.EQ "true") (Yay True.VBoolean) ((t.EQ "false") (Yay False.VBoolean) (Nay t))) }
+  pnum t r        := { r, t.parseSigned Result? Nay => Nay | Yay => ·· Yay VInt }
+  pstr t r        := { r, t ? [] => Nay t | => quotemark rest -> Yay rest.sansLast.VStr } // caution, not handling escapes for now..
+  parr t r        := if (t.not) {[], Nay "unexpected: ]"} (else arrmore r)
+    arrmore r     := r ? [] => {r, Nay "array non-terminated"} | => (h t -> {r, Nay "todo"} ) // h Token? TBracketSq => op -> () | )
+  pobj t r        := { r, Nay "notyet" }
 
 
 
 tokenized src     := src ? => more
-  more chr rest   := (simple.cases chr) Could? Have => +>.<> (tokenized rest) | None => others chr rest
+  more chr rest   := (simple.cases chr) Could? Have => +> _ rest.tokenized | None => others chr rest
   simple          := [{EQ ',', TSepComma.ever}, {EQ '[', True.TBracketSq.ever}, {EQ ']', False.TBracketSq.ever}, {EQ '{', True.TBracketCy.ever}, {EQ '}', False.TBracketCy.ever}, {EQ ':', TSepColon.ever}]
   others c r      := c.checknum (casenum c r) (c.checkname (casename c r) (c.checkstr (casestr c r) (tokenized r)))
   casenum c rest  := (rest.brokenUpOn (_ -> checknum.not·)) (fst snd -> +> (TNumLit (c.+> fst)) (tokenized snd))

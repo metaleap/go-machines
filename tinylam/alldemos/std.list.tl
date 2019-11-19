@@ -77,7 +77,7 @@ indexed list              := list.more 0
 indices list              := list.more 0
   more l i                := l ? => _ rest -> i.+> (more rest i.incr)
 
-brokenUpOn list isMatch   := list.more []
+brokenUpOn list isMatch   := list.more [] // caution with isMatch, takes 2 args of which the 2nd is the running item (the 1st being the accumulated predecessors)
   more l accum            := l ? [] => {accum, []} | => ok more accum
   ok cont acc item rest   := if (isMatch acc item) {acc, item.+> rest} (else rest.cont (concat acc [item]))
 
