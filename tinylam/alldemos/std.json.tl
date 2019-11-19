@@ -4,17 +4,17 @@ Value := VNull | VBoolean _ | VInt _ | VStr _ | VArr (List _) | VObj (List (Pair
 
 
 
-parsed src        := src.tokenized ? [] => Nay "empty input" | => parse
-  parse tok rest  := tok Token? TBracketSq => p rest parr | TBracketCy => p rest pobj | TNumLit => p rest pnum | TStrLit => p rest pstr | TIdent => p rest pident | => Nay "unexpected token"
-  p rest f tokval := handle (tokval.f rest)
+parsed src        := src.tokenized ? [] => Nay "empty input" | => ··· handle parse
   handle          := {tail ret} -> tail ? [] => ret | => _ _ -> Nay "trailing tokens remaining after completed expression"
+  parse tok rest  := tok Token? TNumLit => pnum rest | TStrLit => pstr rest | TIdent => pident rest | TBracketSq => parr parse rest | TBracketCy => pobj parse rest | => {[], Nay "unexpected token"}
 
-  pident t r      := { r, (t.EQ "null") (Yay VNull) ((t.EQ "true") (Yay True.VBoolean) ((t.EQ "false") (Yay False.VBoolean) (Nay t))) }
-  pnum t r        := { r, t.parseSigned Result? Nay => Nay | Yay => ·· Yay VInt }
-  pstr t r        := { r, t ? [] => Nay t | => quotemark rest -> Yay rest.sansLast.VStr } // caution, not handling escapes for now..
-  parr t r        := if (t.not) {[], Nay "unexpected: ]"} (else arrmore r)
-    arrmore r     := r ? [] => {r, Nay "array non-terminated"} | => (h t -> {r, Nay "todo"} ) // h Token? TBracketSq => op -> () | )
-  pobj t r        := { r, Nay "notyet" }
+  pident r t      := { r, (t.EQ "null") (Yay VNull) ((t.EQ "true") (Yay True.VBoolean) ((t.EQ "false") (Yay False.VBoolean) (Nay t))) }
+  pnum r t        := { r, t.parseSigned Result? Nay => Nay | Yay => ·· Yay VInt }
+  pstr r t        := { r, t ? [] => Nay t | => quotemark rest -> Yay rest.sansLast.VStr } // caution, not handling escapes for now..
+  parr p r t      := if (t.not) {[], Nay "]"} (else arrmore p r)
+    arrmore p r   := r ? [] => {r, Nay "array non-terminated"} | => {[], Nay "todo"}
+
+  pobj p r t      := { r, Nay "notyet" }
 
 
 
