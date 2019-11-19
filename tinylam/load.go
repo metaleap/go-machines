@@ -219,26 +219,24 @@ func (me *ctxParse) parseExpr(src string, locHintLn string, locInfo *nodeLocInfo
 						mcases[casename[strings.LastIndexByte(casename, '.')+1:]] = strings.TrimSpace(scase[idxcol+2:])
 					}
 				}
-				if tname == StdRequiredDefs_list && mcases[StdRequiredDefs_listCons] == "" && mcases[""] != "" {
-					mcases[StdRequiredDefs_listCons[strings.LastIndexByte(StdRequiredDefs_listCons, '.')+1:]] = mcases[""]
-					delete(mcases, "")
-				}
 				for _, ctorname := range ctors {
 					if mcases[ctorname] == "" {
 						if tname == StdRequiredDefs_list && (ctorname == StdRequiredDefs_listNil || ctorname == StdRequiredDefs_listNil[strings.IndexByte(StdRequiredDefs_listNil, '.')+1:]) {
 							mcases[ctorname] = StdRequiredDefs_listNil
-						} else {
+						} else if mcases[""] == "" {
 							panic(locInfo.locStr() + "for scrutinizing `" + tname + "`, a case for `" + ctorname + "` is required")
 						}
 					}
 				}
-				if len(mcases) != len(ctors) {
+				if len(mcases) != len(ctors) && mcases[""] == "" {
 					panic(locInfo.locStr() + "for scrutinizing `" + tname + "`, expected " + strconv.Itoa(len(ctors)) + " cases but found (effectively) " + strconv.Itoa(len(mcases)) + ", in:\n" + src)
 				} else {
 					src = src[:pos] + " "
 					for _, ctorname := range ctors {
-						tmpname := "__case__of__" + ctorname
-						me.curTopDef.bracketsParens[tmpname] = mcases[ctorname]
+						tmpname, casecode := "__case__of__"+ctorname, mcases[ctorname]
+						if me.curTopDef.bracketsParens[tmpname] = casecode; casecode == "" {
+							me.curTopDef.bracketsParens[tmpname] = mcases[""]
+						}
 						src += " " + tmpname
 					}
 				}

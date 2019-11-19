@@ -1,2 +1,2 @@
 main args   := args ? => fac | [] => ERR "missing: int arg to factorial"
-  fac arg _ := (num.parseUnsigned arg) Result? Yay => num.factorial _ | Nay => ERR _
+  fac arg _ := arg.parseUnsigned Result? Yay => num.factorial | Nay => ERR

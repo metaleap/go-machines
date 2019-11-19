@@ -4,12 +4,12 @@ Value := VNull | VBoolean _ | VInt _ | VStr _ | VArr (List _) | VObj (List (Pair
 
 
 
-parsed src        := src ? [] => Nay "empty input" | => src.tokenized.parse
-  parse tok rest  := tok.+> rest
+parsed src        := src.tokenized ? [] => Nay "empty input" | => parse
+  parse tok rest  := Yay (tok.+> rest)
 
-  parsename tok   := (tok.EQ "null") (Yay VNull) ((tok.EQ "true") (Yay True.VBoolean) ((tok.EQ "false") (Yay False.VBoolean) (Nay tok)))
+  parseident tok  := (tok.EQ "null") (Yay VNull) ((tok.EQ "true") (Yay True.VBoolean) ((tok.EQ "false") (Yay False.VBoolean) (Nay tok)))
   parsenum tok    := (num.parseSigned tok) Result? Nay => Nay | Yay => n -> Yay (VInt n)
-  parsestr tok    := tok ? => quotemark rest -> Yay rest.sansLast // caution, not handling escapes for now..
+  parsestr tok    := tok ? [] => Nay tok | => quotemark rest -> Yay rest.sansLast // caution, not handling escapes for now..
   parsearr        := []
 
 

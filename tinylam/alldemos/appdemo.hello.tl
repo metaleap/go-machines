@@ -1,2 +1,2 @@
 main args := concat.** ["Hello ", name, "!"]
-  name    := args ? [] => "World" | => True
+  name    := args ? [] => "World" | => ever
