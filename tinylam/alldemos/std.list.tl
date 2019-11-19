@@ -134,3 +134,8 @@ mDrop m key               := m.more
   unless                  := _ same
 
 mWith m key value         := +> {key, value} (m.mDrop key)
+
+
+step s start max f        := countup start
+  countup i               := if (i.cmp max) [] (else +> i.f (countup (i.ADD s)))
+  cmp                     := if (s.LT 0) lEQ (else gEQ)
