@@ -95,11 +95,11 @@ breakOnFirst list isMatch := list.firstwhere []
   firstwhere l acc        := l ? [] => None | .. => item rest -> (item.maybe acc rest) (else firstwhere rest (concat acc [item]))
   maybe item acc rest     := if (item.isMatch) (Have {item, acc, rest})
 
-// eg. call:              rewritten   "foo[z,z,z]bar[x[z,z]y]baz"   (EQ ']')   (EQ '[')   (x -> concat (+> '(' (x.whereNot (EQ ','))) ")")
+// eg. call:              rewritten   "foo[z,z,z]bar[x[z,z]y]baz"   (EQ ']')   (EQ '[')   (it -> concat (+> '(' (it.whereNot (EQ ','))) ")")
 // result:                "foo(zzz)bar(x(zz)y)baz"
 rewritten list d1 d2 re   := list.more
   more l                  := l.breakOnFirst d1 Could? None => l | Have => handle more l
-  handle m l              := {it pref suff} -> pref.breakOnLast d2 Could? None => l | Have => handle´ m suff
+  handle m l              := {_ pref suff} -> pref.breakOnLast d2 Could? None => l | Have => handle´ m suff
   handle´ m suff´         := {_ pref suff} -> m (concat (concat pref suff.re) suff´)
 
 splitUpOn list isMatch    := list ? .. => _ _ -> list.more
