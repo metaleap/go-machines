@@ -87,6 +87,9 @@ pairedUpWith list list2   := list ? => item1 rest1 -> list2 ? => result item1 re
 interspersed list value   := list ? => more False
   more useval item rest   := value.useval (item.+> (rest ? => more +>))
 
+lastWhere list isMatch    := list ? [] => None | => item rest -> pick item (lastWhere rest isMatch)
+  pick item restresult    := restresult Could? Have => Have | None => if (item.isMatch) item.Have (else None)
+
 splitUpOn list isMatch    := list ? => _ _ -> list.more
   more l                  := (l.brokenUpOn (_ -> isMatch)) (andthen more)
   andthen cont fst snd    := fst.+> (snd ? => _ rest -> rest.cont)
