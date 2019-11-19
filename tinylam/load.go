@@ -237,7 +237,6 @@ func (me *ctxParse) parseExpr(src string, locHintLn string, locInfo *nodeLocInfo
 					for _, ctor := range ctors {
 						tmpname, casecode := "__case__of__"+ctor.name, mcases[ctor.name]
 						if me.curTopDef.bracketsParens[tmpname] = casecode; casecode == "" {
-							println(locInfo.locStr()+ctor.name, ctor.arity)
 							me.curTopDef.bracketsParens[tmpname] = strings.Repeat("_ -> ", ctor.arity) + mcases[""]
 						}
 						src += " " + tmpname

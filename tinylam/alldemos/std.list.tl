@@ -87,10 +87,13 @@ pairedUpWith list list2   := list ? .. => item1 rest1 -> list2 ? .. => result it
 interspersed list value   := list ? .. => more False
   more useval item rest   := value.useval (item.+> (rest ? .. => more +>))
 
-lastWhere list isMatch    := list ? [] => None | .. => item rest -> pick item (lastWhere rest isMatch)
-  pick item restresult    := restresult Could? Have => Have | None => if (item.isMatch) item.Have (else None)
+lastWhere list isMatch    := list.lastwhere []
+  lastwhere l acc         := l ? [] => None | .. => item rest -> pick item rest acc (lastwhere rest (concat acc [item]))
+  pick item rest acc ret  := ret Could? Have => Have | None => if (item.isMatch) (Have {item, acc, rest}) (else None)
 
-// rewritten list            := lastWhere list (EQ '[') Maybe? None => list | Have =>
+rewritten list            := list.more []
+  more l acc              := l ? [] => acc | .. => item rest -> more rest (((item.EQ ']') handle same) (item.+> acc))
+  handle acc              := acc
 
 splitUpOn list isMatch    := list ? .. => _ _ -> list.more
   more l                  := (l.brokenUpOn (_ -> isMatch)) (andthen more)
