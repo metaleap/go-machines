@@ -91,14 +91,15 @@ type OpCode int
 
 ```go
 const (
-	OpAdd OpCode = -1
-	OpSub OpCode = -2
-	OpMul OpCode = -3
-	OpDiv OpCode = -4
-	OpMod OpCode = -5
-	OpEq  OpCode = -6
-	OpLt  OpCode = -7
-	OpGt  OpCode = -8
+	OpCrash OpCode = -1234567890
+	OpAdd   OpCode = -1
+	OpSub   OpCode = -2
+	OpMul   OpCode = -3
+	OpDiv   OpCode = -4
+	OpMod   OpCode = -5
+	OpEq    OpCode = -6
+	OpLt    OpCode = -7
+	OpGt    OpCode = -8
 )
 ```
 
