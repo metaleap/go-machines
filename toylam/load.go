@@ -96,6 +96,16 @@ func (me *ctxParse) gatherPseudoSumTypesAndBasedOnTheirDefsAppendToSrcs(moduleSr
 					for cidx, cpart := range cparts {
 						parts := strings.Fields(cpart)
 						me.prog.pseudoSumTypes[tqname] = append(me.prog.pseudoSumTypes[tqname], pseudoSumTypeCtor{parts[0], len(parts) - 1})
+						if strtester := "is" + tparts[0] + "Of" + parts[0] + " some" + tparts[0] + " := "; (!strings.HasPrefix(parts[0], "__")) && StdRequiredDefs_list != (me.curModule.name+"."+tparts[0]) && StdRequiredDefs_tupCons != (me.curModule.name+"."+parts[0]) && StdRequiredDefs_true != (me.curModule.name+"."+parts[0]) && StdRequiredDefs_false != (me.curModule.name+"."+parts[0]) {
+							strtester += "some" + tparts[0] + " " + tparts[0] + "? " + parts[0] + " => " + strings.Repeat("_ ", len(parts)-1)
+							if len(parts) > 1 {
+								strtester += "-> "
+							}
+							if strtester += "True"; len(cparts) > 1 {
+								strtester += " | => False"
+							}
+							lines = append(lines, strtester)
+						}
 						if strcases += " caseOf" + parts[0]; len(parts) > 1 {
 							for _, ctorarg := range parts[1:] {
 								if strdtor := ctorarg + "Of" + tparts[0] + parts[0]; len(ctorarg) > 1 && ctorarg[0] != '_' {

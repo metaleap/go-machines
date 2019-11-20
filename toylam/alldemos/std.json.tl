@@ -28,7 +28,7 @@ tokenized src     := src ? .. => more
 
 
 parsed src        := src.tokenized.treeified ? [] => Nay "empty input" | .. => ··· handle parse
-  treeified s     := (objs2tmp same.arrs2tmp) ((arrs2tmp same.objs2tmp) (s.where (tok -> tok Token? TSepComma => False | TSepColon => False | => True)))
+  treeified s     := (objs2tmp same.arrs2tmp) ((arrs2tmp same.objs2tmp) (s.whereNot (tok -> or tok.isTokenOfTSepComma tok.isTokenOfTSepColon)))
   arrs2tmp o toks := toks.rewritten (t -> t Token? TBracketSq => not | => False) (t -> t Token? TBracketSq => same | => False) (inner -> [__TTmp True inner.o])
   objs2tmp a toks := toks.rewritten (t -> t Token? TBracketCy => not | => False) (t -> t Token? TBracketCy => same | => False) (inner -> [__TTmp False inner.a])
   handle          := {tail ret} -> tail ? [] => ret | .. => _ _ -> Nay "trailing tokens remaining after completed expression"
@@ -42,4 +42,4 @@ parsed src        := src.tokenized.treeified ? [] => Nay "empty input" | .. => �
     parryns yns   := chkfail yns (yns´ -> VArr (yns´.each (_ same same)))
   pobj rest p ts  := { rest, pobjyns (ts.each (t -> sndOfTuplePair (p t []))) }
     pobjyns yns   := chkfail yns (yns´ -> VObj (toPairs (yns´.each (_ same same))))
-  chkfail yns c   := yns.findWhere (yn -> yn Result? Nay => ever True | => False) Could? None => Yay (c yns) | Have => same
+  chkfail yns c   := (yns.findWhere isResultOfNay) Could? None => Yay yns.c | Have => same

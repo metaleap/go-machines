@@ -11,6 +11,9 @@ at list i                 := if (i.EQ 0) list.-< (else at list.>- i.decr)
 each list fn              := list.more
   more l                  := l ? .. => item rest -> item.fn.+> (more rest)
 
+eachTry list fn           := list.more
+  more l                  := l ? [] => Yay [] | .. => (item rest -> (r -> r Result? Nay => Nay | Yay => v -> (mr -> mr Result? Nay => Nay | Yay => vs -> Yay (v.+> vs)) (more rest)) item.fn)
+
 slice list start length   := take (list.drop start) length
 
 drop list n               := if (n.EQ 0) list (else drop list.>- n.decr)
