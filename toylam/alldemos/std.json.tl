@@ -4,6 +4,17 @@ Value := VNull | VBoolean _ | VInt _ | VStr _ | VArr (List _) | VObj (List (Pair
 
 
 
+toString json     := json Value? VNull => casenull | VBoolean => casebool | VInt => caseint | VStr => casestr | VArr => casearr | VObj => caseobj
+  casenull        := "null"
+  casebool        := _ "true" "false"
+  caseint         := num.toString
+  casestr         := quoted
+  casearr l       := concat (+> '[' (/> (l.each toString) joinedVia ", ")) "]"
+  caseobj l       := concat (+> '{' (/> (l.each ({k v} -> concat.** [toString k, ": ", toString v])) joinedVia ", ")) "}"
+  quoted str      := concat (+> 34 str) [34]
+
+
+
 tokenized src     := src ? .. => more
   more chr rest   := (simple.cases chr) Could? Have => +> _ rest.tokenized | None => others chr rest
   simple          := [{EQ ',', TSepComma.ever}, {EQ '[', True.TBracketSq.ever}, {EQ ']', False.TBracketSq.ever}, {EQ '{', True.TBracketCy.ever}, {EQ '}', False.TBracketCy.ever}, {EQ ':', TSepColon.ever}]
@@ -27,20 +38,8 @@ parsed src        := src.tokenized.treeified ? [] => Nay "empty input" | .. => �
   pnum r t        := { r, t.parseSigned Result? Nay => Nay | Yay => ·· Yay VInt }
   pstr r t        := { r, t ? [] => Nay t | .. => quotemark rest -> Yay rest.sansLast.VStr } // caution, not handling escapes for now..
   pcomp r p arr l := (if (arr) parr (else pobj)) r p l
-  parr rest p ts  := {rest, parryns (ts.each (t -> sndOfTuplePair (p t [])))}
+  parr rest p ts  := { rest, parryns (ts.each (t -> sndOfTuplePair (p t []))) }
     parryns yns   := chkfail yns (yns´ -> VArr (yns´.each (_ same same)))
-  pobj rest p ts  := {rest, pobjyns (ts.each (t -> sndOfTuplePair (p t [])))}
+  pobj rest p ts  := { rest, pobjyns (ts.each (t -> sndOfTuplePair (p t []))) }
     pobjyns yns   := chkfail yns (yns´ -> VObj (toPairs (yns´.each (_ same same))))
   chkfail yns c   := yns.findWhere (yn -> yn Result? Nay => ever True | => False) Could? None => Yay (c yns) | Have => same
-
-
-
-
-toString json     := json Value? VNull => casenull | VBoolean => casebool | VInt => caseint | VStr => casestr | VArr => casearr | VObj => caseobj
-  casenull        := "null"
-  casebool        := _ "true" "false"
-  caseint         := num.toString
-  casestr         := quoted
-  casearr l       := concat (+> '[' (/> (l.each toString) joinedVia ", ")) "]"
-  caseobj l       := concat (+> '{' (/> (l.each ({k v} -> concat.** [toString k, ": ", toString v])) joinedVia ", ")) "}"
-  quoted s        := concat (+> 34 s) [34]
