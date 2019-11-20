@@ -1,6 +1,6 @@
-# tinylam
+# toylam
 --
-    import "github.com/metaleap/go-machines/tinylam"
+    import "github.com/metaleap/go-machines/toylam"
 
 
 ## Usage

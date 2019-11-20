@@ -1,4 +1,4 @@
-package tinylam
+package toylam
 
 import (
 	"io/ioutil"
