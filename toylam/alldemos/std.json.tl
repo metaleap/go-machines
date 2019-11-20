@@ -16,19 +16,23 @@ tokenized src     := src ? .. => more
   checkstr chr    := chr.EQ 34
 
 
-parsed src        := src.tokenized ? [] => Nay "empty input" | .. => ··· handle parse
-  treeified toks  := toks.rewritten (t -> t Token? TBracketSq => not | => False) (t -> t Token? TBracketSq => same | => False) (inner -> [inner.where (t -> t Token? TSepComma => False | => True )])
+parsed src        := src.tokenized.treeified ? [] => Nay "empty input" | .. => ··· handle parse
+  treeified s     := (objs2tmp same.arrs2tmp) ((arrs2tmp same.objs2tmp) (s.where (tok -> tok Token? TSepComma => False | TSepColon => False | => True)))
+  arrs2tmp o toks := toks.rewritten (t -> t Token? TBracketSq => not | => False) (t -> t Token? TBracketSq => same | => False) (inner -> [__TTmp True inner.o])
+  objs2tmp a toks := toks.rewritten (t -> t Token? TBracketCy => not | => False) (t -> t Token? TBracketCy => same | => False) (inner -> [__TTmp False inner.a])
   handle          := {tail ret} -> tail ? [] => ret | .. => _ _ -> Nay "trailing tokens remaining after completed expression"
-  parse tok rest  := tok Token? TNumLit => pnum rest | TStrLit => pstr rest | TIdent => pident rest | => {[], Nay "unexpected token"}
+  parse tok rest  := tok Token? TNumLit => pnum rest | TStrLit => pstr rest | TIdent => pident rest | __TTmp => pcomp rest parse | => {[], Nay "unexpected token"}
 
   pident r t      := { r, (t.EQ "null") (Yay VNull) ((t.EQ "true") (Yay True.VBoolean) ((t.EQ "false") (Yay False.VBoolean) (Nay t))) }
   pnum r t        := { r, t.parseSigned Result? Nay => Nay | Yay => ·· Yay VInt }
   pstr r t        := { r, t ? [] => Nay t | .. => quotemark rest -> Yay rest.sansLast.VStr } // caution, not handling escapes for now..
-  parr p r t      := if (t.not) {[], Nay "]"} (else arr p r) // r is all that follows opening `[`
-    arr p ts      := ts ? [] => {[], Nay "array non-terminated"} | .. => arr´ p
-    arr´ p t r    := t Token? => {[], Nay "todo"}
+  pcomp r p arr l := (if (arr) parr (else pobj)) r p l
+  parr rest p ts  := {rest, parryns (ts.each (t -> sndOfTuplePair (p t [])))}
+    parryns yns   := chkfail yns (yns´ -> VArr (yns´.each (_ same same)))
+  pobj rest p ts  := {rest, pobjyns (ts.each (t -> sndOfTuplePair (p t [])))}
+    pobjyns yns   := chkfail yns (yns´ -> VObj (toPairs (yns´.each (_ same same))))
+  chkfail yns c   := yns.findWhere (yn -> yn Result? Nay => ever True | => False) Could? None => Yay (c yns) | Have => same
 
-  pobj p r t      := { r, Nay "notyet" }
 
 
 
@@ -37,6 +41,6 @@ toString json     := json Value? VNull => casenull | VBoolean => casebool | VInt
   casebool        := _ "true" "false"
   caseint         := num.toString
   casestr         := quoted
-  casearr l       := concat (+> '[' (joinedVia (l.each toString) ", ")) "]"
-  caseobj l       := concat (+> '{' (joinedVia (l.each ({k v} -> joinedVia [k.quoted, toString v] ": ")) ", ")) "}"
+  casearr l       := concat (+> '[' (/> (l.each toString) joinedVia ", ")) "]"
+  caseobj l       := concat (+> '{' (/> (l.each ({k v} -> concat.** [toString k, ": ", toString v])) joinedVia ", ")) "}"
   quoted s        := concat (+> 34 s) [34]

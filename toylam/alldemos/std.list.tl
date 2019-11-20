@@ -126,6 +126,9 @@ forth list z f2           := list.more z
 reversed list             := more [] list
   more acc l              := l ? [] => acc | .. => item rest -> more (item.+> acc) rest
 
+toPairs list              := list ? .. => next
+  next item rest          := rest ? .. => valitem more -> +> {item, valitem} (toPairs more)
+
 mGet m key                := m.more
   more l                  := l ? [] => None | .. => {k v} rest -> v.Have.when (k.EQ key) (else more rest)
 
