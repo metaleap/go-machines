@@ -106,7 +106,7 @@ splitUpOn list isMatch    := list ? .. => _ _ -> list.more
   more l                  := (l.brokenUpOn (_ -> isMatch)) (andthen more)
   andthen cont fst snd    := fst.+> (snd ? .. => _ rest -> rest.cont)
 
-joinedVia list sep        := concat.** (list.interspersed sep)
+joinedVia list sep        := list ? .. => _ _ -> concat.** (list.interspersed sep)
 
 trimStart list items      := list.dropWhile items.has
 

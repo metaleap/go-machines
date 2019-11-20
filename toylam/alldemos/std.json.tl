@@ -1,5 +1,5 @@
 
-Token := TSepColon | TSepComma | TBracketSq _ | TBracketCy _ | TNumLit _ | TStrLit _ | TIdent _
+Token := TSepColon | TSepComma | TBracketSq _ | TBracketCy _ | TNumLit _ | TStrLit _ | TIdent _ | __TTmp _ _
 Value := VNull | VBoolean _ | VInt _ | VStr _ | VArr (List _) | VObj (List (Pair k v))
 
 
@@ -17,8 +17,9 @@ tokenized src     := src ? .. => more
 
 
 parsed src        := src.tokenized ? [] => Nay "empty input" | .. => ··· handle parse
+  treeified toks  := toks.rewritten (t -> t Token? TBracketSq => not | => False) (t -> t Token? TBracketSq => same | => False) (inner -> [inner.where (t -> t Token? TSepComma => False | => True )])
   handle          := {tail ret} -> tail ? [] => ret | .. => _ _ -> Nay "trailing tokens remaining after completed expression"
-  parse tok rest  := tok Token? TNumLit => pnum rest | TStrLit => pstr rest | TIdent => pident rest | TBracketSq => parr parse rest | TBracketCy => pobj parse rest | => {[], Nay "unexpected token"}
+  parse tok rest  := tok Token? TNumLit => pnum rest | TStrLit => pstr rest | TIdent => pident rest | => {[], Nay "unexpected token"}
 
   pident r t      := { r, (t.EQ "null") (Yay VNull) ((t.EQ "true") (Yay True.VBoolean) ((t.EQ "false") (Yay False.VBoolean) (Nay t))) }
   pnum r t        := { r, t.parseSigned Result? Nay => Nay | Yay => ·· Yay VInt }
@@ -28,3 +29,14 @@ parsed src        := src.tokenized ? [] => Nay "empty input" | .. => ··· hand
     arr´ p t r    := t Token? => {[], Nay "todo"}
 
   pobj p r t      := { r, Nay "notyet" }
+
+
+
+toString json     := json Value? VNull => casenull | VBoolean => casebool | VInt => caseint | VStr => casestr | VArr => casearr | VObj => caseobj
+  casenull        := "null"
+  casebool        := _ "true" "false"
+  caseint         := num.toString
+  casestr         := quoted
+  casearr l       := concat (+> '[' (joinedVia (l.each toString) ", ")) "]"
+  caseobj l       := concat (+> '{' (joinedVia (l.each ({k v} -> joinedVia [k.quoted, toString v] ": ")) ", ")) "}"
+  quoted s        := concat (+> 34 s) [34]
