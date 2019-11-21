@@ -22,8 +22,8 @@ type Prog []TopDef
 type Expr interface{ String() string }
 
 func (me ExprNum) String() string    { return strconv.Itoa(int(me)) }
-func (me ExprArgRef) String() string { return "#" + strconv.Itoa(int(me)) }
-func (me ExprFnRef) String() string  { return "@" + strconv.Itoa(int(me)) }
+func (me ExprArgRef) String() string { return "@" + strconv.Itoa(int(me)) }
+func (me ExprFnRef) String() string  { return "^" + strconv.Itoa(int(me)) }
 func (me ExprAppl) String() string   { return "(" + me.Callee.String() + " " + me.Arg.String() + ")" }
 
 type ExprNum int
@@ -58,12 +58,12 @@ func exprFromJson(from any) Expr {
 	case string:
 		if n, e := strconv.ParseInt(it, 10, 0); e != nil {
 			panic(e)
-		} else {
-			return ExprArgRef(int(n))
+		} else { // rewrite arg-refs for later stack-access-from-tail-end: 0 -> -1, 1 -> -2, 2 -> -3
+			return ExprArgRef(int(-(n + 1)))
 		}
 	case []any:
 		if len(it) == 0 {
-			return ExprFnRef(OpCrash) // only `panic` mechanism we have in the JSON syntax for now
+			return ExprFnRef(OpPanic) // only `forced panic` mechanism we have in the JSON syntax for now
 		} else if len(it) == 1 {
 			return ExprFnRef(int(it[0].(float64)))
 		}

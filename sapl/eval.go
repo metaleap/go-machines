@@ -7,7 +7,7 @@ import (
 type OpCode int
 
 const (
-	OpCrash OpCode = -1234567890
+	OpPanic OpCode = -1234567890
 	OpAdd   OpCode = -1
 	OpSub   OpCode = -2
 	OpMul   OpCode = -3
@@ -18,39 +18,47 @@ const (
 	OpGt    OpCode = -8
 )
 
-func (me Prog) Eval(expr Expr) (ret Expr, timeTaken time.Duration) {
+func (me Prog) Eval(expr Expr, maybeTracer func(Expr, []Expr) func(Expr) Expr) (ret Expr, timeTaken time.Duration) {
 	stack := make([]Expr, 0, 128)
 	tstart := time.Now().UnixNano()
-	ret = me.eval(expr, stack)
+	if maybeTracer == nil {
+		ret := func(it Expr) Expr { return it }
+		maybeTracer = func(Expr, []Expr) func(Expr) Expr { return ret }
+	}
+	ret = me.eval(expr, stack, maybeTracer)
 	timeTaken = time.Duration(time.Now().UnixNano() - tstart)
 	return
 }
 
-func (me Prog) eval(expr Expr, stack []Expr) Expr {
+func (me Prog) eval(expr Expr, stack []Expr, tracer func(Expr, []Expr) func(Expr) Expr) Expr {
+	ret := tracer(expr, stack)
 	switch it := expr.(type) {
 	case ExprAppl:
-		return me.eval(it.Callee, append(stack, it.Arg))
+		return ret(me.eval(it.Callee, append(stack, it.Arg), tracer))
 	case ExprFnRef:
-		numargs, isop := 2, (it < 0)
-		if !isop {
+		numargs, isopcode := 2, (it < 0)
+		if !isopcode {
 			numargs = me[it].NumArgs
 		}
-		if len(stack) < numargs {
-			return rebuildAppl(it, stack)
-		} else if isop {
-			lhs, rhs := me.eval(stack[len(stack)-1], stack).(ExprNum), me.eval(stack[len(stack)-2], stack).(ExprNum)
+		if len(stack) < numargs { // not enough args on stack: a partial-application aka closure
+			for i := len(stack) - 1; i >= 0; i-- {
+				expr = ExprAppl{expr, stack[i]}
+			}
+			return ret(expr)
+		} else if isopcode {
+			lhs, rhs := me.eval(stack[len(stack)-1], stack, tracer).(ExprNum), me.eval(stack[len(stack)-2], stack, tracer).(ExprNum)
 			stack = stack[:len(stack)-2]
 			switch OpCode(it) {
 			case OpAdd:
-				return (lhs + rhs)
+				return ret(lhs + rhs)
 			case OpSub:
-				return (lhs - rhs)
+				return ret(lhs - rhs)
 			case OpMul:
-				return (lhs * rhs)
+				return ret(lhs * rhs)
 			case OpDiv:
-				return (lhs / rhs)
+				return ret(lhs / rhs)
 			case OpMod:
-				return (lhs % rhs)
+				return ret(lhs % rhs)
 			case OpEq, OpGt, OpLt:
 				if op := OpCode(it); (op == OpEq && lhs == rhs) || (op == OpLt && lhs < rhs) || (op == OpGt && lhs > rhs) {
 					it, numargs = 1, 2
@@ -61,24 +69,17 @@ func (me Prog) eval(expr Expr, stack []Expr) Expr {
 				panic(stack)
 			}
 		}
-		return me.eval(inst(me[it].Expr, stack), stack[:len(stack)-numargs])
+		return ret(me.eval(argRefsResolvedToCurrentStackEntries(me[it].Expr, stack), stack[:len(stack)-numargs], tracer))
 	}
-	return expr
+	return ret(expr)
 }
 
-func rebuildAppl(expr Expr, stack []Expr) Expr {
-	for len(stack) > 0 {
-		expr, stack = ExprAppl{expr, stack[len(stack)-1]}, stack[:len(stack)-1]
-	}
-	return expr
-}
-
-func inst(expr Expr, stack []Expr) Expr {
+func argRefsResolvedToCurrentStackEntries(expr Expr, stack []Expr) Expr {
 	switch it := expr.(type) {
 	case ExprAppl:
-		return ExprAppl{inst(it.Callee, stack), inst(it.Arg, stack)}
+		return ExprAppl{argRefsResolvedToCurrentStackEntries(it.Callee, stack), argRefsResolvedToCurrentStackEntries(it.Arg, stack)}
 	case ExprArgRef:
-		return stack[(len(stack)-1)-int(it)]
+		return stack[len(stack)+int(it)]
 	}
 	return expr
 }

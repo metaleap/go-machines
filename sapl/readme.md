@@ -91,7 +91,7 @@ type OpCode int
 
 ```go
 const (
-	OpCrash OpCode = -1234567890
+	OpPanic OpCode = -1234567890
 	OpAdd   OpCode = -1
 	OpSub   OpCode = -2
 	OpMul   OpCode = -3
@@ -119,7 +119,7 @@ func LoadFromJson(src []byte) Prog
 #### func (Prog) Eval
 
 ```go
-func (me Prog) Eval(expr Expr) (ret Expr, timeTaken time.Duration)
+func (me Prog) Eval(expr Expr, maybeTracer func(Expr, []Expr) func(Expr) Expr) (ret Expr, timeTaken time.Duration)
 ```
 
 #### type TopDef
