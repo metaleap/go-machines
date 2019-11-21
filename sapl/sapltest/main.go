@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"io/ioutil"
 	"os"
 
@@ -15,13 +16,13 @@ func main() {
 		panic(err)
 	}
 	prog, trace := LoadFromJson(src), &tracer{root: &traceStep{}}
-	tracestep := trace.onEvalStep
+	ctx := &CtxEval{Tracer: trace.onEvalStep, Outputs: []io.Writer{os.Stdout, os.Stderr}}
 	if !tracing {
-		tracestep = nil
+		ctx.Tracer = nil
 	}
-	result, stats := prog.Eval(ExprAppl{Callee: ExprFnRef(len(prog) - 1), Arg: ExprNum(7)}, tracestep)
-	println(result.String())
-	println(stats.String())
+	_ = prog.Eval(ctx, ExprAppl{Callee: ExprFnRef(len(prog) - 1), Arg: ExprNum(88)})
+	// println(result.String())
+	println(ctx.String())
 	if tracing {
 		println(trace.root.subSteps[0].str(0))
 	}

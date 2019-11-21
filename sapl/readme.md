@@ -24,11 +24,16 @@ expressly spec out the details here, it's under 40 LoC in the `LoadFromJson` and
 
 ```go
 type CtxEval struct {
-	MaxStack    int
-	NumSteps    int
-	NumRebuilds int
-	NumCalls    int
-	TimeTaken   time.Duration
+	Tracer  func(Expr, []Expr) func(Expr) Expr
+	Outputs []io.Writer
+
+	Stats struct {
+		MaxStack    int
+		NumSteps    int
+		NumRebuilds int
+		NumCalls    int
+		TimeTaken   time.Duration
+	}
 }
 ```
 
@@ -110,15 +115,16 @@ type OpCode int
 
 ```go
 const (
-	OpPanic OpCode = -1234567890
-	OpAdd   OpCode = -1
-	OpSub   OpCode = -2
-	OpMul   OpCode = -3
-	OpDiv   OpCode = -4
-	OpMod   OpCode = -5
-	OpEq    OpCode = -6
-	OpLt    OpCode = -7
-	OpGt    OpCode = -8
+	OpPanic  OpCode = -1234567890
+	OpOutput OpCode = -987654321
+	OpAdd    OpCode = -1
+	OpSub    OpCode = -2
+	OpMul    OpCode = -3
+	OpDiv    OpCode = -4
+	OpMod    OpCode = -5
+	OpEq     OpCode = -6
+	OpLt     OpCode = -7
+	OpGt     OpCode = -8
 )
 ```
 
@@ -138,7 +144,7 @@ func LoadFromJson(src []byte) Prog
 #### func (Prog) Eval
 
 ```go
-func (me Prog) Eval(expr Expr, maybeTracer func(Expr, []Expr) func(Expr) Expr) (ret Expr, stats CtxEval)
+func (me Prog) Eval(ctx *CtxEval, expr Expr) (ret Expr)
 ```
 
 #### type TopDef
