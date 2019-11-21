@@ -20,6 +20,25 @@ expressly spec out the details here, it's under 40 LoC in the `LoadFromJson` and
 
 ## Usage
 
+#### type CtxEval
+
+```go
+type CtxEval struct {
+	MaxStack    int
+	NumSteps    int
+	NumRebuilds int
+	NumCalls    int
+	TimeTaken   time.Duration
+}
+```
+
+
+#### func (*CtxEval) String
+
+```go
+func (me *CtxEval) String() string
+```
+
 #### type Expr
 
 ```go
@@ -119,7 +138,7 @@ func LoadFromJson(src []byte) Prog
 #### func (Prog) Eval
 
 ```go
-func (me Prog) Eval(expr Expr, maybeTracer func(Expr, []Expr) func(Expr) Expr) (ret Expr, timeTaken time.Duration)
+func (me Prog) Eval(expr Expr, maybeTracer func(Expr, []Expr) func(Expr) Expr) (ret Expr, stats CtxEval)
 ```
 
 #### type TopDef

@@ -1,6 +1,7 @@
 package sapl
 
 import (
+	"strconv"
 	"time"
 )
 
@@ -18,35 +19,53 @@ const (
 	OpGt    OpCode = -8
 )
 
-func (me Prog) Eval(expr Expr, maybeTracer func(Expr, []Expr) func(Expr) Expr) (ret Expr, timeTaken time.Duration) {
+type CtxEval struct {
+	tracer func(Expr, []Expr) func(Expr) Expr
+
+	MaxStack    int
+	NumSteps    int
+	NumRebuilds int
+	NumCalls    int
+	TimeTaken   time.Duration
+}
+
+func (me *CtxEval) String() string {
+	return me.TimeTaken.String() + "\tMaxStack=" + strconv.Itoa(me.MaxStack) + "\tNumSteps=" + strconv.Itoa(me.NumSteps) + "\tNumRebuilds=" + strconv.Itoa(me.NumRebuilds) + "\tNumCalls=" + strconv.Itoa(me.NumCalls)
+}
+
+func (me Prog) Eval(expr Expr, maybeTracer func(Expr, []Expr) func(Expr) Expr) (ret Expr, stats CtxEval) {
+	if stats.tracer = maybeTracer; stats.tracer == nil {
+		ret := func(it Expr) Expr { return it }
+		stats.tracer = func(Expr, []Expr) func(Expr) Expr { return ret }
+	}
 	stack := make([]Expr, 0, 128)
 	tstart := time.Now().UnixNano()
-	if maybeTracer == nil {
-		ret := func(it Expr) Expr { return it }
-		maybeTracer = func(Expr, []Expr) func(Expr) Expr { return ret }
-	}
-	ret = me.eval(expr, stack, maybeTracer)
-	timeTaken = time.Duration(time.Now().UnixNano() - tstart)
+	ret = me.eval(expr, stack, &stats)
+	stats.TimeTaken = time.Duration(time.Now().UnixNano() - tstart)
 	return
 }
 
-func (me Prog) eval(expr Expr, stack []Expr, tracer func(Expr, []Expr) func(Expr) Expr) Expr {
-	ret := tracer(expr, stack)
+func (me Prog) eval(expr Expr, stack []Expr, ctx *CtxEval) Expr {
+	if ctx.NumSteps++; len(stack) > ctx.MaxStack {
+		ctx.MaxStack = len(stack)
+	}
+	ret := ctx.tracer(expr, stack)
 	switch it := expr.(type) {
 	case ExprAppl:
-		return ret(me.eval(it.Callee, append(stack, it.Arg), tracer))
+		return ret(me.eval(it.Callee, append(stack, it.Arg), ctx))
 	case ExprFnRef:
 		numargs, isopcode := 2, (it < 0)
 		if !isopcode {
 			numargs = me[it].NumArgs
 		}
 		if len(stack) < numargs { // not enough args on stack: a partial-application aka closure
+			ctx.NumRebuilds++
 			for i := len(stack) - 1; i >= 0; i-- {
 				expr = ExprAppl{expr, stack[i]}
 			}
 			return ret(expr)
 		} else if isopcode {
-			lhs, rhs := me.eval(stack[len(stack)-1], stack, tracer).(ExprNum), me.eval(stack[len(stack)-2], stack, tracer).(ExprNum)
+			lhs, rhs := me.eval(stack[len(stack)-1], stack, ctx).(ExprNum), me.eval(stack[len(stack)-2], stack, ctx).(ExprNum)
 			stack = stack[:len(stack)-2]
 			switch OpCode(it) {
 			case OpAdd:
@@ -69,7 +88,8 @@ func (me Prog) eval(expr Expr, stack []Expr, tracer func(Expr, []Expr) func(Expr
 				panic(stack)
 			}
 		}
-		return ret(me.eval(argRefsResolvedToCurrentStackEntries(me[it].Expr, stack), stack[:len(stack)-numargs], tracer))
+		ctx.NumCalls++
+		return ret(me.eval(argRefsResolvedToCurrentStackEntries(me[it].Expr, stack), stack[:len(stack)-numargs], ctx))
 	}
 	return ret(expr)
 }

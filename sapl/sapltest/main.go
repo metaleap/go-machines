@@ -7,10 +7,10 @@ import (
 	. "github.com/metaleap/go-machines/sapl"
 )
 
-const tracing = true
+const tracing = false
 
 func main() {
-	src, err := ioutil.ReadAll(os.Stdin)
+	src, err := ioutil.ReadFile(os.Args[1])
 	if err != nil {
 		panic(err)
 	}
@@ -19,30 +19,10 @@ func main() {
 	if !tracing {
 		tracestep = nil
 	}
-	result, timetaken := prog.Eval(prog[len(prog)-1].Expr, tracestep)
-	println(timetaken.String(), result.String())
-}
-
-type tracer struct {
-	root *traceStep
-}
-
-type traceStep struct {
-	expr     Expr
-	stack    []Expr
-	subSteps []*traceStep
-	ret      Expr
-}
-
-func (me *tracer) onEvalStep(expr Expr, stack []Expr) (end func(Expr) Expr) {
-	oldstep, curstep := me.root, &traceStep{expr, stack, nil, nil}
-	me.root, oldstep.subSteps = curstep, append(oldstep.subSteps, curstep)
-	return func(expr Expr) Expr {
-		me.root = oldstep
-		return expr
+	result, stats := prog.Eval(ExprAppl{Callee: ExprFnRef(len(prog) - 1), Arg: ExprNum(7)}, tracestep)
+	println(result.String())
+	println(stats.String())
+	if tracing {
+		println(trace.root.subSteps[0].str(0))
 	}
-}
-
-func (me *traceStep) String() string {
-	return "foo"
 }
