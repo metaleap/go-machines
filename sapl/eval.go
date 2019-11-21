@@ -1,7 +1,6 @@
 package sapl
 
 import (
-	"io"
 	"strconv"
 	"time"
 )
@@ -9,21 +8,19 @@ import (
 type OpCode int
 
 const (
-	OpPanic  OpCode = -1234567890
-	OpOutput OpCode = -987654321
-	OpAdd    OpCode = -1
-	OpSub    OpCode = -2
-	OpMul    OpCode = -3
-	OpDiv    OpCode = -4
-	OpMod    OpCode = -5
-	OpEq     OpCode = -6
-	OpLt     OpCode = -7
-	OpGt     OpCode = -8
+	OpPanic OpCode = -1234567890
+	OpAdd   OpCode = -1
+	OpSub   OpCode = -2
+	OpMul   OpCode = -3
+	OpDiv   OpCode = -4
+	OpMod   OpCode = -5
+	OpEq    OpCode = -6
+	OpLt    OpCode = -7
+	OpGt    OpCode = -8
 )
 
 type CtxEval struct {
-	Tracer  func(Expr, []Expr) func(Expr) Expr
-	Outputs []io.Writer
+	Tracer func(Expr, []Expr) func(Expr) Expr
 
 	Stats struct {
 		MaxStack    int
@@ -38,14 +35,32 @@ func (me *CtxEval) String() string {
 	return me.Stats.TimeTaken.String() + "\tMaxStack=" + strconv.Itoa(me.Stats.MaxStack) + "\tNumSteps=" + strconv.Itoa(me.Stats.NumSteps) + "\tNumRebuilds=" + strconv.Itoa(me.Stats.NumRebuilds) + "\tNumCalls=" + strconv.Itoa(me.Stats.NumCalls)
 }
 
-func (me Prog) Eval(ctx *CtxEval, expr Expr) (ret Expr) {
-	if ctx.Tracer == nil {
+func (me Prog) Eval(ctx *CtxEval, expr Expr) (ret Expr, retIntListAsBytes []byte) {
+	if retIntListAsBytes = make([]byte, 0, 1024*1024); ctx.Tracer == nil {
 		ret := func(it Expr) Expr { return it }
 		ctx.Tracer = func(Expr, []Expr) func(Expr) Expr { return ret }
 	}
 	stack := make([]Expr, 0, 128)
 	tstart := time.Now().UnixNano()
 	ret = me.eval(expr, stack, ctx)
+
+	for again, next := true, ret; again; { // if the ret is an int-list, force it into `retIntListAsBytes`
+		again = false
+		if fouter, ok0 := next.(ExprFnRef); ok0 && fouter == 3 { // clean end-of-list
+			break
+		} else if aouter, ok1 := next.(ExprAppl); ok1 {
+			if ainner, ok2 := aouter.Callee.(ExprAppl); ok2 {
+				if finner, ok3 := ainner.Callee.(ExprFnRef); ok3 && finner == 4 {
+					if hd, ok4 := me.eval(ainner.Arg, nil, ctx).(ExprNum); ok4 {
+						again, next, retIntListAsBytes = true, me.eval(aouter.Arg, nil, ctx), append(retIntListAsBytes, byte(hd))
+					}
+				}
+			}
+		}
+		if !again {
+			retIntListAsBytes = nil
+		}
+	}
 
 	ctx.Stats.TimeTaken = time.Duration(time.Now().UnixNano() - tstart)
 	return
@@ -71,46 +86,28 @@ func (me Prog) eval(expr Expr, stack []Expr, ctx *CtxEval) Expr {
 			}
 			return ret(expr)
 		} else if isopcode {
-			if opcode := OpCode(it); opcode == OpOutput {
-				out := ctx.Outputs[me.eval(stack[len(stack)-1], nil, ctx).(ExprNum)]
-				outbuf, head := make([]byte, 0, 1024*1024), me.eval(stack[len(stack)-2], nil, ctx)
-				for again, next := true, head; again; {
-					again = false
-					if outer, ok1 := next.(ExprAppl); ok1 {
-						if inner, ok2 := outer.Callee.(ExprAppl); ok2 {
-							if fn, ok3 := inner.Callee.(ExprFnRef); ok3 && fn == 4 {
-								if hd, ok4 := me.eval(inner.Arg, nil, ctx).(ExprNum); ok4 {
-									again, next, outbuf = true, me.eval(outer.Arg, nil, ctx), append(outbuf, byte(hd))
-								}
-							}
-						}
-					}
+			opcode := OpCode(it)
+			lhs, rhs := me.eval(stack[len(stack)-1], stack, ctx).(ExprNum), me.eval(stack[len(stack)-2], stack, ctx).(ExprNum)
+			stack = stack[:len(stack)-2]
+			switch opcode {
+			case OpAdd:
+				return ret(lhs + rhs)
+			case OpSub:
+				return ret(lhs - rhs)
+			case OpMul:
+				return ret(lhs * rhs)
+			case OpDiv:
+				return ret(lhs / rhs)
+			case OpMod:
+				return ret(lhs % rhs)
+			case OpEq, OpGt, OpLt:
+				if (opcode == OpEq && lhs == rhs) || (opcode == OpLt && lhs < rhs) || (opcode == OpGt && lhs > rhs) {
+					it, numargs = 1, 2
+				} else {
+					it, numargs = 2, 2
 				}
-				out.Write(outbuf)
-				return ret(head)
-			} else {
-				lhs, rhs := me.eval(stack[len(stack)-1], stack, ctx).(ExprNum), me.eval(stack[len(stack)-2], stack, ctx).(ExprNum)
-				stack = stack[:len(stack)-2]
-				switch opcode {
-				case OpAdd:
-					return ret(lhs + rhs)
-				case OpSub:
-					return ret(lhs - rhs)
-				case OpMul:
-					return ret(lhs * rhs)
-				case OpDiv:
-					return ret(lhs / rhs)
-				case OpMod:
-					return ret(lhs % rhs)
-				case OpEq, OpGt, OpLt:
-					if (opcode == OpEq && lhs == rhs) || (opcode == OpLt && lhs < rhs) || (opcode == OpGt && lhs > rhs) {
-						it, numargs = 1, 2
-					} else {
-						it, numargs = 2, 2
-					}
-				default:
-					panic(stack)
-				}
+			default:
+				panic(stack)
 			}
 		}
 		ctx.Stats.NumCalls++
