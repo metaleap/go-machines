@@ -51,14 +51,8 @@ func maybeRepl(prog Prog, ctx *CtxEval, outList []Expr) bool {
 				if appl, oka := outList[2].(ExprAppl); oka {
 					if strintro := prog.ToBytes(prog.List(ctx, appl)); strintro != nil {
 						handleinput := func(input []byte, state Expr) Expr {
-							stateless := (state == nil)
-							if stateless {
-								state = ExprFnRef(3)
-							}
 							if retexpr, retlist := prog.Eval(ctx, ExprAppl{Callee: ExprAppl{Callee: fnhandler, Arg: state}, Arg: ListFrom(input)}); retlist == nil {
 								panic(retexpr.String())
-							} else if stateless {
-								os.Stdout.Write(prog.ToBytes(retlist))
 							} else if len(retlist) == 2 {
 								state = retlist[0]
 								os.Stdout.Write(prog.ToBytes(prog.List(ctx, retlist[1])))
@@ -71,7 +65,7 @@ func maybeRepl(prog Prog, ctx *CtxEval, outList []Expr) bool {
 							if allinputatonce, err := ioutil.ReadAll(os.Stdin); err != nil {
 								panic(err)
 							} else {
-								handleinput(allinputatonce, nil)
+								_ = handleinput(allinputatonce, ExprFnRef(0))
 							}
 						} else {
 							reader := bufio.NewScanner(os.Stdin)
@@ -80,6 +74,9 @@ func maybeRepl(prog Prog, ctx *CtxEval, outList []Expr) bool {
 							}
 							for state := Expr(ExprFnRef(3)); reader.Scan(); {
 								state = handleinput(reader.Bytes(), state)
+								if fn, _ := state.(ExprFnRef); fn == 0 {
+									break
+								}
 							}
 							if err := reader.Err(); err != nil {
 								panic(err)
