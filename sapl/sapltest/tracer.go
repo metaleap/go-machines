@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"strconv"
 	"strings"
 
@@ -22,6 +23,7 @@ func (me *tracer) onEvalStep(expr Expr, stack []Expr) (end func(Expr) Expr) {
 	parent, curstep := me.root, &traceStep{expr, make([]Expr, len(stack)), nil, nil}
 	copy(curstep.stack, stack)
 	me.root, parent.subSteps = curstep, append(parent.subSteps, curstep)
+	os.Stdin.Read([]byte{10})
 	return func(expr Expr) Expr {
 		me.root, curstep.ret = parent, expr
 		return expr

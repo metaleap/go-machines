@@ -53,7 +53,7 @@ type Expr interface{ String() string }
 #### func  ListFrom
 
 ```go
-func ListFrom(str string) (ret Expr)
+func ListFrom(str []byte) (ret Expr)
 ```
 
 #### func  ListsFrom
@@ -151,16 +151,22 @@ type Prog []TopDef
 func LoadFromJson(src []byte) Prog
 ```
 
-#### func (Prog) BytesFromList
-
-```go
-func (me Prog) BytesFromList(ctx *CtxEval, ret Expr, preAlloc []byte) (retIntListAsBytes []byte)
-```
-
 #### func (Prog) Eval
 
 ```go
-func (me Prog) Eval(ctx *CtxEval, expr Expr) (ret Expr, retIntListAsBytes []byte)
+func (me Prog) Eval(ctx *CtxEval, expr Expr) (ret Expr, retList []Expr)
+```
+
+#### func (Prog) List
+
+```go
+func (me Prog) List(ctx *CtxEval, expr Expr) (ret []Expr)
+```
+
+#### func (Prog) ToBytes
+
+```go
+func (me Prog) ToBytes(maybeNumList []Expr) (retNumListAsBytes []byte)
 ```
 
 #### type TopDef

@@ -35,15 +35,15 @@ func (me *CtxEval) String() string {
 	return me.Stats.TimeTaken.String() + "\tMaxStack=" + strconv.Itoa(me.Stats.MaxStack) + "\tNumSteps=" + strconv.Itoa(me.Stats.NumSteps) + "\tNumRebuilds=" + strconv.Itoa(me.Stats.NumRebuilds) + "\tNumCalls=" + strconv.Itoa(me.Stats.NumCalls)
 }
 
-func (me Prog) Eval(ctx *CtxEval, expr Expr) (ret Expr, retIntListAsBytes []byte) {
-	if retIntListAsBytes = make([]byte, 0, 1024*1024); ctx.Tracer == nil {
+func (me Prog) Eval(ctx *CtxEval, expr Expr) (ret Expr, retList []Expr) {
+	if retList = make([]Expr, 0, 128); ctx.Tracer == nil {
 		ret := func(it Expr) Expr { return it }
 		ctx.Tracer = func(Expr, []Expr) func(Expr) Expr { return ret }
 	}
 	stack := make([]Expr, 0, 128)
 	tstart := time.Now().UnixNano()
 	ret = me.eval(expr, stack, ctx)
-	retIntListAsBytes = me.BytesFromList(ctx, ret, retIntListAsBytes)
+	retList = me.List(ctx, ret)
 	ctx.Stats.TimeTaken = time.Duration(time.Now().UnixNano() - tstart)
 	return
 }
