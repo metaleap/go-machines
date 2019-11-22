@@ -1,1 +1,1 @@
-main stdin := stdin.reversed
+main args env stdin := stdin.reversed

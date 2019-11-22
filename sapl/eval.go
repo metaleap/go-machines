@@ -43,25 +43,7 @@ func (me Prog) Eval(ctx *CtxEval, expr Expr) (ret Expr, retIntListAsBytes []byte
 	stack := make([]Expr, 0, 128)
 	tstart := time.Now().UnixNano()
 	ret = me.eval(expr, stack, ctx)
-
-	for again, next := true, ret; again; { // if the ret is an int-list, force it into `retIntListAsBytes`
-		again = false
-		if fouter, ok0 := next.(ExprFnRef); ok0 && fouter == 3 { // clean end-of-list
-			break
-		} else if aouter, ok1 := next.(ExprAppl); ok1 {
-			if ainner, ok2 := aouter.Callee.(ExprAppl); ok2 {
-				if finner, ok3 := ainner.Callee.(ExprFnRef); ok3 && finner == 4 {
-					if hd, ok4 := me.eval(ainner.Arg, nil, ctx).(ExprNum); ok4 {
-						again, next, retIntListAsBytes = true, me.eval(aouter.Arg, nil, ctx), append(retIntListAsBytes, byte(hd))
-					}
-				}
-			}
-		}
-		if !again {
-			retIntListAsBytes = nil
-		}
-	}
-
+	retIntListAsBytes = me.BytesFromList(ctx, ret, retIntListAsBytes)
 	ctx.Stats.TimeTaken = time.Duration(time.Now().UnixNano() - tstart)
 	return
 }
