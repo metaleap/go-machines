@@ -90,7 +90,6 @@ func (me *ctxParse) gatherPseudoSumTypesAndBasedOnTheirDefsAppendToSrcs(moduleSr
 							str += " __" + tparts[0] + "_Of_" + ctorstr[:strings.IndexByte(ctorstr, ' ')]
 						}
 						str += " -> __" + tparts[0] + "_Of_" + cpart
-						println(str)
 						lines = append(lines, str)
 					}
 					tqname, strcases := me.curModule.name+"."+tparts[0], ""

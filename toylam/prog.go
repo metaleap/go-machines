@@ -29,25 +29,25 @@ func (me *Prog) RunAsMain(mainFuncExpr Expr, osProcArgs []string) (ret Value) {
 	loc, expr2eval := mainFuncExpr.locInfo(), mainFuncExpr
 	fillarg := func(argval Expr) Expr { return &ExprCall{loc, expr2eval, argval} }
 	for fn, _ := mainFuncExpr.(*ExprFunc); fn != nil; fn, _ = fn.Body.(*ExprFunc) {
-
+		if fn.numArgUses == 0 {
+			fn.numArgUses = -1
+		}
 		if fn.ArgName == "args" {
 			expr2eval = fillarg(me.newListOfStrs(false, loc, osProcArgs))
-
 		} else if fn.ArgName == "env" {
 			expr2eval = fillarg(me.newListOfStrs(false, loc, os.Environ()))
-
 		} else if fn.ArgName == "stdin" {
 			if stdin, err := ioutil.ReadAll(os.Stdin); err != nil {
 				panic(err)
 			} else {
 				expr2eval = fillarg(me.newStr(false, loc, string(stdin)))
 			}
-
 		} else {
 			panic("no idea how to fill in `" + fn.ArgName + "` arg: for your entry-point-ish top-level defs to be `Prog.RunAsMain`, use any combination of these supported arg names: `stdin`, `env`, `args`.")
 		}
 	}
-	return me.Value(me.Eval(expr2eval, nil))
+	ret = me.Value(me.Eval(expr2eval, nil))
+	return
 }
 
 func (me *Prog) newStr(forceNames bool, loc *nodeLocInfo, str string) Expr {

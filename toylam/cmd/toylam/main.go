@@ -58,11 +58,12 @@ func main() {
 	prog.ParseModules(modules)
 	prog.OnInstrMSG = func(msg string, val tl.Value) { println("LOG: " + msg + "\t" + prog.Value(val).String()) }
 	if maintopdefbody := prog.TopDefs[maintopdefqname]; maintopdefbody != nil {
-		retval := prog.RunAsMain(maintopdefbody, os.Args[argpos+1:])
-		if bytes, ok := tl.ValueBytes(retval); ok {
-			_, _ = os.Stdout.Write(append(bytes, '\n'))
-		} else {
-			_, _ = os.Stdout.WriteString(retval.String() + "\n")
+		if retval := prog.RunAsMain(maintopdefbody, os.Args[argpos+1:]); retval != nil {
+			if bytes, ok := tl.ValueBytes(retval); ok {
+				_, _ = os.Stdout.Write(append(bytes, '\n'))
+			} else {
+				_, _ = os.Stdout.WriteString(retval.String() + "\n")
+			}
 		}
 		os.Exit(0)
 	} else if srcfilename != "" {
