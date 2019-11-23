@@ -20,10 +20,6 @@ func main() {
 	if lazyeval {
 		argpos = 2
 	}
-	compile2atem := filepath.Join(os.Getenv("GOPATH"), "src/github.com/metaleap/atmo/atem/tmpdummies")
-	if stat, err := os.Stat(compile2atem); err != nil || !stat.IsDir() {
-		compile2atem = ""
-	}
 
 	var srcfilepath, srcdirpath string
 	if argpos >= len(os.Args) {
@@ -59,14 +55,9 @@ func main() {
 	}
 
 	prog, maintopdefqname, strdividerline := tl.Prog{LazyEval: lazyeval}, srcfilename[:len(srcfilename)-len(srcfileext)]+".main", "\n────────────────────────────────────────────────────────────────────────────────"
-	prog.ParseModules(modules)
+	prog.ParseModules(modules, tl.ParseOpts{})
 	prog.OnInstrMSG = func(msg string, val tl.Value) { println("LOG: " + msg + "\t" + prog.Value(val).String()) }
 	if maintopdefbody := prog.TopDefs[maintopdefqname]; maintopdefbody != nil {
-		if compile2atem != "" {
-			compile2atem = filepath.Join(compile2atem, maintopdefqname+".json")
-			(&ctxCompileToAtem{prog: &prog}).do(maintopdefqname, compile2atem)
-		}
-
 		if retval := prog.RunAsMain(maintopdefbody, os.Args[argpos+1:]); retval != nil {
 			if bytes, ok := tl.ValueBytes(retval); ok {
 				_, _ = os.Stdout.Write(append(bytes, '\n'))
@@ -83,7 +74,7 @@ func main() {
 		readln, eval := bufio.NewScanner(os.Stdin), func(ln string) (retval tl.Value, err interface{}) {
 			defer func() { err = recover() }()
 			modules["<repl>"] = []byte("<input> := " + ln)
-			prog.ParseModules(modules) // _technically_ very inefficient to reload-it-all on every single input but "works smoothly enough for me for now" --- the goal of toylam was to stay "tiny in terms of LoCs". which we already failed. even whackier is that the original `ParseModules` already did rewrite sources in our `module` map.
+			prog.ParseModules(modules, tl.ParseOpts{}) // _technically_ very inefficient to reload-it-all on every single input but "works smoothly enough for me for now" --- the goal of toylam was to stay "tiny in terms of LoCs". which we already failed. even whackier is that the original `ParseModules` already did rewrite sources in our `module` map.
 			val := prog.Eval(prog.TopDefs["<repl>.<input>"], nil)
 			retval = prog.Value(val)
 			println("STEPS", prog.NumEvalSteps)

@@ -26,6 +26,13 @@ type ctxParse struct {
 		bracketsCurlies map[string]string
 		bracketsSquares map[string]string
 	}
+	opts ParseOpts
+}
+
+type ParseOpts struct {
+	KeepRec      bool
+	KeepNameRefs bool
+	KeepOpRefs   bool
 }
 
 type nodeLocInfo struct {
@@ -42,8 +49,8 @@ func (me *nodeLocInfo) locStr() string {
 	return "in '" + me.srcLocModuleName + "." + me.srcLocTopDefName + "', line " + strconv.Itoa(me.srcLocLineNr) + ": "
 }
 
-func (me *Prog) ParseModules(modules map[string][]byte) {
-	ctx := ctxParse{prog: me, srcs: modules}
+func (me *Prog) ParseModules(modules map[string][]byte, opts ParseOpts) {
+	ctx := ctxParse{prog: me, srcs: modules, opts: opts}
 	ctx.curTopDef.bracketsParens, ctx.curTopDef.bracketsCurlies, ctx.curTopDef.bracketsSquares = make(map[string]string, 16), make(map[string]string, 2), make(map[string]string, 4) // reset every top-def, potentially needed earlier for type-spec top-defs
 	if me.NumEvalSteps, me.TopDefs = 0, map[string]Expr{}; me.pseudoSumTypes == nil {
 		me.pseudoSumTypes = map[string][]pseudoSumTypeCtor{}
@@ -62,11 +69,13 @@ func (me *Prog) ParseModules(modules map[string][]byte) {
 	}
 	me.exprBoolTrue, me.exprBoolFalse = me.TopDefs[StdRequiredDefs_true].(*ExprFunc), me.TopDefs[StdRequiredDefs_false].(*ExprFunc)
 	me.exprListNil, me.exprListConsCtorBody = me.TopDefs[StdRequiredDefs_listNil].(*ExprFunc), me.TopDefs[StdRequiredDefs_listCons].(*ExprFunc).Body.(*ExprFunc).Body.(*ExprFunc).Body
-	for instrname, instrcode := range instrs {
-		me.TopDefs[StdModuleName+".//op"+instrname] = &ExprFunc{nil, "//" + instrname, &ExprCall{nil, &ExprName{nil, instrname, int(instrcode)}, &ExprName{nil, "//" + instrname, -1}}, -1}
+	if !opts.KeepOpRefs {
+		for instrname, instrcode := range instrs {
+			me.TopDefs[StdModuleName+".//op"+instrname] = &ExprFunc{nil, "//" + instrname, &ExprCall{nil, &ExprName{nil, instrname, int(instrcode)}, &ExprName{nil, "//" + instrname, -1}}, -1}
+		}
 	}
 	for topdefqname, topdefbody := range me.TopDefs {
-		me.TopDefs[topdefqname] = me.preResolveExprs(topdefbody, topdefqname, topdefbody)
+		me.TopDefs[topdefqname] = ctx.preResolveExprs(topdefbody, topdefqname, topdefbody)
 	}
 }
 
@@ -178,7 +187,7 @@ func (me *ctxParse) parseTopDef(lines []string, idxStart int, idxEnd int) (topDe
 				panic(loc.locStr() + "illegal  local def name '" + localname + "' in:\n" + lnorig)
 			} else {
 				localbody := me.hoistArgs(me.parseExpr(rhs, lnorig, loc), defsig[1:])
-				if 0 < localbody.replaceName(localname, "//recur3//"+localname) {
+				if (!me.opts.KeepRec) && 0 < localbody.replaceName(localname, "//recur3//"+localname) {
 					localbody = me.rewriteForRecursion(localname, localbody, "recur")
 				}
 				topDefBody = &ExprCall{loc, &ExprFunc{loc, localname, topDefBody, -1}, localbody}
@@ -186,7 +195,7 @@ func (me *ctxParse) parseTopDef(lines []string, idxStart int, idxEnd int) (topDe
 		}
 	}
 	topDefBody = me.hoistArgs(topDefBody, topdefargs)
-	if topDefBody != nil && 0 < topDefBody.replaceName(topDefName, topDefName) /* aka "refers to"*/ {
+	if (!me.opts.KeepRec) && topDefBody != nil && 0 < topDefBody.replaceName(topDefName, topDefName) {
 		topDefBody = me.rewriteForRecursion(topDefName, topDefBody, "Recur")
 	}
 	return
@@ -381,7 +390,7 @@ func (*ctxParse) hoistArgs(expr Expr, argNames []string) Expr {
 func (me *ctxParse) populateNames(expr Expr, binders map[string]int, curModule map[string]Expr, locHintTopDefName string) Expr {
 	const stdpref = StdModuleName + "."
 	fixinstrval := func(expr Expr) {
-		if name, _ := expr.(*ExprName); name != nil && name.IdxOrInstr > 0 {
+		if name, _ := expr.(*ExprName); name != nil && name.IdxOrInstr > 0 && !me.opts.KeepOpRefs {
 			name.NameVal, name.IdxOrInstr = stdpref+"//op"+name.NameVal, 0
 		}
 	}
@@ -408,11 +417,13 @@ func (me *ctxParse) populateNames(expr Expr, binders map[string]int, curModule m
 			}
 		}
 	case *ExprName:
-		if it.NameVal == locHintTopDefName {
-			return me.populateNames(&ExprCall{it.locInfo(), &ExprName{it.locInfo(), "//Recur2//" + it.NameVal, 0}, &ExprName{it.locInfo(), "//Recur2//" + it.NameVal, 0}}, binders, curModule, locHintTopDefName)
-		} else if strings.HasPrefix(it.NameVal, "//recur3//") {
-			it.NameVal = it.NameVal[len("//recur3//"):]
-			return me.populateNames(&ExprCall{it.locInfo(), &ExprName{it.locInfo(), "//recur2//" + it.NameVal, 0}, &ExprName{it.locInfo(), "//recur2//" + it.NameVal, 0}}, binders, curModule, locHintTopDefName)
+		if !me.opts.KeepRec {
+			if it.NameVal == locHintTopDefName {
+				return me.populateNames(&ExprCall{it.locInfo(), &ExprName{it.locInfo(), "//Recur2//" + it.NameVal, 0}, &ExprName{it.locInfo(), "//Recur2//" + it.NameVal, 0}}, binders, curModule, locHintTopDefName)
+			} else if strings.HasPrefix(it.NameVal, "//recur3//") {
+				it.NameVal = it.NameVal[len("//recur3//"):]
+				return me.populateNames(&ExprCall{it.locInfo(), &ExprName{it.locInfo(), "//recur2//" + it.NameVal, 0}, &ExprName{it.locInfo(), "//recur2//" + it.NameVal, 0}}, binders, curModule, locHintTopDefName)
+			}
 		}
 		if posdot := strings.LastIndexByte(it.NameVal, '.'); posdot > 0 && nil == me.srcs[it.NameVal[:posdot]] && (nil == me.srcs[stdpref+it.NameVal[:posdot]] || 0 != binders[it.NameVal[:posdot]]) {
 			dotpath := strings.Split(it.NameVal, ".") // desugar a.b.c into (c (b a))
@@ -475,7 +486,7 @@ func (me *ctxParse) extractBrackets(loc *nodeLocInfo, ln string, lnOrig string, 
 	return ln
 }
 
-func (me *Prog) preResolveExprs(expr Expr, topDefQName string, topDefBody Expr) Expr {
+func (me *ctxParse) preResolveExprs(expr Expr, topDefQName string, topDefBody Expr) Expr {
 	switch it := expr.(type) {
 	case *ExprFunc:
 		it.Body = me.preResolveExprs(it.Body, topDefQName, topDefBody)
@@ -491,28 +502,32 @@ func (me *Prog) preResolveExprs(expr Expr, topDefQName string, topDefBody Expr) 
 	case *ExprName:
 		if it.IdxOrInstr <= 0 {
 			const stdpref = StdModuleName + "."
-			topdefbody := me.TopDefs[it.NameVal]
+			topdefbody := me.prog.TopDefs[it.NameVal]
 			if topdefbody == nil {
-				topdefbody = me.TopDefs[stdpref+it.NameVal]
+				topdefbody = me.prog.TopDefs[stdpref+it.NameVal]
 			}
 			if it.IdxOrInstr == 0 {
 				if topdefbody == nil && strings.HasPrefix(it.NameVal, stdpref) && strings.LastIndexByte(it.NameVal, '.') == len(StdModuleName) {
 					needle := strings.TrimPrefix(it.NameVal, stdpref)
-					for name, expr := range me.TopDefs {
+					for name, expr := range me.prog.TopDefs {
 						if strings.HasPrefix(name, stdpref) && strings.HasSuffix(name, "."+needle) {
 							topdefbody = expr
 							break
 						}
 					}
 				}
-				if topdefbody == nil {
-					panic("in '" + topDefQName + "', line " + strconv.Itoa(it.srcLocLineNr) + ": name '" + it.NameVal + "' unresolvable in:\n" + topDefBody.String())
-				} else if it.NameVal == topDefQName {
-					panic(it.locStr() + "NEW BUG in `Prog.preResolveExprs` for top-level def '" + it.NameVal + "' recursion")
-				} else if name, _ := topdefbody.(*ExprName); name != nil {
-					return me.preResolveExprs(name, it.NameVal, name)
-				} else {
-					return topdefbody
+				if !me.opts.KeepNameRefs {
+					if topdefbody == nil {
+						panic("in '" + topDefQName + "', line " + strconv.Itoa(it.srcLocLineNr) + ": name '" + it.NameVal + "' unresolvable in:\n" + topDefBody.String())
+					} else if it.NameVal == topDefQName {
+						if !me.opts.KeepRec {
+							panic(it.locStr() + "NEW BUG in `Prog.preResolveExprs` for top-level def '" + it.NameVal + "' recursion")
+						}
+					} else if name, _ := topdefbody.(*ExprName); name != nil {
+						return me.preResolveExprs(name, it.NameVal, name)
+					} else {
+						return topdefbody
+					}
 				}
 			} else if topdefbody != nil {
 				panic("in '" + topDefQName + "', line " + strconv.Itoa(it.srcLocLineNr) + ": local name '" + it.NameVal + "' already taken (no shadowing allowed)")

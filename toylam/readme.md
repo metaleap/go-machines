@@ -142,6 +142,17 @@ const (
 )
 ```
 
+#### type ParseOpts
+
+```go
+type ParseOpts struct {
+	KeepRec      bool
+	KeepNameRefs bool
+	KeepOpRefs   bool
+}
+```
+
+
 #### type Prog
 
 ```go
@@ -163,7 +174,7 @@ func (me *Prog) Eval(expr Expr, env Values) Value
 #### func (*Prog) ParseModules
 
 ```go
-func (me *Prog) ParseModules(modules map[string][]byte)
+func (me *Prog) ParseModules(modules map[string][]byte, opts ParseOpts)
 ```
 
 #### func (*Prog) RunAsMain
