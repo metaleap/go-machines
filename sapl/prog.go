@@ -22,9 +22,9 @@ type Prog []TopDef
 type Expr interface{ String() string }
 
 func (me ExprNum) String() string    { return strconv.Itoa(int(me)) }
-func (me ExprArgRef) String() string { return "@" + strconv.Itoa(int(me)) }
-func (me ExprFnRef) String() string  { return "^" + strconv.Itoa(int(me)) }
-func (me ExprAppl) String() string   { return "(" + me.Callee.String() + " " + me.Arg.String() + ")" }
+func (me ExprArgRef) String() string { return "\"" + strconv.Itoa(int(me)) + "\"" }
+func (me ExprFnRef) String() string  { return "[" + strconv.Itoa(int(me)) + "]" }
+func (me ExprAppl) String() string   { return "[" + me.Callee.String() + ", " + me.Arg.String() + "]" }
 
 type ExprNum int
 
