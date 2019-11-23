@@ -264,3 +264,16 @@ func (me Instr) callCmp(loc *nodeLocInfo, lhs valNum, rhs valNum) bool {
 	}
 	panic(loc.locStr() + "unknown compare-instruction code: " + strconv.Itoa(int(me)))
 }
+
+func Walk(expr Expr, visitor func(Expr)) {
+	visitor(expr)
+	switch it := expr.(type) {
+	case *ExprFunc:
+		Walk(it.Body, visitor)
+	case *ExprCall:
+		Walk(it.Callee, visitor)
+		Walk(it.CallArg, visitor)
+	default:
+		panic(it)
+	}
+}

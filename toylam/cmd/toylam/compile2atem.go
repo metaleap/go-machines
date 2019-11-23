@@ -27,22 +27,21 @@ type ctxCompileToAtem struct {
 
 func (me *ctxCompileToAtem) do(mainTopDefQName string, outJsonFilePath string) {
 	me.done = make(map[Expr]int, len(me.prog.TopDefs))
-	me.compileFuncDef("same", me.prog.TopDefs["same"])
+	me.compileTopDef("same")
 
 	ioutil.WriteFile(outJsonFilePath, []byte(me.outProg.String()), os.ModePerm)
 }
 
-func (me *ctxCompileToAtem) compileFuncDef(argName string, body Expr) (idx int) {
-	if have, ok := me.done[body]; ok {
+func (me *ctxCompileToAtem) compileTopDef(name string) {
+
+}
+
+func (me *ctxCompileToAtem) compileFuncDef(argName string, expr Expr) (idx int) {
+	if have, ok := me.done[expr]; ok {
 		return have
 	}
-	switch it := body.(type) {
-	case *ExprFunc:
 
-	default:
-		panic(it)
-	}
-	me.done[body] = idx
+	me.done[expr] = idx
 	return
 }
 
@@ -62,4 +61,26 @@ func (me *ctxCompileToAtem) compileExpr(expr Expr) atem.Expr {
 		return atem.ExprFuncRef(me.compileFuncDef(it.ArgName, it.Body))
 	}
 	panic(expr)
+}
+
+func (me *ctxCompileToAtem) dissectFunc(it *ExprFunc) (innerBody Expr, args []int, freeVars map[int]string) {
+	var fns []*ExprFunc
+	var numargs int
+	for fn := it; fn != nil; fn, _ = fn.Body.(*ExprFunc) {
+		if _, done := me.done[fn.Body]; done {
+			panic(fn.ArgName)
+		}
+		fns, numargs, innerBody = append(fns, fn), numargs+1, fn.Body
+	}
+	args, freeVars = make([]int, numargs), make(map[int]string, 2)
+	Walk(innerBody, func(expr Expr) {
+		if name, _ := expr.(*ExprName); name != nil && name.IdxOrInstr < 0 {
+			if idx := len(args) + name.IdxOrInstr; idx >= 0 && idx < len(args) {
+				args[idx] = args[idx] + 1
+			} else {
+				freeVars[name.IdxOrInstr] = name.NameVal
+			}
+		}
+	})
+	return
 }

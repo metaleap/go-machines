@@ -41,6 +41,12 @@ func ValueNum(it Value) (int, bool)
 func ValueOther(it Value) (string, bool)
 ```
 
+#### func  Walk
+
+```go
+func Walk(expr Expr, visitor func(Expr))
+```
+
 #### type Expr
 
 ```go
