@@ -20,6 +20,10 @@ func main() {
 	if lazyeval {
 		argpos = 2
 	}
+	compile2atem := filepath.Join(os.Getenv("GOPATH"), "src/github.com/metaleap/atmo/atem/tmpdummies")
+	if stat, err := os.Stat(compile2atem); err != nil || !stat.IsDir() {
+		compile2atem = ""
+	}
 
 	var srcfilepath, srcdirpath string
 	if argpos >= len(os.Args) {
@@ -58,6 +62,11 @@ func main() {
 	prog.ParseModules(modules)
 	prog.OnInstrMSG = func(msg string, val tl.Value) { println("LOG: " + msg + "\t" + prog.Value(val).String()) }
 	if maintopdefbody := prog.TopDefs[maintopdefqname]; maintopdefbody != nil {
+		if compile2atem != "" {
+			compile2atem = filepath.Join(compile2atem, maintopdefqname+".json")
+			(&ctxCompileToAtem{prog: prog}).do(maintopdefqname, compile2atem)
+		}
+
 		if retval := prog.RunAsMain(maintopdefbody, os.Args[argpos+1:]); retval != nil {
 			if bytes, ok := tl.ValueBytes(retval); ok {
 				_, _ = os.Stdout.Write(append(bytes, '\n'))
