@@ -64,7 +64,7 @@ func main() {
 	if maintopdefbody := prog.TopDefs[maintopdefqname]; maintopdefbody != nil {
 		if compile2atem != "" {
 			compile2atem = filepath.Join(compile2atem, maintopdefqname+".json")
-			(&ctxCompileToAtem{prog: prog}).do(maintopdefqname, compile2atem)
+			(&ctxCompileToAtem{prog: &prog}).do(maintopdefqname, compile2atem)
 		}
 
 		if retval := prog.RunAsMain(maintopdefbody, os.Args[argpos+1:]); retval != nil {

@@ -4,24 +4,24 @@ import (
 	"strconv"
 )
 
-type instr int
+type Instr int
 
 const ( // if wanting to re-arrange: `Eval` requires that all arith-instrs do precede all compare-instrs (of which EQ must be the first)
-	_ instr = iota
-	instrADD
-	instrMUL
-	instrSUB
-	instrDIV
-	instrMOD
-	instrMSG
-	instrERR
-	instrEQ
-	instrGT
-	instrLT
+	_ Instr = iota
+	InstrADD
+	InstrMUL
+	InstrSUB
+	InstrDIV
+	InstrMOD
+	InstrMSG
+	InstrERR
+	InstrEQ
+	InstrGT
+	InstrLT
 )
 
 var (
-	instrs     = map[string]instr{"ADD": instrADD, "MUL": instrMUL, "SUB": instrSUB, "DIV": instrDIV, "MOD": instrMOD, "MSG": instrMSG, "ERR": instrERR, "EQ": instrEQ, "GT": instrGT, "LT": instrLT}
+	instrs     = map[string]Instr{"ADD": InstrADD, "MUL": InstrMUL, "SUB": InstrSUB, "DIV": InstrDIV, "MOD": InstrMOD, "MSG": InstrMSG, "ERR": InstrERR, "EQ": InstrEQ, "GT": InstrGT, "LT": InstrLT}
 	instrNames = []string{"?!?", "ADD", "MUL", "SUB", "DIV", "MOD", "MSG", "ERR", "EQ", "GT", "LT"}
 )
 
@@ -46,15 +46,15 @@ func (me *ExprLitNum) String() string                 { return strconv.FormatInt
 type ExprName struct {
 	*nodeLocInfo
 	NameVal    string
-	idxOrInstr int // if <0 then De Bruijn index, if >0 then instrCode
+	IdxOrInstr int // if <0 then De Bruijn index, if >0 then instrCode
 }
 
 func (me *ExprName) namesDeclared() []string { return nil }
 func (me *ExprName) rewriteName(name string, with Expr) Expr {
 	if me.NameVal == name {
 		return with
-	} else if me.idxOrInstr < 0 {
-		me.idxOrInstr = 0
+	} else if me.IdxOrInstr < 0 {
+		me.IdxOrInstr = 0
 	}
 	return me
 }
@@ -64,7 +64,7 @@ func (me *ExprName) replaceName(nameOld string, nameNew string) (didReplace int)
 	}
 	return
 }
-func (me *ExprName) String() string { return me.NameVal + ":" + strconv.Itoa(me.idxOrInstr) }
+func (me *ExprName) String() string { return me.NameVal + ":" + strconv.Itoa(me.IdxOrInstr) }
 
 type ExprCall struct {
 	*nodeLocInfo
@@ -122,7 +122,7 @@ func (me valNum) String() string         { return strconv.FormatInt(int64(me), 1
 type valClosure struct {
 	env     Values
 	body    Expr
-	instr   instr
+	instr   Instr
 	argDrop bool
 }
 
@@ -171,12 +171,12 @@ func (me *Prog) Eval(expr Expr, env Values) Value {
 	case *ExprFunc:
 		return &valClosure{body: it.Body, env: env.shallowCopy(), argDrop: it.numArgUses == 0}
 	case *ExprName:
-		if it.idxOrInstr > 0 { // it's never 0 thanks to prior & completed `Prog.preResolveNames`
-			return &valClosure{instr: instr(-it.idxOrInstr), env: env.shallowCopy()}
-		} else if it.idxOrInstr == 0 {
+		if it.IdxOrInstr > 0 { // it's never 0 thanks to prior & completed `Prog.preResolveNames`
+			return &valClosure{instr: Instr(-it.IdxOrInstr), env: env.shallowCopy()}
+		} else if it.IdxOrInstr == 0 {
 			panic(it.locStr() + "NEWLY INTRODUCED INTERPRETER BUG: " + it.String())
 		}
-		return env[len(env)+it.idxOrInstr]
+		return env[len(env)+it.IdxOrInstr]
 	case *ExprCall:
 		callee := me.Eval(it.Callee, env)
 		closure := callee.isClosure()
@@ -193,7 +193,7 @@ func (me *Prog) Eval(expr Expr, env Values) Value {
 		}
 		if closure.instr < 0 {
 			closure.instr, closure.env = -closure.instr, append(closure.env, argval) // return &valClosure{instr: -closure.instr, env: append(closure.env.Copy(), argval)}
-			if closure.instr == instrERR {
+			if closure.instr == InstrERR {
 				if argval = me.Value(argval); me.OnInstrMSG != nil {
 					me.OnInstrMSG(it.locStr(), argval)
 				}
@@ -203,19 +203,19 @@ func (me *Prog) Eval(expr Expr, env Values) Value {
 		} else if closure.instr > 0 {
 			lhs, rhs := closure.env[len(closure.env)-1], argval
 			lnum, rnum := lhs.isNum(), rhs.isNum()
-			if closure.instr == instrMSG {
+			if closure.instr == InstrMSG {
 				if me.OnInstrMSG != nil {
 					me.OnInstrMSG(string(me.Value(lhs).(valFinalBytes)), rhs)
 				}
 				return argval
 			}
-			if closure.instr < instrEQ && lnum != nil && rnum != nil {
+			if closure.instr < InstrEQ && lnum != nil && rnum != nil {
 				return closure.instr.callCalc(it.locInfo(), *lnum, *rnum)
 			}
 			var retbool *ExprFunc
-			if closure.instr >= instrEQ && lnum != nil && rnum != nil {
+			if closure.instr >= InstrEQ && lnum != nil && rnum != nil {
 				retbool = me.newBool(closure.instr.callCmp(it.locInfo(), *lnum, *rnum))
-			} else if closure.instr == instrEQ {
+			} else if closure.instr == InstrEQ {
 				if eq, _ := me.value(lhs).(valEq); eq != nil {
 					retbool = me.newBool(eq.eq(me.value(rhs)))
 				}
@@ -237,29 +237,29 @@ func (me *Prog) newBool(b bool) (exprTrueOrFalse *ExprFunc) {
 	return
 }
 
-func (me instr) callCalc(loc *nodeLocInfo, lhs valNum, rhs valNum) valNum {
+func (me Instr) callCalc(loc *nodeLocInfo, lhs valNum, rhs valNum) valNum {
 	switch me {
-	case instrADD:
+	case InstrADD:
 		return lhs + rhs
-	case instrSUB:
+	case InstrSUB:
 		return lhs - rhs
-	case instrMUL:
+	case InstrMUL:
 		return lhs * rhs
-	case instrDIV:
+	case InstrDIV:
 		return lhs / rhs
-	case instrMOD:
+	case InstrMOD:
 		return lhs % rhs
 	}
 	panic(loc.locStr() + "unknown calc-instruction code: " + strconv.Itoa(int(me)))
 }
 
-func (me instr) callCmp(loc *nodeLocInfo, lhs valNum, rhs valNum) bool {
+func (me Instr) callCmp(loc *nodeLocInfo, lhs valNum, rhs valNum) bool {
 	switch me {
-	case instrEQ:
+	case InstrEQ:
 		return (lhs == rhs)
-	case instrGT:
+	case InstrGT:
 		return (lhs > rhs)
-	case instrLT:
+	case InstrLT:
 		return (lhs < rhs)
 	}
 	panic(loc.locStr() + "unknown compare-instruction code: " + strconv.Itoa(int(me)))

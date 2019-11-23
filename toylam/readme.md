@@ -102,7 +102,8 @@ func (me *ExprLitNum) String() string
 
 ```go
 type ExprName struct {
-	NameVal string
+	NameVal    string
+	IdxOrInstr int // if <0 then De Bruijn index, if >0 then instrCode
 }
 ```
 
@@ -111,6 +112,28 @@ type ExprName struct {
 
 ```go
 func (me *ExprName) String() string
+```
+
+#### type Instr
+
+```go
+type Instr int
+```
+
+
+```go
+const (
+	InstrADD Instr
+	InstrMUL
+	InstrSUB
+	InstrDIV
+	InstrMOD
+	InstrMSG
+	InstrERR
+	InstrEQ
+	InstrGT
+	InstrLT
+)
 ```
 
 #### type Prog

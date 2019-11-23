@@ -314,7 +314,7 @@ func (me *ctxParse) parseExprToks(toks []string, locHintLn string, locInfo *node
 		}
 	} else if subexpr, ok := me.curTopDef.bracketsParens[tok]; ok {
 		if subexpr = strings.TrimSpace(subexpr); subexpr == "" {
-			expr = &ExprCall{locInfo, &ExprName{locInfo, "ERR", int(instrERR)}, me.prog.newStr(true, locInfo, "forced crash via `()`!")}
+			expr = &ExprCall{locInfo, &ExprName{locInfo, "ERR", int(InstrERR)}, me.prog.newStr(true, locInfo, "forced crash via `()`!")}
 		} else {
 			expr = me.parseExpr(subexpr, locHintLn, locInfo)
 		}
@@ -381,8 +381,8 @@ func (*ctxParse) hoistArgs(expr Expr, argNames []string) Expr {
 func (me *ctxParse) populateNames(expr Expr, binders map[string]int, curModule map[string]Expr, locHintTopDefName string) Expr {
 	const stdpref = StdModuleName + "."
 	fixinstrval := func(expr Expr) {
-		if name, _ := expr.(*ExprName); name != nil && name.idxOrInstr > 0 {
-			name.NameVal, name.idxOrInstr = stdpref+"//op"+name.NameVal, 0
+		if name, _ := expr.(*ExprName); name != nil && name.IdxOrInstr > 0 {
+			name.NameVal, name.IdxOrInstr = stdpref+"//op"+name.NameVal, 0
 		}
 	}
 	switch it := expr.(type) {
@@ -421,9 +421,9 @@ func (me *ctxParse) populateNames(expr Expr, binders map[string]int, curModule m
 				ret = &ExprCall{it.nodeLocInfo, &ExprName{it.nodeLocInfo, dotpath[i], int(instrs[dotpath[i]])}, ret}
 			}
 			return me.populateNames(ret, binders, curModule, locHintTopDefName)
-		} else if it.idxOrInstr == 0 && posdot < 0 { // neither a prim-instr-op-code, nor an already-qualified cross-module reference
-			if it.idxOrInstr = binders[it.NameVal]; it.idxOrInstr > 0 {
-				it.idxOrInstr = -it.idxOrInstr // mark as referring to a local / arg (De Bruijn index but negative)
+		} else if it.IdxOrInstr == 0 && posdot < 0 { // neither a prim-instr-op-code, nor an already-qualified cross-module reference
+			if it.IdxOrInstr = binders[it.NameVal]; it.IdxOrInstr > 0 {
+				it.IdxOrInstr = -it.IdxOrInstr // mark as referring to a local / arg (De Bruijn index but negative)
 			} else if _, topdefexists := curModule[it.NameVal]; topdefexists {
 				it.NameVal = me.curModule.name + "." + it.NameVal // mark as referring to a global in the current module
 			} else {
@@ -489,13 +489,13 @@ func (me *Prog) preResolveExprs(expr Expr, topDefQName string, topDefBody Expr) 
 			return it.CallArg
 		}
 	case *ExprName:
-		if it.idxOrInstr <= 0 {
+		if it.IdxOrInstr <= 0 {
 			const stdpref = StdModuleName + "."
 			topdefbody := me.TopDefs[it.NameVal]
 			if topdefbody == nil {
 				topdefbody = me.TopDefs[stdpref+it.NameVal]
 			}
-			if it.idxOrInstr == 0 {
+			if it.IdxOrInstr == 0 {
 				if topdefbody == nil && strings.HasPrefix(it.NameVal, stdpref) && strings.LastIndexByte(it.NameVal, '.') == len(StdModuleName) {
 					needle := strings.TrimPrefix(it.NameVal, stdpref)
 					for name, expr := range me.TopDefs {
@@ -524,13 +524,13 @@ func (me *Prog) preResolveExprs(expr Expr, topDefQName string, topDefBody Expr) 
 
 func (me *ExprFunc) isIdentity() bool {
 	name, ok := me.Body.(*ExprName)
-	return ok && name.idxOrInstr == -1
+	return ok && name.IdxOrInstr == -1
 }
 
 func (me *ExprCall) ifConstNumArithOpInstrThenPreCalcInto(rhs *ExprLitNum, parent *ExprCall) (ok bool) {
-	if name, _ := me.Callee.(*ExprName); name != nil && name.idxOrInstr > 0 {
+	if name, _ := me.Callee.(*ExprName); name != nil && name.IdxOrInstr > 0 {
 		if lhs, _ := me.CallArg.(*ExprLitNum); lhs != nil {
-			if instr := instr(name.idxOrInstr); instr < instrEQ {
+			if instr := Instr(name.IdxOrInstr); instr < InstrEQ {
 				ok, rhs.nodeLocInfo, rhs.NumVal = true, parent.nodeLocInfo, int(instr.callCalc(parent.nodeLocInfo, valNum(lhs.NumVal), valNum(rhs.NumVal)))
 			}
 		}
