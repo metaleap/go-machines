@@ -257,6 +257,18 @@ func (me *Loc) LocInfo() *Loc
 func (me *Loc) LocStr() string
 ```
 
+#### type LocalDef
+
+```go
+type LocalDef = struct {
+	Name string
+	Expr
+}
+```
+
+not used or created / populated at all by the standard interpreter with default
+ParseOpts
+
 #### type ParseOpts
 
 ```go
@@ -277,7 +289,7 @@ interpreter in here
 type Prog struct {
 	LazyEval        bool
 	TopDefs         map[string]Expr
-	TopDefSepLocals map[string][]localDef
+	TopDefSepLocals map[string][]LocalDef // not used or created / populated at all by the standard interpreter with default ParseOpts
 	OnInstrMSG      func(string, Value)
 	NumEvalSteps    int
 }

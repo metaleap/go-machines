@@ -55,7 +55,7 @@ func (me *Loc) LocStr() string {
 func (me *Prog) ParseModules(modules map[string][]byte, opts ParseOpts) {
 	ctx := ctxParse{prog: me, srcs: modules, opts: opts}
 	ctx.curTopDef.bracketsParens, ctx.curTopDef.bracketsCurlies, ctx.curTopDef.bracketsSquares = make(map[string]string, 16), make(map[string]string, 2), make(map[string]string, 4) // reset every top-def, potentially needed earlier for type-spec top-defs
-	me.NumEvalSteps, me.TopDefs, me.TopDefSepLocals = 0, map[string]Expr{}, map[string][]localDef{}
+	me.NumEvalSteps, me.TopDefs, me.TopDefSepLocals = 0, map[string]Expr{}, map[string][]LocalDef{}
 	if me.pseudoSumTypes == nil {
 		me.pseudoSumTypes = map[string][]pseudoSumTypeCtor{}
 	}
@@ -70,7 +70,7 @@ func (me *Prog) ParseModules(modules map[string][]byte, opts ParseOpts) {
 		for topdefname, topdefbody := range module {
 			me.TopDefs[modulename+"."+topdefname] = ctx.populateNames(topdefbody, make(map[string]int, 16), module, topdefname)
 			for i, localdef := range me.TopDefSepLocals[topdefname] {
-				me.TopDefSepLocals[topdefname][i] = localDef{Name: localdef.Name, Expr: ctx.populateNames(localdef.Expr, make(map[string]int, 16), module, topdefname)}
+				me.TopDefSepLocals[topdefname][i] = LocalDef{Name: localdef.Name, Expr: ctx.populateNames(localdef.Expr, make(map[string]int, 16), module, topdefname)}
 			}
 			me.TopDefSepLocals[modulename+"."+topdefname] = me.TopDefSepLocals[topdefname]
 			delete(me.TopDefSepLocals, topdefname)
@@ -88,7 +88,7 @@ func (me *Prog) ParseModules(modules map[string][]byte, opts ParseOpts) {
 	}
 	for topdefqname, topdeflocals := range me.TopDefSepLocals {
 		for i, localdef := range topdeflocals {
-			topdeflocals[i] = localDef{Name: localdef.Name, Expr: ctx.preResolveExprs(localdef.Expr, topdefqname, me.TopDefs[topdefqname])}
+			topdeflocals[i] = LocalDef{Name: localdef.Name, Expr: ctx.preResolveExprs(localdef.Expr, topdefqname, me.TopDefs[topdefqname])}
 		}
 		me.TopDefSepLocals[topdefqname] = topdeflocals
 	}
@@ -206,7 +206,7 @@ func (me *ctxParse) parseTopDef(lines []string, idxStart int, idxEnd int) (topDe
 					localbody = me.rewriteForRecursion(localname, localbody, "recur")
 				}
 				if me.opts.KeepSepLocals {
-					me.prog.TopDefSepLocals[topDefName] = append(me.prog.TopDefSepLocals[topDefName], localDef{localname, localbody})
+					me.prog.TopDefSepLocals[topDefName] = append(me.prog.TopDefSepLocals[topDefName], LocalDef{localname, localbody})
 				} else {
 					topDefBody = &ExprCall{loc, &ExprFunc{loc, localname, topDefBody, -1}, localbody}
 				}
