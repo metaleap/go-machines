@@ -8,6 +8,7 @@
 ```go
 const (
 	StdModuleName            = "std"
+	StdRequiredDefs_id       = StdModuleName + "." + "same"
 	StdRequiredDefs_true     = StdModuleName + "." + "True"
 	StdRequiredDefs_false    = StdModuleName + "." + "False"
 	StdRequiredDefs_tupCons  = StdModuleName + "." + "Pair"

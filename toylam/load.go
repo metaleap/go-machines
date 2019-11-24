@@ -8,6 +8,7 @@ import (
 
 const (
 	StdModuleName            = "std"
+	StdRequiredDefs_id       = StdModuleName + "." + "same"
 	StdRequiredDefs_true     = StdModuleName + "." + "True"
 	StdRequiredDefs_false    = StdModuleName + "." + "False"
 	StdRequiredDefs_tupCons  = StdModuleName + "." + "Pair"
@@ -68,6 +69,8 @@ func (me *Prog) ParseModules(modules map[string][]byte, opts ParseOpts) {
 		module := ctx.parseModule(string(modulesrc))
 		for topdefname, topdefbody := range module {
 			me.TopDefs[modulename+"."+topdefname] = ctx.populateNames(topdefbody, make(map[string]int, 16), module, topdefname)
+			me.TopDefSepLocals[modulename+"."+topdefname] = me.TopDefSepLocals[topdefname]
+			delete(me.TopDefSepLocals, topdefname)
 		}
 	}
 	me.exprBoolTrue, me.exprBoolFalse = me.TopDefs[StdRequiredDefs_true].(*ExprFunc), me.TopDefs[StdRequiredDefs_false].(*ExprFunc)
