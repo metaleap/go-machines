@@ -8,7 +8,7 @@ import (
 )
 
 type localDef = struct {
-	name string
+	Name string
 	Expr
 }
 

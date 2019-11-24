@@ -72,6 +72,12 @@ type ExprCall struct {
 ```
 
 
+#### func (*ExprCall) IfConstNumArithOpInstrThenPreCalcInto
+
+```go
+func (me *ExprCall) IfConstNumArithOpInstrThenPreCalcInto(rhs *ExprLitNum, parent *ExprCall) (ok bool)
+```
+
 #### func (*ExprCall) NamesDeclared
 
 ```go
@@ -106,6 +112,12 @@ type ExprFunc struct {
 }
 ```
 
+
+#### func (*ExprFunc) IsIdentity
+
+```go
+func (me *ExprFunc) IsIdentity() bool
+```
 
 #### func (*ExprFunc) NamesDeclared
 

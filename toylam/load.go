@@ -503,10 +503,10 @@ func (me *ctxParse) preResolveExprs(expr Expr, topDefQName string, topDefBody Ex
 	case *ExprCall:
 		it.CallArg, it.Callee = me.preResolveExprs(it.CallArg, topDefQName, topDefBody), me.preResolveExprs(it.Callee, topDefQName, topDefBody)
 		if call, _ := it.Callee.(*ExprCall); call != nil {
-			if numlit, _ := it.CallArg.(*ExprLitNum); numlit != nil && call.ifConstNumArithOpInstrThenPreCalcInto(numlit, it) {
+			if numlit, _ := it.CallArg.(*ExprLitNum); numlit != nil && call.IfConstNumArithOpInstrThenPreCalcInto(numlit, it) {
 				return numlit
 			}
-		} else if fn, _ := it.Callee.(*ExprFunc); fn != nil && fn.isIdentity() {
+		} else if fn, _ := it.Callee.(*ExprFunc); fn != nil && fn.IsIdentity() {
 			return it.CallArg
 		}
 	case *ExprName:
@@ -547,12 +547,12 @@ func (me *ctxParse) preResolveExprs(expr Expr, topDefQName string, topDefBody Ex
 	return expr
 }
 
-func (me *ExprFunc) isIdentity() bool {
+func (me *ExprFunc) IsIdentity() bool {
 	name, ok := me.Body.(*ExprName)
 	return ok && name.IdxOrInstr == -1
 }
 
-func (me *ExprCall) ifConstNumArithOpInstrThenPreCalcInto(rhs *ExprLitNum, parent *ExprCall) (ok bool) {
+func (me *ExprCall) IfConstNumArithOpInstrThenPreCalcInto(rhs *ExprLitNum, parent *ExprCall) (ok bool) {
 	if name, _ := me.Callee.(*ExprName); name != nil && name.IdxOrInstr > 0 {
 		if lhs, _ := me.CallArg.(*ExprLitNum); lhs != nil {
 			if instr := Instr(name.IdxOrInstr); instr < InstrEQ {
