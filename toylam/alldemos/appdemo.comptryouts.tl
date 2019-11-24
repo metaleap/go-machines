@@ -1,1 +1,1 @@
-main args env := num.factorial 7
+main args env := num.toString 123
