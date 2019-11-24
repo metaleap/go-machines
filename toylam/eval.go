@@ -26,31 +26,31 @@ var (
 )
 
 type Expr interface {
-	locInfo() *nodeLocInfo
-	namesDeclared() []string
-	replaceName(string, string) int
-	rewriteName(string, Expr) Expr
+	LocInfo() *Loc
+	NamesDeclared() []string
+	ReplaceName(string, string) int
+	RewriteName(string, Expr) Expr
 	String() string
 }
 
 type ExprLitNum struct {
-	*nodeLocInfo
+	*Loc
 	NumVal int
 }
 
-func (me *ExprLitNum) namesDeclared() []string        { return nil }
-func (me *ExprLitNum) rewriteName(string, Expr) Expr  { return me }
-func (me *ExprLitNum) replaceName(string, string) int { return 0 }
+func (me *ExprLitNum) NamesDeclared() []string        { return nil }
+func (me *ExprLitNum) RewriteName(string, Expr) Expr  { return me }
+func (me *ExprLitNum) ReplaceName(string, string) int { return 0 }
 func (me *ExprLitNum) String() string                 { return strconv.FormatInt(int64(me.NumVal), 10) }
 
 type ExprName struct {
-	*nodeLocInfo
+	*Loc
 	NameVal    string
 	IdxOrInstr int // if <0 then De Bruijn index, if >0 then instrCode
 }
 
-func (me *ExprName) namesDeclared() []string { return nil }
-func (me *ExprName) rewriteName(name string, with Expr) Expr {
+func (me *ExprName) NamesDeclared() []string { return nil }
+func (me *ExprName) RewriteName(name string, with Expr) Expr {
 	if me.NameVal == name {
 		return with
 	} else if me.IdxOrInstr < 0 {
@@ -58,8 +58,8 @@ func (me *ExprName) rewriteName(name string, with Expr) Expr {
 	}
 	return me
 }
-func (me *ExprName) replaceName(nameOld string, nameNew string) (didReplace int) {
-	if me.NameVal == nameOld { // even if nameOld==nameNew, by design: as we use it also to check "refersTo" by doing `replaceName("foo", "foo")`
+func (me *ExprName) ReplaceName(nameOld string, nameNew string) (didReplace int) {
+	if me.NameVal == nameOld { // even if nameOld==nameNew, by design: as we use it also to check "refersTo" by doing `ReplaceName("foo", "foo")`
 		didReplace, me.NameVal = 1, nameNew
 	}
 	return
@@ -67,39 +67,39 @@ func (me *ExprName) replaceName(nameOld string, nameNew string) (didReplace int)
 func (me *ExprName) String() string { return me.NameVal + ":" + strconv.Itoa(me.IdxOrInstr) }
 
 type ExprCall struct {
-	*nodeLocInfo
+	*Loc
 	Callee  Expr
 	CallArg Expr
 }
 
-func (me *ExprCall) namesDeclared() []string {
-	return append(me.Callee.namesDeclared(), me.CallArg.namesDeclared()...)
+func (me *ExprCall) NamesDeclared() []string {
+	return append(me.Callee.NamesDeclared(), me.CallArg.NamesDeclared()...)
 }
-func (me *ExprCall) rewriteName(name string, with Expr) Expr {
-	me.Callee, me.CallArg = me.Callee.rewriteName(name, with), me.CallArg.rewriteName(name, with)
+func (me *ExprCall) RewriteName(name string, with Expr) Expr {
+	me.Callee, me.CallArg = me.Callee.RewriteName(name, with), me.CallArg.RewriteName(name, with)
 	return me
 }
-func (me *ExprCall) replaceName(nameOld string, nameNew string) int {
-	return me.Callee.replaceName(nameOld, nameNew) + me.CallArg.replaceName(nameOld, nameNew)
+func (me *ExprCall) ReplaceName(nameOld string, nameNew string) int {
+	return me.Callee.ReplaceName(nameOld, nameNew) + me.CallArg.ReplaceName(nameOld, nameNew)
 }
 func (me *ExprCall) String() string {
 	return "(" + me.Callee.String() + " " + me.CallArg.String() + ")"
 }
 
 type ExprFunc struct {
-	*nodeLocInfo
+	*Loc
 	ArgName string
 	Body    Expr
 
 	numArgUses int
 }
 
-func (me *ExprFunc) namesDeclared() []string { return append(me.Body.namesDeclared(), me.ArgName) }
-func (me *ExprFunc) rewriteName(name string, with Expr) Expr {
-	me.Body = me.Body.rewriteName(name, with)
+func (me *ExprFunc) NamesDeclared() []string { return append(me.Body.NamesDeclared(), me.ArgName) }
+func (me *ExprFunc) RewriteName(name string, with Expr) Expr {
+	me.Body = me.Body.RewriteName(name, with)
 	return me
 }
-func (me *ExprFunc) replaceName(old string, new string) int { return me.Body.replaceName(old, new) }
+func (me *ExprFunc) ReplaceName(old string, new string) int { return me.Body.ReplaceName(old, new) }
 func (me *ExprFunc) String() string                         { return "{ " + me.ArgName + " -> " + me.Body.String() + " }" }
 
 type Value interface {
@@ -174,14 +174,14 @@ func (me *Prog) Eval(expr Expr, env Values) Value {
 		if it.IdxOrInstr > 0 { // it's never 0 thanks to prior & completed `Prog.preResolveNames`
 			return &valClosure{instr: Instr(-it.IdxOrInstr), env: env.shallowCopy()}
 		} else if it.IdxOrInstr == 0 {
-			panic(it.locStr() + "NEWLY INTRODUCED INTERPRETER BUG: " + it.String())
+			panic(it.LocStr() + "NEWLY INTRODUCED INTERPRETER BUG: " + it.String())
 		}
 		return env[len(env)+it.IdxOrInstr]
 	case *ExprCall:
 		callee := me.Eval(it.Callee, env)
 		closure := callee.isClosure()
 		if closure == nil {
-			panic(it.locStr() + "not callable: `" + it.Callee.String() + "`, which equates to `" + callee.String() + "`, in: " + it.String())
+			panic(it.LocStr() + "not callable: `" + it.Callee.String() + "`, which equates to `" + callee.String() + "`, in: " + it.String())
 		}
 		var argval Value
 		if !closure.argDrop {
@@ -195,7 +195,7 @@ func (me *Prog) Eval(expr Expr, env Values) Value {
 			closure.instr, closure.env = -closure.instr, append(closure.env, argval) // return &valClosure{instr: -closure.instr, env: append(closure.env.Copy(), argval)}
 			if closure.instr == InstrERR {
 				if argval = me.Value(argval); me.OnInstrMSG != nil {
-					me.OnInstrMSG(it.locStr(), argval)
+					me.OnInstrMSG(it.LocStr(), argval)
 				}
 				panic(argval)
 			}
@@ -210,18 +210,18 @@ func (me *Prog) Eval(expr Expr, env Values) Value {
 				return argval
 			}
 			if closure.instr < InstrEQ && lnum != nil && rnum != nil {
-				return closure.instr.callCalc(it.locInfo(), *lnum, *rnum)
+				return closure.instr.callCalc(it.LocInfo(), *lnum, *rnum)
 			}
 			var retbool *ExprFunc
 			if closure.instr >= InstrEQ && lnum != nil && rnum != nil {
-				retbool = me.newBool(closure.instr.callCmp(it.locInfo(), *lnum, *rnum))
+				retbool = me.newBool(closure.instr.callCmp(it.LocInfo(), *lnum, *rnum))
 			} else if closure.instr == InstrEQ {
 				if eq, _ := me.value(lhs).(valEq); eq != nil {
 					retbool = me.newBool(eq.eq(me.value(rhs)))
 				}
 			}
 			if retbool == nil {
-				panic(it.locStr() + "invalid operands for '" + instrNames[closure.instr] + "' instruction: `" + lhs.String() + "` and `" + rhs.String() + "`, in: `" + it.String() + "`")
+				panic(it.LocStr() + "invalid operands for '" + instrNames[closure.instr] + "' instruction: `" + lhs.String() + "` and `" + rhs.String() + "`, in: `" + it.String() + "`")
 			}
 			return me.Eval(retbool, env)
 		}
@@ -237,7 +237,7 @@ func (me *Prog) newBool(b bool) (exprTrueOrFalse *ExprFunc) {
 	return
 }
 
-func (me Instr) callCalc(loc *nodeLocInfo, lhs valNum, rhs valNum) valNum {
+func (me Instr) callCalc(loc *Loc, lhs valNum, rhs valNum) valNum {
 	switch me {
 	case InstrADD:
 		return lhs + rhs
@@ -250,10 +250,10 @@ func (me Instr) callCalc(loc *nodeLocInfo, lhs valNum, rhs valNum) valNum {
 	case InstrMOD:
 		return lhs % rhs
 	}
-	panic(loc.locStr() + "unknown calc-instruction code: " + strconv.Itoa(int(me)))
+	panic(loc.LocStr() + "unknown calc-instruction code: " + strconv.Itoa(int(me)))
 }
 
-func (me Instr) callCmp(loc *nodeLocInfo, lhs valNum, rhs valNum) bool {
+func (me Instr) callCmp(loc *Loc, lhs valNum, rhs valNum) bool {
 	switch me {
 	case InstrEQ:
 		return (lhs == rhs)
@@ -262,7 +262,7 @@ func (me Instr) callCmp(loc *nodeLocInfo, lhs valNum, rhs valNum) bool {
 	case InstrLT:
 		return (lhs < rhs)
 	}
-	panic(loc.locStr() + "unknown compare-instruction code: " + strconv.Itoa(int(me)))
+	panic(loc.LocStr() + "unknown compare-instruction code: " + strconv.Itoa(int(me)))
 }
 
 func Walk(expr Expr, visitor func(Expr)) {

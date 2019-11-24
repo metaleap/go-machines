@@ -51,8 +51,11 @@ func Walk(expr Expr, visitor func(Expr))
 
 ```go
 type Expr interface {
+	LocInfo() *Loc
+	NamesDeclared() []string
+	ReplaceName(string, string) int
+	RewriteName(string, Expr) Expr
 	String() string
-	// contains filtered or unexported methods
 }
 ```
 
@@ -61,11 +64,30 @@ type Expr interface {
 
 ```go
 type ExprCall struct {
+	*Loc
 	Callee  Expr
 	CallArg Expr
 }
 ```
 
+
+#### func (*ExprCall) NamesDeclared
+
+```go
+func (me *ExprCall) NamesDeclared() []string
+```
+
+#### func (*ExprCall) ReplaceName
+
+```go
+func (me *ExprCall) ReplaceName(nameOld string, nameNew string) int
+```
+
+#### func (*ExprCall) RewriteName
+
+```go
+func (me *ExprCall) RewriteName(name string, with Expr) Expr
+```
 
 #### func (*ExprCall) String
 
@@ -77,11 +99,30 @@ func (me *ExprCall) String() string
 
 ```go
 type ExprFunc struct {
+	*Loc
 	ArgName string
 	Body    Expr
 }
 ```
 
+
+#### func (*ExprFunc) NamesDeclared
+
+```go
+func (me *ExprFunc) NamesDeclared() []string
+```
+
+#### func (*ExprFunc) ReplaceName
+
+```go
+func (me *ExprFunc) ReplaceName(old string, new string) int
+```
+
+#### func (*ExprFunc) RewriteName
+
+```go
+func (me *ExprFunc) RewriteName(name string, with Expr) Expr
+```
 
 #### func (*ExprFunc) String
 
@@ -93,10 +134,29 @@ func (me *ExprFunc) String() string
 
 ```go
 type ExprLitNum struct {
+	*Loc
 	NumVal int
 }
 ```
 
+
+#### func (*ExprLitNum) NamesDeclared
+
+```go
+func (me *ExprLitNum) NamesDeclared() []string
+```
+
+#### func (*ExprLitNum) ReplaceName
+
+```go
+func (me *ExprLitNum) ReplaceName(string, string) int
+```
+
+#### func (*ExprLitNum) RewriteName
+
+```go
+func (me *ExprLitNum) RewriteName(string, Expr) Expr
+```
 
 #### func (*ExprLitNum) String
 
@@ -108,11 +168,30 @@ func (me *ExprLitNum) String() string
 
 ```go
 type ExprName struct {
+	*Loc
 	NameVal    string
 	IdxOrInstr int // if <0 then De Bruijn index, if >0 then instrCode
 }
 ```
 
+
+#### func (*ExprName) NamesDeclared
+
+```go
+func (me *ExprName) NamesDeclared() []string
+```
+
+#### func (*ExprName) ReplaceName
+
+```go
+func (me *ExprName) ReplaceName(nameOld string, nameNew string) (didReplace int)
+```
+
+#### func (*ExprName) RewriteName
+
+```go
+func (me *ExprName) RewriteName(name string, with Expr) Expr
+```
 
 #### func (*ExprName) String
 
@@ -142,25 +221,52 @@ const (
 )
 ```
 
+#### type Loc
+
+```go
+type Loc struct {
+	ModuleName string
+	TopDefName string
+	LineNr     int
+}
+```
+
+
+#### func (*Loc) LocInfo
+
+```go
+func (me *Loc) LocInfo() *Loc
+```
+
+#### func (*Loc) LocStr
+
+```go
+func (me *Loc) LocStr() string
+```
+
 #### type ParseOpts
 
 ```go
 type ParseOpts struct {
-	KeepRec      bool
-	KeepNameRefs bool
-	KeepOpRefs   bool
+	KeepRec       bool
+	KeepNameRefs  bool
+	KeepOpRefs    bool
+	KeepSepLocals bool
 }
 ```
 
+for compilers or other syntax users. defaults to all-`false`s for our
+interpreter in here
 
 #### type Prog
 
 ```go
 type Prog struct {
-	LazyEval     bool
-	TopDefs      map[string]Expr
-	OnInstrMSG   func(string, Value)
-	NumEvalSteps int
+	LazyEval        bool
+	TopDefs         map[string]Expr
+	TopDefSepLocals map[string][]localDef
+	OnInstrMSG      func(string, Value)
+	NumEvalSteps    int
 }
 ```
 

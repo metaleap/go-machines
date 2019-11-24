@@ -7,11 +7,17 @@ import (
 	"strings"
 )
 
+type localDef = struct {
+	name string
+	Expr
+}
+
 type Prog struct {
-	LazyEval     bool
-	TopDefs      map[string]Expr
-	OnInstrMSG   func(string, Value)
-	NumEvalSteps int
+	LazyEval        bool
+	TopDefs         map[string]Expr
+	TopDefSepLocals map[string][]localDef
+	OnInstrMSG      func(string, Value)
+	NumEvalSteps    int
 
 	exprBoolTrue         *ExprFunc
 	exprBoolFalse        *ExprFunc
@@ -26,7 +32,7 @@ type pseudoSumTypeCtor = struct {
 }
 
 func (me *Prog) RunAsMain(mainFuncExpr Expr, osProcArgs []string) (ret Value) {
-	loc, expr2eval := mainFuncExpr.locInfo(), mainFuncExpr
+	loc, expr2eval := mainFuncExpr.LocInfo(), mainFuncExpr
 	fillarg := func(argval Expr) Expr { return &ExprCall{loc, expr2eval, argval} }
 	for fn, _ := mainFuncExpr.(*ExprFunc); fn != nil; fn, _ = fn.Body.(*ExprFunc) {
 		if fn.numArgUses == 0 {
@@ -50,11 +56,11 @@ func (me *Prog) RunAsMain(mainFuncExpr Expr, osProcArgs []string) (ret Value) {
 	return
 }
 
-func (me *Prog) newStr(forceNames bool, loc *nodeLocInfo, str string) Expr {
+func (me *Prog) newStr(forceNames bool, loc *Loc, str string) Expr {
 	return me.newList(forceNames, loc, len(str), func(i int) Expr { return &ExprLitNum{loc, int(str[i])} })
 }
 
-func (me *Prog) newList(forceNames bool, loc *nodeLocInfo, length int, next func(int) Expr) (list Expr) {
+func (me *Prog) newList(forceNames bool, loc *Loc, length int, next func(int) Expr) (list Expr) {
 	cons := me.TopDefs[StdRequiredDefs_listCons]
 	if cons == nil || forceNames {
 		cons = &ExprName{loc, StdRequiredDefs_listCons, 0}
@@ -68,10 +74,9 @@ func (me *Prog) newList(forceNames bool, loc *nodeLocInfo, length int, next func
 	return
 }
 
-func (me *Prog) newListOfStrs(forceNames bool, loc *nodeLocInfo, vals []string) Expr {
+func (me *Prog) newListOfStrs(forceNames bool, loc *Loc, vals []string) Expr {
 	return me.newList(forceNames, loc, len(vals), func(i int) Expr { return me.newStr(forceNames, loc, vals[i]) })
 }
-
 func (me *Prog) value(it Value) Value {
 	if cl := it.isClosure(); cl != nil {
 		if cl.body == me.exprListNil.Body {
