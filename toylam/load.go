@@ -69,6 +69,9 @@ func (me *Prog) ParseModules(modules map[string][]byte, opts ParseOpts) {
 		module := ctx.parseModule(string(modulesrc))
 		for topdefname, topdefbody := range module {
 			me.TopDefs[modulename+"."+topdefname] = ctx.populateNames(topdefbody, make(map[string]int, 16), module, topdefname)
+			for i, localdef := range me.TopDefSepLocals[topdefname] {
+				me.TopDefSepLocals[topdefname][i] = localDef{Name: localdef.Name, Expr: ctx.populateNames(localdef.Expr, make(map[string]int, 16), module, topdefname)}
+			}
 			me.TopDefSepLocals[modulename+"."+topdefname] = me.TopDefSepLocals[topdefname]
 			delete(me.TopDefSepLocals, topdefname)
 		}
@@ -82,6 +85,12 @@ func (me *Prog) ParseModules(modules map[string][]byte, opts ParseOpts) {
 	}
 	for topdefqname, topdefbody := range me.TopDefs {
 		me.TopDefs[topdefqname] = ctx.preResolveExprs(topdefbody, topdefqname, topdefbody)
+	}
+	for topdefqname, topdeflocals := range me.TopDefSepLocals {
+		for i, localdef := range topdeflocals {
+			topdeflocals[i] = localDef{Name: localdef.Name, Expr: ctx.preResolveExprs(localdef.Expr, topdefqname, me.TopDefs[topdefqname])}
+		}
+		me.TopDefSepLocals[topdefqname] = topdeflocals
 	}
 }
 
