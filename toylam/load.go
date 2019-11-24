@@ -456,7 +456,7 @@ func (me *ctxParse) populateNames(expr Expr, binders map[string]int, curModule m
 				it.IdxOrInstr = -it.IdxOrInstr // mark as referring to a local / arg (De Bruijn index but negative)
 			} else if _, topdefexists := curModule[it.NameVal]; topdefexists {
 				it.NameVal = me.curModule.name + "." + it.NameVal // mark as referring to a global in the current module
-			} else {
+			} else if !me.opts.KeepNameRefs {
 				it.NameVal = stdpref + it.NameVal // mark as referring to a global in std
 			}
 		}
