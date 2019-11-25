@@ -193,19 +193,18 @@ func (me *Prog) Eval(expr Expr, env Values) Value {
 		}
 		if closure.instr < 0 {
 			closure.instr, closure.env = -closure.instr, append(closure.env, argval) // return &valClosure{instr: -closure.instr, env: append(closure.env.Copy(), argval)}
-			if closure.instr == InstrERR {
-				if argval = me.Value(argval); me.OnInstrMSG != nil {
-					me.OnInstrMSG(it.LocStr(), argval)
-				}
-				panic(argval)
-			}
 			return closure
 		} else if closure.instr > 0 {
 			lhs, rhs := closure.env[len(closure.env)-1], argval
 			lnum, rnum := lhs.isNum(), rhs.isNum()
-			if closure.instr == InstrMSG {
-				if me.OnInstrMSG != nil {
-					me.OnInstrMSG(string(me.Value(lhs).(valFinalBytes)), rhs)
+			if iserr := closure.instr == InstrERR; iserr || (closure.instr == InstrMSG) {
+				if strmsg := me.Value(lhs).(valFinalBytes); iserr {
+					if r := me.Value(rhs).isClosure(); r == nil || r.body == nil || r.body != me.exprId.Body {
+						panic(valFinalList{strmsg, me.Value(rhs)})
+					}
+					panic(strmsg)
+				} else if me.OnInstrMSG != nil {
+					me.OnInstrMSG(string(strmsg), rhs)
 				}
 				return argval
 			}

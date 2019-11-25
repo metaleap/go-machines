@@ -1,6 +1,6 @@
 
--< list                   := list ? [] => ERR "forgot nil check before -<" | .. => True
->- list                   := list ? [] => ERR "forgot nil check before >-" | .. => False
+-< list                   := list ? [] => ERR "forgot nil check before -<" same | .. => True
+>- list                   := list ? [] => ERR "forgot nil check before >-" same | .. => False
 +>                        := ListLink
 ! list                    := list ? [] => True | .. => _ _ -> False
 

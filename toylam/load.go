@@ -77,7 +77,7 @@ func (me *Prog) ParseModules(modules map[string][]byte, opts ParseOpts) {
 		}
 	}
 	me.exprBoolTrue, me.exprBoolFalse = me.TopDefs[StdRequiredDefs_true].(*ExprFunc), me.TopDefs[StdRequiredDefs_false].(*ExprFunc)
-	me.exprListNil, me.exprListConsCtorBody = me.TopDefs[StdRequiredDefs_listNil].(*ExprFunc), me.TopDefs[StdRequiredDefs_listCons].(*ExprFunc).Body.(*ExprFunc).Body.(*ExprFunc).Body
+	me.exprId, me.exprListNil, me.exprListConsCtorBody = me.TopDefs[StdRequiredDefs_id].(*ExprFunc), me.TopDefs[StdRequiredDefs_listNil].(*ExprFunc), me.TopDefs[StdRequiredDefs_listCons].(*ExprFunc).Body.(*ExprFunc).Body.(*ExprFunc).Body
 	if !opts.KeepOpRefs {
 		for instrname, instrcode := range instrs {
 			me.TopDefs[StdModuleName+".//op"+instrname] = &ExprFunc{nil, "//" + instrname, &ExprCall{nil, &ExprName{nil, instrname, int(instrcode)}, &ExprName{nil, "//" + instrname, -1}}, -1}

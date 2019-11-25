@@ -20,6 +20,7 @@ type Prog struct {
 	OnInstrMSG      func(string, Value)
 	NumEvalSteps    int
 
+	exprId               *ExprFunc
 	exprBoolTrue         *ExprFunc
 	exprBoolFalse        *ExprFunc
 	exprListNil          *ExprFunc
