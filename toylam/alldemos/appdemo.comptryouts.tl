@@ -1,1 +1,1 @@
-main args env := len (takeWhile "oooooonoice" (EQ 'o')) // num.toString (ADD 123 321)
+main args env := max (abs -123) (len "!?")
