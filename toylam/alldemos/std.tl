@@ -18,11 +18,11 @@ same it         := it
 // K combinator aka 'konst'
 ever            := True
 
-and b1 b2       := b1 b2 False
-or b1 b2        := b1 True b2
-xor b1 b2       := b1 b2.not b2
+and b1 b2       := if (b1) b2 (else False)
+or b1 b2        := if (b1) True (else b2)
+xor b1 b2       := if (b1) b2.not (else b2)
 
-not             := _ False True
+not             := if _ False (else True)
 not·            := ·· not
 
 if              := same
