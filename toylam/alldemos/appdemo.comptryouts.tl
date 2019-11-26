@@ -1,1 +1,1 @@
-main args env := if (not (not (args.len.EQ 0))) env.len (min (abs -123) (len "!?"))
+main args env := if (args.len.EQ 0) env.len (else max (len (env.at 0)) (len (args.at 0)))
