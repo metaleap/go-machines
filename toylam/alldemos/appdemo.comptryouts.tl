@@ -1,4 +1,4 @@
-main args env := num.parseUnsigned "1"
+main args env := num.factorial 5
 
 // m1 _ _      := num.parseUnsigned "7" Result? Yay => "same" | Nay => msg -> "msg"
 
