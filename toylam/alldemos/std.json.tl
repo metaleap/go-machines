@@ -4,13 +4,13 @@ Value := VNull | VBoolean _ | VInt _ | VStr _ | VArr (List _) | VObj (List (Pair
 
 
 
-toString json     := json Value? VNull => casenull | VBoolean => casebool | VInt => caseint | VStr => casestr | VArr => casearr | VObj => caseobj
+stringify json    := json Value? VNull => casenull | VBoolean => casebool | VInt => caseint | VStr => casestr | VArr => casearr | VObj => caseobj
   casenull        := "null"
   casebool        := _ "true" "false"
   caseint         := num.toString
   casestr         := quoted
-  casearr l       := concat (+> '[' (/> (l.each toString) joinedVia ", ")) "]"
-  caseobj l       := concat (+> '{' (/> (l.each ({k v} -> concat.** [toString k, ": ", toString v])) joinedVia ", ")) "}"
+  casearr l       := concat (+> '[' (/> (l.each stringify) joinedVia ", ")) "]"
+  caseobj l       := concat (+> '{' (/> (l.each ({k v} -> concat.** [stringify k, ": ", stringify v])) joinedVia ", ")) "}"
   quoted str      := concat (+> 34 str) [34]
 
 

@@ -1,4 +1,8 @@
-main args env := m0 args env
+main args env := m4 args env
+
+m4 args env   := +> 33 s1
+  s1          := num.toString l
+  l           := env.len
 
 m0 _ _ := num.factorial 5
 
