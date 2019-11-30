@@ -1,7 +1,9 @@
 main args env := m4 args env
 
-m4 args env   := +> 33 s1
-  s1          := num.toString l
+m4 args env   := concat (+> \t s1) " env vars"
+  \t          := 9
+  s1          := s0 l
+  s0          := num.toString
   l           := env.len
 
 m0 _ _ := num.factorial 5
