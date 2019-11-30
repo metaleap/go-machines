@@ -1,6 +1,6 @@
 main args env := m4 args env
 
-m4 args env   := concat (+> \t s1) " env vars"
+m4 args env   := concat (+> \t s1) "!"
   \t          := 9
   s1          := s0 l
   s0          := num.toString
