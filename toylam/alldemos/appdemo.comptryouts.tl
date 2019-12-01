@@ -1,4 +1,6 @@
-main args env := m6 args env
+main args env := m7 args env
+
+m7 args env   := pow 10 -2
 
 m4 args env   := concat (+> \t s1) "!"
   \t          := 9
@@ -22,6 +24,7 @@ m3 args _     := (cases [{ LT _ 8 , ever 111 }, { GT _ 23 , ever 777 }, { ever T
 m6 args _     := numparse (args.at 0)
 
 numparse s      := finalresult
-  finalresult   := more (each s chartodigit) (decr (len s))
-  more l n      := ADD (l.-<.MUL (pow 10 n)) (l.>- 0 (_ _ -> more l.>- n.decr))
+  finalresult   := digits.moar s.len.decr
+  digits        := s.each chartodigit
+  moar l n      := ADD (l.-<.MUL (pow 10 n)) (l.>- 0 (_ _ -> moar l.>- n.decr))
   chartodigit c := (and (c.GT 47) (c.LT 58)) (c.SUB 48) (else c.neg)
