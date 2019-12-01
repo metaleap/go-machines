@@ -1,6 +1,6 @@
-main args env := m7 args env
+main args env := m4 args env
 
-m7 args env   := pow 10 -2
+m7 args env   := pow 10 args.len
 
 m4 args env   := concat (+> \t s1) "!"
   \t          := 9
