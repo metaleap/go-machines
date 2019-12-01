@@ -34,7 +34,7 @@ parsed src        := src.tokenized.treeified ? [] => Nay "empty input" | .. => �
   handle          := {tail ret} -> tail ? [] => ret | .. => _ _ -> Nay "trailing tokens remaining after completed expression"
   parse tok rest  := tok Token? TNumLit => pnum rest | TStrLit => pstr rest | TIdent => pident rest | __TTmp => pcomp rest parse | => {[], Nay "unexpected token"}
 
-  pident r t      := { r, (t.EQ "null") (Yay VNull) ((t.EQ "true") (Yay True.VBoolean) ((t.EQ "false") (Yay False.VBoolean) (Nay t))) }
+  pident r t      := { r, (t.EQ "null") (Yay VNull) (Nay t) } // ((t.EQ "true") (Yay True.VBoolean) ((t.EQ "false") (Yay False.VBoolean) (Nay t))) }
   pnum r t        := { r, t.parseSigned Result? Nay => Nay | Yay => ·· Yay VInt }
   pstr r t        := { r, t ? [] => Nay t | .. => quotemark rest -> Yay rest.sansLast.VStr } // caution, not handling escapes for now..
   pcomp r p arr l := (if (arr) parr (else pobj)) r p l

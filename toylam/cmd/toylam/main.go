@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -91,5 +92,16 @@ func main() {
 				}
 			}
 		}
+	}
+}
+
+func stdinReadSplitterBy(sep byte) bufio.SplitFunc {
+	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+		if i := bytes.IndexByte(data, sep); i >= 0 {
+			advance, token = i+1, data[0:i]
+		} else if atEOF {
+			advance, token = len(data), data
+		}
+		return
 	}
 }
