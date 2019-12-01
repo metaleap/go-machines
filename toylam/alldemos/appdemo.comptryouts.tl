@@ -1,4 +1,4 @@
-main args env := m5 args env
+main args env := m6 args env
 
 m4 args env   := concat (+> \t s1) "!"
   \t          := 9
@@ -8,13 +8,20 @@ m4 args env   := concat (+> \t s1) "!"
 
 m0 args _     := num.factorial args.len
 
-m5 args _     := (if (n.EQ 0) (Nay "no args") (else Yay (concat n.toString " arg(s)"))) Result? Yay => yo | Nay => no
+m5 args _     := if (n.EQ 0) (Nay "no args") (else Yay (concat n.toString " arg(s)")) Result? Yay => yo | Nay => no
   n           := args.len
-  yo          := concat "neat! "
-  no          := concat "weak! "
+  yo          := concat "neat: "
+  no          := concat "weak: "
 
 m1 args _     := (num.parseUnsigned (args.at 0)) Result? Yay => num -> "yo" | Nay => msg -> "no"
 
 m2 args env   := if (args.len.EQ 0) env.len (else max (len (env.at 0)) (len (args.at 0)))
 
 m3 args _     := (cases [{ LT _ 8 , ever 111 }, { GT _ 23 , ever 777 }, { ever True, ever 444 }] 17) same 999
+
+m6 args _     := numparse (args.at 0)
+
+numparse s      := finalresult
+  finalresult   := more (each s chartodigit) (decr (len s))
+  more l n      := ADD (l.-<.MUL (pow 10 n)) (l.>- 0 (_ _ -> more l.>- n.decr))
+  chartodigit c := (and (c.GT 47) (c.LT 58)) (c.SUB 48) (else c.neg)
