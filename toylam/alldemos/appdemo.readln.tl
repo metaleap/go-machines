@@ -1,5 +1,6 @@
-main args env             := [onInput, \n, concat "Enter text to reverse:" [\n]]
+main args env             := [onInput, \n, -0, concat "Enter text to reverse, empty aborts:" [\n]]
 
 \n                        := 10
 
-onInput oldState inputLn  := [oldState, [111, 33, \n]]
+onInput prevstate inputLn := [ nextstate , reversed (\n.+> inputLn) ]
+  nextstate               := inputLn ? [] => same | .. => _ _ -> prevstate
