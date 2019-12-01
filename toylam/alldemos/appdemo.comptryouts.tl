@@ -1,4 +1,4 @@
-main args env := m4 args env
+main args env := m5 args env
 
 m4 args env   := concat (+> \t s1) "!"
   \t          := 9
@@ -6,10 +6,15 @@ m4 args env   := concat (+> \t s1) "!"
   s0          := num.toString
   l           := env.len
 
-m0 _ _ := num.factorial 5
+m0 args _     := num.factorial args.len
 
-m1 _ _      := num.parseUnsigned "7" Result? Yay => num -> "yo" | Nay => msg -> "no"
+m5 args _     := (if (n.EQ 0) (Nay "no args") (else Yay (concat n.toString " arg(s)"))) Result? Yay => yo | Nay => no
+  n           := args.len
+  yo          := concat "neat! "
+  no          := concat "weak! "
 
-m2 args env := if (args.len.EQ 0) env.len (else max (len (env.at 0)) (len (args.at 0)))
+m1 args _     := (num.parseUnsigned (args.at 0)) Result? Yay => num -> "yo" | Nay => msg -> "no"
 
-m3 args _   := (cases [{ LT _ 8 , ever 111 }, { GT _ 23 , ever 777 }, { ever True, ever 444 }] 7) same 999
+m2 args env   := if (args.len.EQ 0) env.len (else max (len (env.at 0)) (len (args.at 0)))
+
+m3 args _     := (cases [{ LT _ 8 , ever 111 }, { GT _ 23 , ever 777 }, { ever True, ever 444 }] 17) same 999
