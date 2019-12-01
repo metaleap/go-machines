@@ -1,4 +1,4 @@
-main args env := m8 args env
+main args env := m6 args env
 
 
 
@@ -26,4 +26,6 @@ m2 args env   := if (args.len.EQ 0) env.len (else max (len (env.at 0)) (len (arg
 m3 args _     := (cases [{ LT _ 8 , ever 111 }, { GT _ 23 , ever 777 }, { ever True, ever 444 }] args.len) same 999
 
 m6 args _     := [on, 0, -0, ""]
-  on _ jsrc   := [same , (json.parsed jsrc) Result? Yay => _ -> "noice" | Nay => msg -> (concat "BAH: " msg)]
+  on _ jsrc   := [same , (json.parsed jsrc) Result? Yay => json.stringified | Nay => msg -> (concat "BAH: " msg)]
+
+m9 args _     := (json.parsed (args.at 0)) Result? Yay => _ -> "neat" | Nay => msg -> (concat "!?" msg)
