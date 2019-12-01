@@ -24,4 +24,4 @@ m2 args env   := if (args.len.EQ 0) env.len (else max (len (env.at 0)) (len (arg
 m3 args _     := (cases [{ LT _ 8 , ever 111 }, { GT _ 23 , ever 777 }, { ever True, ever 444 }] args.len) same 999
 
 m6 args _     := [on, 0, -0, ""]
-  on _ jsrc   := [same , json.parsed jsrc Result? Yay => ever "noice" | Nay => same]
+  on _ jsrc   := [same , json.parsed jsrc Result? Yay => _ -> "noice" | Nay => msg -> concat "BAH: " msg]
