@@ -111,12 +111,6 @@ splitUpOn list isMatch    := list ? .. => _ _ -> list.more
 
 joinedVia list sep        := list ? .. => _ _ -> concat.** (list.interspersed sep)
 
-trimStart list items      := list.dropWhile items.has
-
-trimEnd list items        := reversed (list.reversed.dropWhile items.has)
-
-trim list items           := trimEnd (list.trimStart items) items
-
 concat l1 l2              := l2 ? [] => l1 | .. => _ _ -> l1.prepend
   prepend l               := l ? [] => l2 | .. => item rest -> item.+> (prepend rest)
 
