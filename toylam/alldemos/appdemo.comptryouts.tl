@@ -1,6 +1,7 @@
 main args env := m6 args env
 
 
+m10 args _    := args 777 (arg _ -> 555)
 
 m8 args _     := args ? [] => "arg missing" | .. => arg1 _ -> (arg1.EQ "foo") "got foo" "not foo"
 
