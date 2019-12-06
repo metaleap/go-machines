@@ -111,8 +111,8 @@ splitUpOn list isMatch    := list ? .. => _ _ -> list.more
 
 joinedVia list sep        := list ? .. => _ _ -> concat.** (list.interspersed sep)
 
-concat l1 l2              := l2 ? [] => l1 | .. => _ _ -> l1.prepend
-  prepend l               := l ? [] => l2 | .. => item rest -> item.+> (prepend rest)
+concat lpref lsuff        := lsuff ? [] => lpref | .. => _ _ -> lpref.prepend
+  prepend lp              := lp ? [] => lsuff | .. => item rest -> item.+> (prepend rest)
 
 from list z f2            := list.more
   more l                  := l ? [] => z | .. => item rest -> f2 item (more rest)
