@@ -14,9 +14,9 @@ sign i          := if (i.LT 0) -1 (else 1)
 factorial i     := if (i.EQ 0) 1 (else i.MUL (factorial (i.SUB 1)))
 fibonacci i     := if (i.LT 2) 1 (else ADD (fibonacci (i.SUB 1)) (fibonacci (i.SUB 2)))
 
-toString numval := if (numval.GT -1) numval.tostr (else +> '-' numval.abs.tostr)
-  tostr i       := if (i.LT 10) i.tochr (else list.concat (tostr (i.DIV 10)) (tochr (i.MOD 10)))
-  tochr d       := [d.ADD 48] // d is always >= 0 and < 10, char-code for '0' is 48..
+toString numval := if (numval.GT -1) numval.tostr.reversed (else +> '-' numval.abs.tostr.reversed)
+  tostr i       := if (i.LT 10) [i.tochr] (else +> (tochr (i.MOD 10)) (tostr (i.DIV 10)) )
+  tochr d       := d.ADD 48 // d is always >= 0 and < 10, char-code for '0' is 48..
 
 parseSigned str := str ? [] => Nay "empty input" | .. => unsign
   unsign c rest := parsed (if (c.EQ '-') rest (else str))

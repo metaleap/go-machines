@@ -30,3 +30,7 @@ m6 args _     := [on, 0, -0, ""]
   on _ jsrc   := [same , (json.parsed jsrc) Result? Yay => json.stringified | Nay => msg -> (concat "BAH: " msg)]
 
 m9 args _     := (json.parsed (args.at 0)) Result? Yay => _ -> "neat" | Nay => msg -> (concat "!?" msg)
+
+
+m11 args _    := [on, 0, -0, ""]
+  on _ jsrc   := [same , num.toString (len ( jsrc)) ]

@@ -82,7 +82,7 @@ indices list              := list.more 0
 
 brokenUpOn list isMatch   := list.more [] // caution with isMatch, takes 2 args of which the 2nd is the running item (the 1st being the accumulated predecessors)
   more l accum            := l ? [] => {accum, []} | .. => ok more accum
-  ok cont acc item rest   := if (isMatch acc item) {acc, item.+> rest} (else rest.cont (concat acc [item]))
+  ok cont acc item rest   := if (isMatch acc item) {acc, item.+> rest} (else rest.cont (append acc item))
 
 pairedUpWith list list2   := list ? .. => item1 rest1 -> list2 ? .. => result item1 rest1
   result i1 r1 i2 r2      := +> {i1, i2} (pairedUpWith r1 r2)
@@ -91,11 +91,11 @@ interspersed list value   := list ? .. => more False
   more useval item rest   := value.useval (item.+> (rest ? .. => more +>))
 
 breakOnLast list isMatch  := list.lastwhere []
-  lastwhere l acc         := l ? [] => None | .. => item rest -> pick item rest acc (lastwhere rest (concat acc [item]))
+  lastwhere l acc         := l ? [] => None | .. => item rest -> pick item rest acc (lastwhere rest (append acc item))
   pick item rest acc ret  := ret Could? Have => Have | None => if (item.isMatch) (Have {item, acc, rest}) (else None)
 
 breakOnFirst list isMatch := list.firstwhere []
-  firstwhere l acc        := l ? [] => None | .. => item rest -> (item.maybe acc rest) (else firstwhere rest (concat acc [item]))
+  firstwhere l acc        := l ? [] => None | .. => item rest -> (item.maybe acc rest) (else firstwhere rest (append acc item))
   maybe item acc rest     := if (item.isMatch) (Have {item, acc, rest})
 
 // eg. call:              rewritten   "foo[z,z,z]bar[x[z,z]y]baz"   (EQ ']')   (EQ '[')   (inner -> concat (+> '(' (inner.whereNot (EQ ','))) ")")
@@ -113,6 +113,8 @@ joinedVia list sep        := list ? .. => _ _ -> concat.** (list.interspersed se
 
 concat lpref lsuff        := lsuff ? [] => lpref | .. => _ _ -> lpref.prepend
   prepend lp              := lp ? [] => lsuff | .. => item rest -> item.+> (prepend rest)
+
+append list item          := reversed (item.+> list.reversed)
 
 from list z f2            := list.more
   more l                  := l ? [] => z | .. => item rest -> f2 item (more rest)
