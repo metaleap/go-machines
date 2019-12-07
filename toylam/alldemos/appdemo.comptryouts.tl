@@ -35,4 +35,4 @@ m9 args _     := (json.parsed (args.at 0)) Result? Yay => _ -> "neat" | Nay => m
 m11 args _    := [on, 0, -0, ""]
   on _ jsrc   := [same , num.toString (len ( jsrc)) ]
 
-m12 args _    := num.parseUnsigned (args.at 0) Result? Nay => ERR | Yay => num.toString
+m12 args _    := num.parseUnsigned (args.at 0) Result? Nay => _ -> 123 | Yay => n -> n
