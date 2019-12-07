@@ -1,4 +1,4 @@
-main args env := m6 args env
+main args env := m12 args env
 
 
 m10 args _    := args 777 (arg _ -> 555)
@@ -34,3 +34,5 @@ m9 args _     := (json.parsed (args.at 0)) Result? Yay => _ -> "neat" | Nay => m
 
 m11 args _    := [on, 0, -0, ""]
   on _ jsrc   := [same , num.toString (len ( jsrc)) ]
+
+m12 args _    := num.parseUnsigned (args.at 0) Result? Nay => ERR | Yay => num.toString
