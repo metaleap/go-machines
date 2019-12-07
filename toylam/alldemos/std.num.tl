@@ -12,7 +12,7 @@ isEven i        := EQ 0 (i.MOD 2)
 isOdd i         := i.sign.EQ (i.MOD 2)
 sign i          := if (i.LT 0) -1 (else 1)
 factorial i     := if (i.EQ 0) 1 (else i.MUL (factorial (i.SUB 1)))
-fibonacci i     := if (i.LT 2) 1 (else ADD (fibonacci (i.SUB 1)) (fibonacci (i.SUB 2)))
+fibonacci i     := if (i.LT 2) i (else ADD (fibonacci (i.SUB 1)) (fibonacci (i.SUB 2)))
 
 toString numval := if (numval.GT -1) numval.tostr.reversed (else +> '-' numval.abs.tostr.reversed)
   tostr i       := if (i.LT 10) [i.tochr] (else +> (tochr (i.MOD 10)) (tostr (i.DIV 10)) )
