@@ -1,4 +1,4 @@
-main args env := m12 args env
+main args env := m10 args env
 
 
 m10 args _    := args 777 (arg _ -> 555)
