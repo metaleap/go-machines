@@ -1,3 +1,3 @@
 /home/_/c/go/src/github.com/metaleap/go-machines/toylam/alldemos
-atem ../../../atmo/atem/tmpdummies/appdemo.comptryouts.json y
+atem ../../../atmo/atem/tmpdummies/appdemo.env.json
 

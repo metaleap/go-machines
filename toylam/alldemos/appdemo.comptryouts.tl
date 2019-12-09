@@ -1,4 +1,4 @@
-main args env := m10 args env
+main args env := m13 args env
 
 
 m10 args _    := args 777 (arg _ -> 555)
@@ -36,3 +36,5 @@ m11 args _    := [on, 0, -0, ""]
   on _ jsrc   := [same , num.toString (len ( jsrc)) ]
 
 m12 args _    := num.parseUnsigned (args.at 0) Result? Nay => _ -> 123 | Yay => n -> n
+
+m13 args _    := +> '!' (args ? [] => "?" | .. => hd tl -> hd)
