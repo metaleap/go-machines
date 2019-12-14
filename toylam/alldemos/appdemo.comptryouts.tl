@@ -1,4 +1,4 @@
-main args env := m7 args env
+main args env := ** concat args
 
 
 m10 args _    := args 777 (arg _ -> 555)
@@ -7,11 +7,11 @@ m8 args _     := args ? [] => "arg missing" | .. => arg1 _ -> (arg1.EQ "foo") "g
 
 m7 args _   := pow 10 args.len
 
-m4 args env   := concat (+> \t s1) "!"
+m4 args env   := concat (+> \t s1) "!!"
   \t          := 9
   s1          := s0 l
   s0          := num.toString
-  l           := env.len
+  l           := args.len
 
 m0 args _     := num.factorial args.len
 

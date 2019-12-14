@@ -1,94 +1,302 @@
-(appdemo.comptryouts.main ["foo", "bar", "baz", ] ["SHELL=/bin/bash", "COLORTERM=truecolor", "I3SOCK=/tmp/i3-_.HzUuYS/ipc-socket.1107", "JAVA_HOME=/usr/lib/jvm/openjdk-1.8.0_202/jre", "DOTNET_ROOT=/home/_/a/dotnet", "DOTNET_CLI_TELEMETRY_OPTOUT=true", "CLR_OPENSSL_VERSION_OVERRIDE=46", "NO_AT_BRIDGE=1", "PWD=/home/_/c/go/src/github.com/metaleap/go-machines/toylam/alldemos", "LOGNAME=_", "XAUTHORITY=/home/_/.Xauthority", "WINDOWPATH=1", "HOME=/home/_", "LANG=en_US.UTF-8", "LS_COLORS=no=00:fi=00:di=01;34:ln=01;36:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=01;05;37;41:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.svgz=01;31:*.arj=01;31:*.taz=01;31:*.lzh=01;31:*.lzma=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.dz=01;31:*.gz=01;31:*.bz2=01;31:*.tbz2=01;31:*.bz=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.rar=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.jpg=01;35:*.jpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.svg=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:", "VTE_VERSION=5603", "TERM=xterm-256color", "USER=_", "DISPLAY=:0", "SHLVL=2", "MOZ_PLUGIN_PATH=/usr/lib/mozilla/plugins", "LC_CTYPE=en_US.UTF-8", "GO111MODULE=off", "PS1=\\[\\e[30;100m\\]\\w\\[\\e[00m\\e[90m\\]» \\[\\e[00m\\]", "QT_AUTO_SCREEN_SCALE_FACTOR=1", "LC_COLLATE=C", "PATH=/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/home/_/b:/home/_/c/go/bin:/home/_/.local/bin:/usr/local/go/bin", "MAIL=/var/mail/_", "GIT_TERMINAL_PROMPT=1", "OLDPWD=/home/_", "GOPATH=/home/_/c/go", "ATMO_KITS_DIRS=/home/_/c/a/kits:/foo/bar/baz", "_=/home/_/c/go/bin/atem", ])			
- = (pow ("0" 0 len_lam_0_545166))		···		["foo", "bar", "baz", ]		_
-(pow ("0" 0 len_lam_0_545166))					["foo", "bar", "baz", ]		_
-  ("0" 0 len_lam_0_545166)					["foo", "bar", "baz", ]		_
-    "0"					["foo", "bar", "baz", ]		_
+(appdemo.comptryouts.main ["foo", "bar", "baz", ] ["SHELL=/bin/bash", "COLORTERM=truecolor", "I3SOCK=/tmp/i3-_.HzUuYS/ipc-socket.1107", "JAVA_HOME=/usr/lib/jvm/openjdk-1.8.0_202/jre", "DOTNET_ROOT=/home/_/a/dotnet", "DOTNET_CLI_TELEMETRY_OPTOUT=true", "CLR_OPENSSL_VERSION_OVERRIDE=46", "NO_AT_BRIDGE=1", "PWD=/home/_/c/go/src/github.com/metaleap/go-machines/toylam/alldemos", "LOGNAME=_", "XAUTHORITY=/home/_/.Xauthority", "WINDOWPATH=1", "HOME=/home/_", "LANG=en_US.UTF-8", "LS_COLORS=no=00:fi=00:di=01;34:ln=01;36:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=01;05;37;41:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.svgz=01;31:*.arj=01;31:*.taz=01;31:*.lzh=01;31:*.lzma=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.dz=01;31:*.gz=01;31:*.bz2=01;31:*.tbz2=01;31:*.bz=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.rar=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.jpg=01;35:*.jpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.svg=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:", "VTE_VERSION=5603", "TERM=xterm-256color", "USER=_", "DISPLAY=:0", "SHLVL=2", "MOZ_PLUGIN_PATH=/usr/lib/mozilla/plugins", "LC_CTYPE=en_US.UTF-8", "GO111MODULE=off", "PS1=\\[\\e[30;100m\\]\\w\\[\\e[00m\\e[90m\\]» \\[\\e[00m\\]", "QT_AUTO_SCREEN_SCALE_FACTOR=1", "LC_COLLATE=C", "PATH=/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/home/_/b:/home/_/c/go/bin:/home/_/.local/bin:/usr/local/go/bin", "MAIL=/var/mail/_", "GIT_TERMINAL_PROMPT=1", "OLDPWD=/home/_", "GOPATH=/home/_/c/go", "ATMO_KITS_DIRS=/home/_/c/a/kits:/foo/bar/baz", "_=/home/_/c/go/bin/atem", ])																	
+ = (forth_lcl_more0 concat ("0" (ERR "forgot nil check before >-" same) False) ("0" (ERR "forgot nil check before -<" same) True))		···		["foo", "bar", "baz", ]		_
+(forth_lcl_more0 concat ("0" (ERR "forgot nil check before >-" same) False) ("0" (ERR "forgot nil check before -<" same) True))																			["foo", "bar", "baz", ]		_
+  ("0" (ERR "forgot nil check before >-" same) False)																			["foo", "bar", "baz", ]		_
+    "0"																			["foo", "bar", "baz", ]		_
      = ["foo", "bar", "baz", ]
-   = (len_lam_0_545166 "foo" ["bar", "baz", ])		···
-  (len_lam_0_545166 "foo" ["bar", "baz", ])			
-   = (ADD 1 ("1" 0 len_lam_0_545166))		···		"foo"		["bar", "baz", ]
-  (ADD 1 ("1" 0 len_lam_0_545166))					"foo"		["bar", "baz", ]
-    ("1" 0 len_lam_0_545166)					"foo"		["bar", "baz", ]
-      "1"					"foo"		["bar", "baz", ]
-       = ["bar", "baz", ]
-     = (len_lam_0_545166 "bar" ["baz", ])		···
-    (len_lam_0_545166 "bar" ["baz", ])			
-     = (ADD 1 ("1" 0 len_lam_0_545166))		···		"bar"		["baz", ]
-    (ADD 1 ("1" 0 len_lam_0_545166))					"bar"		["baz", ]
-      ("1" 0 len_lam_0_545166)					"bar"		["baz", ]
-        "1"					"bar"		["baz", ]
-         = ["baz", ]
-       = (len_lam_0_545166 "baz" ListEnd)		···
-      (len_lam_0_545166 "baz" ListEnd)			
-       = (ADD 1 ("1" 0 len_lam_0_545166))		···		"baz"		ListEnd
-      (ADD 1 ("1" 0 len_lam_0_545166))					"baz"		ListEnd
-        ("1" 0 len_lam_0_545166)					"baz"		ListEnd
-          "1"					"baz"		ListEnd
+   = (False "foo" ["bar", "baz", ])		···
+  (False "foo" ["bar", "baz", ])																	
+   = ["bar", "baz", ]		···
+  ("0" (ERR "forgot nil check before -<" same) True)																			["foo", "bar", "baz", ]		_
+    "0"																			["foo", "bar", "baz", ]		_
+     = ["foo", "bar", "baz", ]
+   = (True "foo" ["bar", "baz", ])		···
+  (True "foo" ["bar", "baz", ])																	
+   = "foo"		···
+ = ("1" "2" 2#(forth_lcl_more0_lam_item166 "2" "0"))		···		concat		["bar", "baz", ]		"foo"
+("1" "2" 2#(forth_lcl_more0_lam_item166 "2" "0"))																			concat		["bar", "baz", ]		"foo"
+  "1"																			concat		["bar", "baz", ]		"foo"
+   = ["bar", "baz", ]
+  2#(forth_lcl_more0_lam_item166 "2" "0")																			concat		["bar", "baz", ]		"foo"
+    "2"																			concat		["bar", "baz", ]		"foo"
+     = "foo"
+    "0"																			concat		["bar", "baz", ]		"foo"
+     = concat
+   = 2#(forth_lcl_more0_lam_item166 "foo" concat)
+ = (2#(forth_lcl_more0_lam_item166 "foo" concat) "bar" ["baz", ])		···
+(2#(forth_lcl_more0_lam_item166 "foo" concat) "bar" ["baz", ])																	
+ = (forth_lcl_more0 "1" "3" ("1" "0" "2"))		···		"foo"		concat		"bar"		["baz", ]
+(forth_lcl_more0 "1" "3" ("1" "0" "2"))																			"foo"		concat		"bar"		["baz", ]
+  "1"																			"foo"		concat		"bar"		["baz", ]
+   = concat
+  "3"																			"foo"		concat		"bar"		["baz", ]
+   = ["baz", ]
+  ("1" "0" "2")																			"foo"		concat		"bar"		["baz", ]
+    "1"																			"foo"		concat		"bar"		["baz", ]
+     = concat
+    "0"																			"foo"		concat		"bar"		["baz", ]
+     = "foo"
+    "2"																			"foo"		concat		"bar"		["baz", ]
+     = "bar"
+   = ("1" "0" 2#(concat_lam_0_474168 "0" "1"))		···		"foo"		"bar"
+  ("1" "0" 2#(concat_lam_0_474168 "0" "1"))																			"foo"		"bar"
+    "1"																			"foo"		"bar"
+     = "bar"
+    2#(concat_lam_0_474168 "0" "1")																			"foo"		"bar"
+      "0"																			"foo"		"bar"
+       = "foo"
+      "1"																			"foo"		"bar"
+       = "bar"
+     = 2#(concat_lam_0_474168 "foo" "bar")
+   = (2#(concat_lam_0_474168 "foo" "bar") 98 "ar")		···
+  (2#(concat_lam_0_474168 "foo" "bar") 98 "ar")																	
+   = (concat_lcl_prepend0 "1" "0")		···		"foo"		"bar"		98		"ar"
+  (concat_lcl_prepend0 "1" "0")																			"foo"		"bar"		98		"ar"
+    "1"																			"foo"		"bar"		98		"ar"
+     = "bar"
+    "0"																			"foo"		"bar"		98		"ar"
+     = "foo"
+   = ("1" "0" 2#(concat_lcl_prepend0_lam_item169 "0"))		···		"bar"		"foo"
+  ("1" "0" 2#(concat_lcl_prepend0_lam_item169 "0"))																			"bar"		"foo"
+    "1"																			"bar"		"foo"
+     = "foo"
+    2#(concat_lcl_prepend0_lam_item169 "0")																			"bar"		"foo"
+      "0"																			"bar"		"foo"
+       = "bar"
+     = 2#(concat_lcl_prepend0_lam_item169 "bar")
+   = (2#(concat_lcl_prepend0_lam_item169 "bar") 102 "oo")		···
+  (2#(concat_lcl_prepend0_lam_item169 "bar") 102 "oo")																	
+   = 2#(ListLink "1" (concat_lcl_prepend0 "0" "2"))		···		"bar"		102		"oo"
+  2#(ListLink "1" (concat_lcl_prepend0 "0" "2"))																			"bar"		102		"oo"
+    "1"																			"bar"		102		"oo"
+     = 102
+    (concat_lcl_prepend0 "0" "2")																			"bar"		102		"oo"
+      "0"																			"bar"		102		"oo"
+       = "bar"
+      "2"																			"bar"		102		"oo"
+       = "oo"
+     = ("1" "0" 2#(concat_lcl_prepend0_lam_item169 "0"))		···		"bar"		"oo"
+    ("1" "0" 2#(concat_lcl_prepend0_lam_item169 "0"))																			"bar"		"oo"
+      "1"																			"bar"		"oo"
+       = "oo"
+      2#(concat_lcl_prepend0_lam_item169 "0")																			"bar"		"oo"
+        "0"																			"bar"		"oo"
+         = "bar"
+       = 2#(concat_lcl_prepend0_lam_item169 "bar")
+     = (2#(concat_lcl_prepend0_lam_item169 "bar") 111 "o")		···
+    (2#(concat_lcl_prepend0_lam_item169 "bar") 111 "o")																	
+     = 2#(ListLink "1" (concat_lcl_prepend0 "0" "2"))		···		"bar"		111		"o"
+    2#(ListLink "1" (concat_lcl_prepend0 "0" "2"))																			"bar"		111		"o"
+      "1"																			"bar"		111		"o"
+       = 111
+      (concat_lcl_prepend0 "0" "2")																			"bar"		111		"o"
+        "0"																			"bar"		111		"o"
+         = "bar"
+        "2"																			"bar"		111		"o"
+         = "o"
+       = ("1" "0" 2#(concat_lcl_prepend0_lam_item169 "0"))		···		"bar"		"o"
+      ("1" "0" 2#(concat_lcl_prepend0_lam_item169 "0"))																			"bar"		"o"
+        "1"																			"bar"		"o"
+         = "o"
+        2#(concat_lcl_prepend0_lam_item169 "0")																			"bar"		"o"
+          "0"																			"bar"		"o"
+           = "bar"
+         = 2#(concat_lcl_prepend0_lam_item169 "bar")
+       = (2#(concat_lcl_prepend0_lam_item169 "bar") 111 ListEnd)		···
+      (2#(concat_lcl_prepend0_lam_item169 "bar") 111 ListEnd)																	
+       = 2#(ListLink "1" (concat_lcl_prepend0 "0" "2"))		···		"bar"		111		ListEnd
+      2#(ListLink "1" (concat_lcl_prepend0 "0" "2"))																			"bar"		111		ListEnd
+        "1"																			"bar"		111		ListEnd
+         = 111
+        (concat_lcl_prepend0 "0" "2")																			"bar"		111		ListEnd
+          "0"																			"bar"		111		ListEnd
+           = "bar"
+          "2"																			"bar"		111		ListEnd
            = ListEnd
-         = "0"		···		0		_
-        "0"					0		_
-         = 0
-       = 1
-     = 2
-   = 3
- = (GT "0" -1 (pow_lcl_mults0 10 "0") (ERR "std.num.pow called with negative exp:" "0"))		···		3
-(GT "0" -1 (pow_lcl_mults0 10 "0") (ERR "std.num.pow called with negative exp:" "0"))					3
-  "0"					3
-   = 3
- = (pow_lcl_mults0 10 "0")		···		3
-(pow_lcl_mults0 10 "0")					3
-  "0"					3
-   = 3
- = (EQ "1" 0 1 (MUL "0" (pow_lcl_mults0 "0" (ADD -1 "1"))))		···		10		3
-(EQ "1" 0 1 (MUL "0" (pow_lcl_mults0 "0" (ADD -1 "1"))))					10		3
-  "1"					10		3
-   = 3
- = (MUL "0" (pow_lcl_mults0 "0" (ADD -1 "1")))		···		10		3
-(MUL "0" (pow_lcl_mults0 "0" (ADD -1 "1")))					10		3
-  "0"					10		3
-   = 10
-  (pow_lcl_mults0 "0" (ADD -1 "1"))					10		3
-    "0"					10		3
-     = 10
-    (ADD -1 "1")					10		3
-      "1"					10		3
-       = 3
-     = 2
-   = (EQ "1" 0 1 (MUL "0" (pow_lcl_mults0 "0" (ADD -1 "1"))))		···		10		2
-  (EQ "1" 0 1 (MUL "0" (pow_lcl_mults0 "0" (ADD -1 "1"))))					10		2
-    "1"					10		2
-     = 2
-   = (MUL "0" (pow_lcl_mults0 "0" (ADD -1 "1")))		···		10		2
-  (MUL "0" (pow_lcl_mults0 "0" (ADD -1 "1")))					10		2
-    "0"					10		2
-     = 10
-    (pow_lcl_mults0 "0" (ADD -1 "1"))					10		2
-      "0"					10		2
-       = 10
-      (ADD -1 "1")					10		2
-        "1"					10		2
-         = 2
-       = 1
-     = (EQ "1" 0 1 (MUL "0" (pow_lcl_mults0 "0" (ADD -1 "1"))))		···		10		1
-    (EQ "1" 0 1 (MUL "0" (pow_lcl_mults0 "0" (ADD -1 "1"))))					10		1
-      "1"					10		1
-       = 1
-     = (MUL "0" (pow_lcl_mults0 "0" (ADD -1 "1")))		···		10		1
-    (MUL "0" (pow_lcl_mults0 "0" (ADD -1 "1")))					10		1
-      "0"					10		1
-       = 10
-      (pow_lcl_mults0 "0" (ADD -1 "1"))					10		1
-        "0"					10		1
-         = 10
-        (ADD -1 "1")					10		1
-          "1"					10		1
-           = 1
-         = 0
-       = (EQ "1" 0 1 (MUL "0" (pow_lcl_mults0 "0" (ADD -1 "1"))))		···		10		0
-      (EQ "1" 0 1 (MUL "0" (pow_lcl_mults0 "0" (ADD -1 "1"))))					10		0
-        "1"					10		0
-         = 0
-       = 1		···		10		0
-     = 10
-   = 100
- = 1000
+         = ("1" "0" 2#(concat_lcl_prepend0_lam_item169 "0"))		···		"bar"		ListEnd
+        ("1" "0" 2#(concat_lcl_prepend0_lam_item169 "0"))																			"bar"		ListEnd
+          "1"																			"bar"		ListEnd
+           = ListEnd
+          "0"																			"bar"		ListEnd
+           = "bar"
+         = "bar"		···
+       = "obar"
+     = "oobar"
+   = "foobar"
+ = ("1" "2" 2#(forth_lcl_more0_lam_item166 "2" "0"))		···		concat		["baz", ]		"foobar"
+("1" "2" 2#(forth_lcl_more0_lam_item166 "2" "0"))																			concat		["baz", ]		"foobar"
+  "1"																			concat		["baz", ]		"foobar"
+   = ["baz", ]
+  2#(forth_lcl_more0_lam_item166 "2" "0")																			concat		["baz", ]		"foobar"
+    "2"																			concat		["baz", ]		"foobar"
+     = "foobar"
+    "0"																			concat		["baz", ]		"foobar"
+     = concat
+   = 2#(forth_lcl_more0_lam_item166 "foobar" concat)
+ = (2#(forth_lcl_more0_lam_item166 "foobar" concat) "baz" ListEnd)		···
+(2#(forth_lcl_more0_lam_item166 "foobar" concat) "baz" ListEnd)																	
+ = (forth_lcl_more0 "1" "3" ("1" "0" "2"))		···		"foobar"		concat		"baz"		ListEnd
+(forth_lcl_more0 "1" "3" ("1" "0" "2"))																			"foobar"		concat		"baz"		ListEnd
+  "1"																			"foobar"		concat		"baz"		ListEnd
+   = concat
+  "3"																			"foobar"		concat		"baz"		ListEnd
+   = ListEnd
+  ("1" "0" "2")																			"foobar"		concat		"baz"		ListEnd
+    "1"																			"foobar"		concat		"baz"		ListEnd
+     = concat
+    "0"																			"foobar"		concat		"baz"		ListEnd
+     = "foobar"
+    "2"																			"foobar"		concat		"baz"		ListEnd
+     = "baz"
+   = ("1" "0" 2#(concat_lam_0_474168 "0" "1"))		···		"foobar"		"baz"
+  ("1" "0" 2#(concat_lam_0_474168 "0" "1"))																			"foobar"		"baz"
+    "1"																			"foobar"		"baz"
+     = "baz"
+    2#(concat_lam_0_474168 "0" "1")																			"foobar"		"baz"
+      "0"																			"foobar"		"baz"
+       = "foobar"
+      "1"																			"foobar"		"baz"
+       = "baz"
+     = 2#(concat_lam_0_474168 "foobar" "baz")
+   = (2#(concat_lam_0_474168 "foobar" "baz") 98 "az")		···
+  (2#(concat_lam_0_474168 "foobar" "baz") 98 "az")																	
+   = (concat_lcl_prepend0 "1" "0")		···		"foobar"		"baz"		98		"az"
+  (concat_lcl_prepend0 "1" "0")																			"foobar"		"baz"		98		"az"
+    "1"																			"foobar"		"baz"		98		"az"
+     = "baz"
+    "0"																			"foobar"		"baz"		98		"az"
+     = "foobar"
+   = ("1" "0" 2#(concat_lcl_prepend0_lam_item169 "0"))		···		"baz"		"foobar"
+  ("1" "0" 2#(concat_lcl_prepend0_lam_item169 "0"))																			"baz"		"foobar"
+    "1"																			"baz"		"foobar"
+     = "foobar"
+    2#(concat_lcl_prepend0_lam_item169 "0")																			"baz"		"foobar"
+      "0"																			"baz"		"foobar"
+       = "baz"
+     = 2#(concat_lcl_prepend0_lam_item169 "baz")
+   = (2#(concat_lcl_prepend0_lam_item169 "baz") 102 "oobar")		···
+  (2#(concat_lcl_prepend0_lam_item169 "baz") 102 "oobar")																	
+   = 2#(ListLink "1" (concat_lcl_prepend0 "0" "2"))		···		"baz"		102		"oobar"
+  2#(ListLink "1" (concat_lcl_prepend0 "0" "2"))																			"baz"		102		"oobar"
+    "1"																			"baz"		102		"oobar"
+     = 102
+    (concat_lcl_prepend0 "0" "2")																			"baz"		102		"oobar"
+      "0"																			"baz"		102		"oobar"
+       = "baz"
+      "2"																			"baz"		102		"oobar"
+       = "oobar"
+     = ("1" "0" 2#(concat_lcl_prepend0_lam_item169 "0"))		···		"baz"		"oobar"
+    ("1" "0" 2#(concat_lcl_prepend0_lam_item169 "0"))																			"baz"		"oobar"
+      "1"																			"baz"		"oobar"
+       = "oobar"
+      2#(concat_lcl_prepend0_lam_item169 "0")																			"baz"		"oobar"
+        "0"																			"baz"		"oobar"
+         = "baz"
+       = 2#(concat_lcl_prepend0_lam_item169 "baz")
+     = (2#(concat_lcl_prepend0_lam_item169 "baz") 111 "obar")		···
+    (2#(concat_lcl_prepend0_lam_item169 "baz") 111 "obar")																	
+     = 2#(ListLink "1" (concat_lcl_prepend0 "0" "2"))		···		"baz"		111		"obar"
+    2#(ListLink "1" (concat_lcl_prepend0 "0" "2"))																			"baz"		111		"obar"
+      "1"																			"baz"		111		"obar"
+       = 111
+      (concat_lcl_prepend0 "0" "2")																			"baz"		111		"obar"
+        "0"																			"baz"		111		"obar"
+         = "baz"
+        "2"																			"baz"		111		"obar"
+         = "obar"
+       = ("1" "0" 2#(concat_lcl_prepend0_lam_item169 "0"))		···		"baz"		"obar"
+      ("1" "0" 2#(concat_lcl_prepend0_lam_item169 "0"))																			"baz"		"obar"
+        "1"																			"baz"		"obar"
+         = "obar"
+        2#(concat_lcl_prepend0_lam_item169 "0")																			"baz"		"obar"
+          "0"																			"baz"		"obar"
+           = "baz"
+         = 2#(concat_lcl_prepend0_lam_item169 "baz")
+       = (2#(concat_lcl_prepend0_lam_item169 "baz") 111 "bar")		···
+      (2#(concat_lcl_prepend0_lam_item169 "baz") 111 "bar")																	
+       = 2#(ListLink "1" (concat_lcl_prepend0 "0" "2"))		···		"baz"		111		"bar"
+      2#(ListLink "1" (concat_lcl_prepend0 "0" "2"))																			"baz"		111		"bar"
+        "1"																			"baz"		111		"bar"
+         = 111
+        (concat_lcl_prepend0 "0" "2")																			"baz"		111		"bar"
+          "0"																			"baz"		111		"bar"
+           = "baz"
+          "2"																			"baz"		111		"bar"
+           = "bar"
+         = ("1" "0" 2#(concat_lcl_prepend0_lam_item169 "0"))		···		"baz"		"bar"
+        ("1" "0" 2#(concat_lcl_prepend0_lam_item169 "0"))																			"baz"		"bar"
+          "1"																			"baz"		"bar"
+           = "bar"
+          2#(concat_lcl_prepend0_lam_item169 "0")																			"baz"		"bar"
+            "0"																			"baz"		"bar"
+             = "baz"
+           = 2#(concat_lcl_prepend0_lam_item169 "baz")
+         = (2#(concat_lcl_prepend0_lam_item169 "baz") 98 "ar")		···
+        (2#(concat_lcl_prepend0_lam_item169 "baz") 98 "ar")																	
+         = 2#(ListLink "1" (concat_lcl_prepend0 "0" "2"))		···		"baz"		98		"ar"
+        2#(ListLink "1" (concat_lcl_prepend0 "0" "2"))																			"baz"		98		"ar"
+          "1"																			"baz"		98		"ar"
+           = 98
+          (concat_lcl_prepend0 "0" "2")																			"baz"		98		"ar"
+            "0"																			"baz"		98		"ar"
+             = "baz"
+            "2"																			"baz"		98		"ar"
+             = "ar"
+           = ("1" "0" 2#(concat_lcl_prepend0_lam_item169 "0"))		···		"baz"		"ar"
+          ("1" "0" 2#(concat_lcl_prepend0_lam_item169 "0"))																			"baz"		"ar"
+            "1"																			"baz"		"ar"
+             = "ar"
+            2#(concat_lcl_prepend0_lam_item169 "0")																			"baz"		"ar"
+              "0"																			"baz"		"ar"
+               = "baz"
+             = 2#(concat_lcl_prepend0_lam_item169 "baz")
+           = (2#(concat_lcl_prepend0_lam_item169 "baz") 97 "r")		···
+          (2#(concat_lcl_prepend0_lam_item169 "baz") 97 "r")																	
+           = 2#(ListLink "1" (concat_lcl_prepend0 "0" "2"))		···		"baz"		97		"r"
+          2#(ListLink "1" (concat_lcl_prepend0 "0" "2"))																			"baz"		97		"r"
+            "1"																			"baz"		97		"r"
+             = 97
+            (concat_lcl_prepend0 "0" "2")																			"baz"		97		"r"
+              "0"																			"baz"		97		"r"
+               = "baz"
+              "2"																			"baz"		97		"r"
+               = "r"
+             = ("1" "0" 2#(concat_lcl_prepend0_lam_item169 "0"))		···		"baz"		"r"
+            ("1" "0" 2#(concat_lcl_prepend0_lam_item169 "0"))																			"baz"		"r"
+              "1"																			"baz"		"r"
+               = "r"
+              2#(concat_lcl_prepend0_lam_item169 "0")																			"baz"		"r"
+                "0"																			"baz"		"r"
+                 = "baz"
+               = 2#(concat_lcl_prepend0_lam_item169 "baz")
+             = (2#(concat_lcl_prepend0_lam_item169 "baz") 114 ListEnd)		···
+            (2#(concat_lcl_prepend0_lam_item169 "baz") 114 ListEnd)																	
+             = 2#(ListLink "1" (concat_lcl_prepend0 "0" "2"))		···		"baz"		114		ListEnd
+            2#(ListLink "1" (concat_lcl_prepend0 "0" "2"))																			"baz"		114		ListEnd
+              "1"																			"baz"		114		ListEnd
+               = 114
+              (concat_lcl_prepend0 "0" "2")																			"baz"		114		ListEnd
+                "0"																			"baz"		114		ListEnd
+                 = "baz"
+                "2"																			"baz"		114		ListEnd
+                 = ListEnd
+               = ("1" "0" 2#(concat_lcl_prepend0_lam_item169 "0"))		···		"baz"		ListEnd
+              ("1" "0" 2#(concat_lcl_prepend0_lam_item169 "0"))																			"baz"		ListEnd
+                "1"																			"baz"		ListEnd
+                 = ListEnd
+                "0"																			"baz"		ListEnd
+                 = "baz"
+               = "baz"		···
+             = "rbaz"
+           = "arbaz"
+         = "barbaz"
+       = "obarbaz"
+     = "oobarbaz"
+   = "foobarbaz"
+ = ("1" "2" 2#(forth_lcl_more0_lam_item166 "2" "0"))		···		concat		ListEnd		"foobarbaz"
+("1" "2" 2#(forth_lcl_more0_lam_item166 "2" "0"))																			concat		ListEnd		"foobarbaz"
+  "1"																			concat		ListEnd		"foobarbaz"
+   = ListEnd
+  "2"																			concat		ListEnd		"foobarbaz"
+   = "foobarbaz"
+ = "foobarbaz"		···
