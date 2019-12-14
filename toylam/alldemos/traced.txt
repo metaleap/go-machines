@@ -1,0 +1,222 @@
+(appdemo.comptryouts.main ["7", ] ["SHELL=/bin/bash", "COLORTERM=truecolor", "I3SOCK=/tmp/i3-_.HzUuYS/ipc-socket.1107", "JAVA_HOME=/usr/lib/jvm/openjdk-1.8.0_202/jre", "DOTNET_ROOT=/home/_/a/dotnet", "DOTNET_CLI_TELEMETRY_OPTOUT=true", "CLR_OPENSSL_VERSION_OVERRIDE=46", "NO_AT_BRIDGE=1", "PWD=/home/_/c/go/src/github.com/metaleap/go-machines/toylam/alldemos", "LOGNAME=_", "XAUTHORITY=/home/_/.Xauthority", "WINDOWPATH=1", "HOME=/home/_", "LANG=en_US.UTF-8", "LS_COLORS=no=00:fi=00:di=01;34:ln=01;36:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=01;05;37;41:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.svgz=01;31:*.arj=01;31:*.taz=01;31:*.lzh=01;31:*.lzma=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.dz=01;31:*.gz=01;31:*.bz2=01;31:*.tbz2=01;31:*.bz=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.rar=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.jpg=01;35:*.jpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.svg=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:", "VTE_VERSION=5603", "TERM=xterm-256color", "USER=_", "DISPLAY=:0", "SHLVL=2", "MOZ_PLUGIN_PATH=/usr/lib/mozilla/plugins", "LC_CTYPE=en_US.UTF-8", "GO111MODULE=off", "PS1=\\[\\e[30;100m\\]\\w\\[\\e[00m\\e[90m\\]» \\[\\e[00m\\]", "QT_AUTO_SCREEN_SCALE_FACTOR=1", "LC_COLLATE=C", "PATH=/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/home/_/b:/home/_/c/go/bin:/home/_/.local/bin:/usr/local/go/bin", "MAIL=/var/mail/_", "GIT_TERMINAL_PROMPT=1", "OLDPWD=/home/_", "GOPATH=/home/_/c/go", "ATMO_KITS_DIRS=/home/_/c/a/kits:/foo/bar/baz", "_=/home/_/c/go/bin/atem", ])			
+= (parseUnsigned (at "0" 0) same 1#(True -1))		···		["7", ]		_
+(parseUnsigned (at "0" 0) same 1#(True -1))					["7", ]		_
+  (at "0" 0)					["7", ]		_
+    "0"					["7", ]		_
+    = ["7", ]
+  = (EQ "1" 0 (-< "0") (at (>- "0") (ADD -1 "1")))		···		["7", ]		0
+  (EQ "1" 0 (-< "0") (at (>- "0") (ADD -1 "1")))					["7", ]		0
+    "1"					["7", ]		0
+    = 0
+  = (-< "0")		···		["7", ]		0
+  (-< "0")					["7", ]		0
+    "0"					["7", ]		0
+    = ["7", ]
+  = ("0" (ERR "forgot nil check before -<" same) True)		···		["7", ]
+  ("0" (ERR "forgot nil check before -<" same) True)					["7", ]
+    "0"					["7", ]
+    = ["7", ]
+  = ("3" "0" "1")		···		"7"		ListEnd		_		True
+  ("3" "0" "1")					"7"		ListEnd		_		True
+    "3"					"7"		ListEnd		_		True
+    = True
+    "0"					"7"		ListEnd		_		True
+    = "7"
+  = "0"		···		"7"		_
+  "0"					"7"		_
+  = "7"
+  ("0" 2#(Nay "empty input") 2#(parseUnsigned_lam_shr_digits167_lam_0_12168 "0" (each_lcl_more0 parseUnsigned_lcl_chartodigit1 "0")))					"7"
+    "0"					"7"
+    = "7"
+    2#(parseUnsigned_lam_shr_digits167_lam_0_12168 "0" (each_lcl_more0 parseUnsigned_lcl_chartodigit1 "0"))					"7"
+      (each_lcl_more0 parseUnsigned_lcl_chartodigit1 "0")					"7"
+        "0"					"7"
+        = "7"
+      = ("1" ListEnd 2#(each_lcl_more0_lam_item177 "0"))		···		parseUnsigned_lcl_chartodigit1		"7"
+      ("1" ListEnd 2#(each_lcl_more0_lam_item177 "0"))					parseUnsigned_lcl_chartodigit1		"7"
+        "1"					parseUnsigned_lcl_chartodigit1		"7"
+        = "7"
+        2#(each_lcl_more0_lam_item177 "0")					parseUnsigned_lcl_chartodigit1		"7"
+          "0"					parseUnsigned_lcl_chartodigit1		"7"
+          = parseUnsigned_lcl_chartodigit1
+        = 2#(each_lcl_more0_lam_item177 parseUnsigned_lcl_chartodigit1)
+      = ("3" "0" "1")		···		55		ListEnd		_		2#(each_lcl_more0_lam_item177 parseUnsigned_lcl_chartodigit1)
+      ("3" "0" "1")					55		ListEnd		_		2#(each_lcl_more0_lam_item177 parseUnsigned_lcl_chartodigit1)
+        "3"					55		ListEnd		_		2#(each_lcl_more0_lam_item177 parseUnsigned_lcl_chartodigit1)
+        = 2#(each_lcl_more0_lam_item177 parseUnsigned_lcl_chartodigit1)
+        "1"					55		ListEnd		_		2#(each_lcl_more0_lam_item177 parseUnsigned_lcl_chartodigit1)
+        = ListEnd
+        "0"					55		ListEnd		_		2#(each_lcl_more0_lam_item177 parseUnsigned_lcl_chartodigit1)
+        = 55
+      = 2#(ListLink ("0" "1") (each_lcl_more0 "0" "2"))		···		parseUnsigned_lcl_chartodigit1		55		ListEnd
+      2#(ListLink ("0" "1") (each_lcl_more0 "0" "2"))					parseUnsigned_lcl_chartodigit1		55		ListEnd
+        (each_lcl_more0 "0" "2")					parseUnsigned_lcl_chartodigit1		55		ListEnd
+          "2"					parseUnsigned_lcl_chartodigit1		55		ListEnd
+          = ListEnd
+          "0"					parseUnsigned_lcl_chartodigit1		55		ListEnd
+          = parseUnsigned_lcl_chartodigit1
+        = ("1" ListEnd 2#(each_lcl_more0_lam_item177 "0"))		···		parseUnsigned_lcl_chartodigit1		ListEnd
+        ("1" ListEnd 2#(each_lcl_more0_lam_item177 "0"))					parseUnsigned_lcl_chartodigit1		ListEnd
+          "1"					parseUnsigned_lcl_chartodigit1		ListEnd
+          = ListEnd
+        = "0"		···		ListEnd		_
+        "0"					ListEnd		_
+        = ListEnd
+        ("0" "1")					parseUnsigned_lcl_chartodigit1		55		ListEnd
+          "0"					parseUnsigned_lcl_chartodigit1		55		ListEnd
+          = parseUnsigned_lcl_chartodigit1
+          "1"					parseUnsigned_lcl_chartodigit1		55		ListEnd
+          = 55
+        = (GT "0" 47 (LT "0" 58) False (SUB "0" 48) (SUB 0 "0"))		···		55
+        (GT "0" 47 (LT "0" 58) False (SUB "0" 48) (SUB 0 "0"))					55
+          "0"					55
+          = 55
+        = ((LT "0" 58) (SUB "0" 48) (SUB 0 "0"))		···		55
+        ((LT "0" 58) (SUB "0" 48) (SUB 0 "0"))					55
+          (LT "0" 58)					55
+            "0"					55
+            = 55
+          = True
+          (SUB "0" 48)					55
+            "0"					55
+            = 55
+          = 7
+        = "0"		···		7		_
+        "0"					7		_
+        = 7
+      = "\a"
+      "0"					"7"
+      = "7"
+    = 2#(parseUnsigned_lam_shr_digits167_lam_0_12168 "7" "\a")
+  = ("3" "0" "1")		···		55		ListEnd		_		2#(parseUnsigned_lam_shr_digits167_lam_0_12168 "7" "\a")
+  ("3" "0" "1")					55		ListEnd		_		2#(parseUnsigned_lam_shr_digits167_lam_0_12168 "7" "\a")
+    "3"					55		ListEnd		_		2#(parseUnsigned_lam_shr_digits167_lam_0_12168 "7" "\a")
+    = 2#(parseUnsigned_lam_shr_digits167_lam_0_12168 "7" "\a")
+  = (findWhere_lcl_more0 parseUnsigned_lam_shr_digits167_lam_0_12168_lam_lam_1_25171 "1" parseUnsigned_lam_shr_digits167_lam_0_12168_lam_bad172 2#(Have (parseUnsigned_lcl_more0 "1" (ADD -1 ("0" 0 len_lam_0_1034175)))))		···		"7"		"\a"		_		_
+  (findWhere_lcl_more0 parseUnsigned_lam_shr_digits167_lam_0_12168_lam_lam_1_25171 "1" parseUnsigned_lam_shr_digits167_lam_0_12168_lam_bad172 2#(Have (parseUnsigned_lcl_more0 "1" (ADD -1 ("0" 0 len_lam_0_1034175)))))					"7"		"\a"		_		_
+    "1"					"7"		"\a"		_		_
+    = "\a"
+    ("1" False 2#(findWhere_lcl_more0_lam_item170 "0"))					parseUnsigned_lam_shr_digits167_lam_0_12168_lam_lam_1_25171		"\a"
+      "1"					parseUnsigned_lam_shr_digits167_lam_0_12168_lam_lam_1_25171		"\a"
+      = "\a"
+      2#(findWhere_lcl_more0_lam_item170 "0")					parseUnsigned_lam_shr_digits167_lam_0_12168_lam_lam_1_25171		"\a"
+        "0"					parseUnsigned_lam_shr_digits167_lam_0_12168_lam_lam_1_25171		"\a"
+        = parseUnsigned_lam_shr_digits167_lam_0_12168_lam_lam_1_25171
+      = 2#(findWhere_lcl_more0_lam_item170 parseUnsigned_lam_shr_digits167_lam_0_12168_lam_lam_1_25171)
+    = ("3" "0" "1")		···		7		ListEnd		_		2#(findWhere_lcl_more0_lam_item170 parseUnsigned_lam_shr_digits167_lam_0_12168_lam_lam_1_25171)
+    ("3" "0" "1")					7		ListEnd		_		2#(findWhere_lcl_more0_lam_item170 parseUnsigned_lam_shr_digits167_lam_0_12168_lam_lam_1_25171)
+      "3"					7		ListEnd		_		2#(findWhere_lcl_more0_lam_item170 parseUnsigned_lam_shr_digits167_lam_0_12168_lam_lam_1_25171)
+      = 2#(findWhere_lcl_more0_lam_item170 parseUnsigned_lam_shr_digits167_lam_0_12168_lam_lam_1_25171)
+      "1"					7		ListEnd		_		2#(findWhere_lcl_more0_lam_item170 parseUnsigned_lam_shr_digits167_lam_0_12168_lam_lam_1_25171)
+      = ListEnd
+      "0"					7		ListEnd		_		2#(findWhere_lcl_more0_lam_item170 parseUnsigned_lam_shr_digits167_lam_0_12168_lam_lam_1_25171)
+      = 7
+    = ("0" "1" 2#(Have "1") (findWhere_lcl_more0 "0" "2"))		···		parseUnsigned_lam_shr_digits167_lam_0_12168_lam_lam_1_25171		7		ListEnd
+    ("0" "1" 2#(Have "1") (findWhere_lcl_more0 "0" "2"))					parseUnsigned_lam_shr_digits167_lam_0_12168_lam_lam_1_25171		7		ListEnd
+      "0"					parseUnsigned_lam_shr_digits167_lam_0_12168_lam_lam_1_25171		7		ListEnd
+      = parseUnsigned_lam_shr_digits167_lam_0_12168_lam_lam_1_25171
+      "1"					parseUnsigned_lam_shr_digits167_lam_0_12168_lam_lam_1_25171		7		ListEnd
+      = 7
+      (LT "0" 0)					7
+        "0"					7
+        = 7
+      = False
+    = (findWhere_lcl_more0 "0" "2")		···		parseUnsigned_lam_shr_digits167_lam_0_12168_lam_lam_1_25171		7		ListEnd
+    (findWhere_lcl_more0 "0" "2")					parseUnsigned_lam_shr_digits167_lam_0_12168_lam_lam_1_25171		7		ListEnd
+      "2"					parseUnsigned_lam_shr_digits167_lam_0_12168_lam_lam_1_25171		7		ListEnd
+      = ListEnd
+      "0"					parseUnsigned_lam_shr_digits167_lam_0_12168_lam_lam_1_25171		7		ListEnd
+      = parseUnsigned_lam_shr_digits167_lam_0_12168_lam_lam_1_25171
+    = ("1" False 2#(findWhere_lcl_more0_lam_item170 "0"))		···		parseUnsigned_lam_shr_digits167_lam_0_12168_lam_lam_1_25171		ListEnd
+    ("1" False 2#(findWhere_lcl_more0_lam_item170 "0"))					parseUnsigned_lam_shr_digits167_lam_0_12168_lam_lam_1_25171		ListEnd
+      "1"					parseUnsigned_lam_shr_digits167_lam_0_12168_lam_lam_1_25171		ListEnd
+      = ListEnd
+    = "0"		···		False		_
+    "0"					False		_
+    = False
+  = 2#(Have (parseUnsigned_lcl_more0 "1" (ADD -1 ("0" 0 len_lam_0_1034175))))		···		"7"		"\a"		_		_
+  2#(Have (parseUnsigned_lcl_more0 "1" (ADD -1 ("0" 0 len_lam_0_1034175))))					"7"		"\a"		_		_
+    (parseUnsigned_lcl_more0 "1" (ADD -1 ("0" 0 len_lam_0_1034175)))					"7"		"\a"		_		_
+      (ADD -1 ("0" 0 len_lam_0_1034175))					"7"		"\a"		_		_
+        ("0" 0 len_lam_0_1034175)					"7"		"\a"		_		_
+          "0"					"7"		"\a"		_		_
+          = "7"
+        = ("3" "0" "1")		···		55		ListEnd		_		len_lam_0_1034175
+        ("3" "0" "1")					55		ListEnd		_		len_lam_0_1034175
+          "3"					55		ListEnd		_		len_lam_0_1034175
+          = len_lam_0_1034175
+          "1"					55		ListEnd		_		len_lam_0_1034175
+          = ListEnd
+        = (ADD 1 ("1" 0 len_lam_0_1034175))		···		_		ListEnd
+        (ADD 1 ("1" 0 len_lam_0_1034175))					_		ListEnd
+          ("1" 0 len_lam_0_1034175)					_		ListEnd
+            "1"					_		ListEnd
+            = ListEnd
+          = "0"		···		0		_
+          "0"					0		_
+          = 0
+        = 1
+      = 0
+      "1"					"7"		"\a"		_		_
+      = "\a"
+    = (ADD (MUL (-< "0") (GT "1" -1 (pow_lcl_mults0 10 "1") (ERR "std.num.pow called with negative exp:" "1"))) (>- "0" 0 2#(parseUnsigned_lcl_more0_lam_0_41174 "1" "0")))		···		"\a"		0
+    (ADD (MUL (-< "0") (GT "1" -1 (pow_lcl_mults0 10 "1") (ERR "std.num.pow called with negative exp:" "1"))) (>- "0" 0 2#(parseUnsigned_lcl_more0_lam_0_41174 "1" "0")))					"\a"		0
+      (>- "0" 0 2#(parseUnsigned_lcl_more0_lam_0_41174 "1" "0"))					"\a"		0
+        "0"					"\a"		0
+        = "\a"
+        ("0" (ERR "forgot nil check before >-" same) False)					"\a"
+          "0"					"\a"
+          = "\a"
+        = ("3" "0" "1")		···		7		ListEnd		_		False
+        ("3" "0" "1")					7		ListEnd		_		False
+          "3"					7		ListEnd		_		False
+          = False
+          "1"					7		ListEnd		_		False
+          = ListEnd
+        = "1"		···		_		ListEnd
+        "1"					_		ListEnd
+        = ListEnd
+      = 0		···		"\a"		0
+      (MUL (-< "0") (GT "1" -1 (pow_lcl_mults0 10 "1") (ERR "std.num.pow called with negative exp:" "1")))					"\a"		0
+        (GT "1" -1 (pow_lcl_mults0 10 "1") (ERR "std.num.pow called with negative exp:" "1"))					"\a"		0
+          "1"					"\a"		0
+          = 0
+        = (pow_lcl_mults0 10 "1")		···		"\a"		0
+        (pow_lcl_mults0 10 "1")					"\a"		0
+          "1"					"\a"		0
+          = 0
+        = (EQ "1" 0 1 (MUL "0" (pow_lcl_mults0 "0" (ADD -1 "1"))))		···		10		0
+        (EQ "1" 0 1 (MUL "0" (pow_lcl_mults0 "0" (ADD -1 "1"))))					10		0
+          "1"					10		0
+          = 0
+        = 1		···		10		0
+        (-< "0")					"\a"		0
+          "0"					"\a"		0
+          = "\a"
+        = ("0" (ERR "forgot nil check before -<" same) True)		···		"\a"
+        ("0" (ERR "forgot nil check before -<" same) True)					"\a"
+          "0"					"\a"
+          = "\a"
+        = ("3" "0" "1")		···		7		ListEnd		_		True
+        ("3" "0" "1")					7		ListEnd		_		True
+          "3"					7		ListEnd		_		True
+          = True
+          "0"					7		ListEnd		_		True
+          = 7
+        = "0"		···		7		_
+        "0"					7		_
+        = 7
+      = 7
+    = 7
+  = 2#(Have 7)
+= (2#(Have 7) same 1#(True -1))		···		["7", ]		_
+(2#(Have 7) same 1#(True -1))					["7", ]		_
+= ("1" "0")		···		7		same		_
+("1" "0")					7		same		_
+  "1"					7		same		_
+  = same
+  "0"					7		same		_
+  = 7
+= "0"		···		7
+"0"					7
+= 7

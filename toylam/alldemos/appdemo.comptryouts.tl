@@ -1,11 +1,11 @@
-main args env := m6 args env
+main args env := m12 args env
 
 
 m10 args _    := args 777 (arg _ -> 555)
 
 m8 args _     := args ? [] => "arg missing" | .. => arg1 _ -> (arg1.EQ "foo") "got foo" "not foo"
 
-m7 args env   := pow 10 args.len
+m7 args _   := pow 10 args.len
 
 m4 args env   := concat (+> \t s1) "!"
   \t          := 9
@@ -35,6 +35,6 @@ m9 args _     := (json.parsed (args.at 0)) Result? Yay => _ -> "neat" | Nay => m
 m11 args _    := [on, 0, -0, ""]
   on _ jsrc   := [same , num.toString (len ( jsrc)) ]
 
-m12 args _    := num.parseUnsigned (args.at 0) Result? Nay => _ -> 123 | Yay => n -> n
+m12 args _    := num.parseUnsigned (args.at 0) Result? Nay => _ -> -1 | Yay => n -> n
 
 m13 args _    := +> '!' (args ? [] => "?" | .. => hd tl -> hd)

@@ -1,2 +1,2 @@
-main args env stdin := jsondom Result? Yay => json.stringified | Nay => msg -> ERR msg stdin
-  jsondom           := json.parsed stdin
+main args env := [on, 0, -0, ""]
+  on _ jsrc   := [same , (json.parsed jsrc) Result? Yay => json.stringified | Nay => same]
