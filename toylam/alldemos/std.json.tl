@@ -16,8 +16,8 @@ stringified json  := json Value? VNull => casenull | VBoolean => casebool | VInt
 
 
 tokenized src     := src ? .. => more
-  more chr rest   := (simple.cases chr) Could? Have => +> _ rest.tokenized | None => others chr rest
-  simple          := [{EQ ',', TSepComma.ever}, {EQ '[', True.TBracketSq.ever}, {EQ ']', False.TBracketSq.ever}, {EQ '{', True.TBracketCy.ever}, {EQ '}', False.TBracketCy.ever}, {EQ ':', TSepColon.ever}]
+  more chr rest   := chr.simplecases Could? Have => +> _ rest.tokenized | None => others chr rest
+  simplecases c   := (c.EQ ',') TSepComma.Have ((c.EQ '[') True.TBracketSq.Have ((c.EQ ']') False.TBracketSq.Have ((c.EQ '{') True.TBracketCy.Have ((c.EQ '}') False.TBracketCy.Have ((c.EQ ':') TSepColon.Have None)))))
   others c r      := c.checknum (casenum c r) (c.checkname (casename c r) (c.checkstr (casestr c r) (tokenized r)))
   casenum c rest  := (rest.brokenUpOn (_ -> checknum.not·)) (fst snd -> +> (TNumLit (c.+> fst)) (tokenized snd))
   casename c rest := (rest.brokenUpOn (_ -> checkname.not·)) (fst snd -> +> (TIdent (c.+> fst)) (tokenized snd))
