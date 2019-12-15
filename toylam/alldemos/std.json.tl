@@ -27,6 +27,7 @@ tokenized src     := src ? .. => more
   checkstr chr    := chr.EQ 34
 
 
+
 parsed src        := src.tokenized.treeified ? [] => Nay "empty input" | .. => ··· handle parse
   treeified s     := (objs2tmp same.arrs2tmp) ((arrs2tmp same.objs2tmp) (s.whereNot (tok -> or tok.isTokenOfTSepComma tok.isTokenOfTSepColon)))
   arrs2tmp o toks := toks.rewritten (t -> t Token? TBracketSq => not | => False) (t -> t Token? TBracketSq => same | => False) (inner -> [__TTmp True inner.o])
