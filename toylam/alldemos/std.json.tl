@@ -22,7 +22,7 @@ tokenized src     := src ? .. => more
   casenum c rest  := (rest.brokenUpOn (_ -> checknum.not·)) (fst snd -> +> (TNumLit (c.+> fst)) (tokenized snd))
   casename c rest := (rest.brokenUpOn (_ -> checkname.not·)) (fst snd -> +> (TIdent (c.+> fst)) (tokenized snd))
   casestr c rest  := (rest.brokenUpOn (a c´ -> and c´.checkstr (a.last2 ? [] => True | .. => c1 c2 -> or (c2.-<.nEQ 92) (c1.EQ 92)))) (fst snd -> +> (TStrLit (concat (c.+> fst) [34])) (snd ? .. => _ r -> tokenized r))
-  checknum chr    := or (chr.EQ '-') (and (chr.GT 47) (chr.LT 58))
+  checknum chr    := and (chr.LT 58) (chr.GT 44)
   checkname chr   := and (chr.GT 96) (chr.LT 123)
   checkstr chr    := chr.EQ 34
 
@@ -40,7 +40,8 @@ parsed src        := src.tokenized.treeified ? [] => Nay "empty input" | .. => �
   pstr r t        := { r, t ? [] => Nay t | .. => quotemark rest -> Yay rest.sansLast.VStr } // caution, not handling escapes for now..
   pcomp r p arr l := (if (arr) parr (else pobj)) r p l
   parr rest p ts  := { rest, parryns (ts.each (t -> sndOfTuplePair (p t []))) }
-    parryns yns   := chkfail yns (yns´ -> VArr (yns´.each (_ same same)))
+    parryns yns   := chkfail yns (yns´ -> VArr yns´.iter)
   pobj rest p ts  := { rest, pobjyns (ts.each (t -> sndOfTuplePair (p t []))) }
-    pobjyns yns   := chkfail yns (yns´ -> VObj (toPairs (yns´.each (_ same same))))
+    pobjyns yns   := chkfail yns (yns´ -> VObj yns´.iter.pairified)
+  iter yns        := yns.each (_ same same)
   chkfail yns c   := (yns.findWhere isResultOfNay) Could? None => Yay yns.c | Have => same

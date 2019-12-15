@@ -70,19 +70,21 @@ deduped list              := list.more
 
 last list                 := list.>- ? [] => list.-< | .. => _ _ -> last list.>-
 
-last2 list                := list ? .. => item rest -> (rest ? .. => item2 rest2 -> (rest2 ? [] => [item, item2] | .. =>  _ _ -> last2 rest))
+last2 list                := list ? .. => item0 rest1 -> (rest1 ? .. => more item0)
+  more previtem item rest := rest ? [] => [previtem, item] | .. => more item
 
-sansLast list             := list ? .. => item rest -> (rest ? .. => _ _ -> item.+> (sansLast rest))
+sansLast list             := list ? .. => more
+  more item rest          := rest ? .. => nextitem nextrest -> item.+> (more nextitem nextrest)
 
 indexed list              := list.more 0
-  more l i                := l ? .. => item rest -> +> {i, item} (more rest i.incr)
+  more l idx              := l ? .. => item rest -> +> {idx, item} (more rest idx.incr)
 
 indices list              := list.more 0
   more l i                := l ? .. => _ rest -> i.+> (more rest i.incr)
 
 brokenUpOn list isMatch   := list.more [] // caution with isMatch, takes 2 args of which the 2nd is the running item (the 1st being the accumulated predecessors)
   more l accum            := l ? [] => {accum, []} | .. => ok more accum
-  ok cont acc item rest   := if (isMatch acc item) {acc, item.+> rest} (else rest.cont (acc.concat [item]))
+  ok cont acc item rest   := if (isMatch acc item) {acc, item.+> rest} (else rest.cont (acc.append item))
 
 pairedUpWith list list2   := list ? .. => item1 rest1 -> list2 ? .. => result item1 rest1
   result i1 r1 i2 r2      := +> {i1, i2} (pairedUpWith r1 r2)
@@ -91,11 +93,11 @@ interspersed list value   := list ? .. => more False
   more useval item rest   := value.useval (item.+> (rest ? .. => more +>))
 
 breakOnLast list isMatch  := list.lastwhere []
-  lastwhere l acc         := l ? [] => None | .. => item rest -> pick item rest acc (lastwhere rest (acc.concat [item]))
+  lastwhere l acc         := l ? [] => None | .. => item rest -> pick item rest acc (lastwhere rest (acc.append item))
   pick item rest acc ret  := ret Could? Have => Have | None => if (item.isMatch) (Have {item, acc, rest}) (else None)
 
 breakOnFirst list isMatch := list.firstwhere []
-  firstwhere l acc        := l ? [] => None | .. => item rest -> (item.maybe acc rest) (else firstwhere rest (acc.concat [item]))
+  firstwhere l acc        := l ? [] => None | .. => item rest -> (item.maybe acc rest) (else firstwhere rest (acc.append item))
   maybe item acc rest     := if (item.isMatch) (Have {item, acc, rest})
 
 // eg. call:              rewritten   "foo[z,z,z]bar[x[z,z]y]baz"   (EQ ']')   (EQ '[')   (inner -> concat (+> '(' (inner.whereNot (EQ ','))) ")")
@@ -114,7 +116,7 @@ joinedVia list sep        := list ? .. => _ _ -> concat.** (list.interspersed se
 concat lpref lsuff        := lpref.prepend
   prepend items           := items ? [] => lsuff | .. => item rest -> item.+> (prepend rest)
 
-append list item          := list.concat [item]
+append list item          := list ? [] => [item] | .. => cur rest -> cur.+> (append rest item)
 
 from list z f2            := list.more
   more l                  := l ? [] => z | .. => item rest -> f2 item (more rest)
@@ -125,8 +127,8 @@ forth list z f2           := list.more z
 reversed list             := more [] list
   more acc l              := l ? [] => acc | .. => item rest -> more (item.+> acc) rest
 
-toPairs list              := list ? .. => next
-  next item rest          := rest ? .. => valitem more -> +> {item, valitem} (toPairs more)
+pairified list            := list ? .. => next
+  next item rest          := rest ? .. => valitem more -> +> {item, valitem} (pairified more)
 
 mGet m key                := m.more
   more l                  := l ? [] => None | .. => {k v} rest -> v.Have.when (k.EQ key) (else more rest)
