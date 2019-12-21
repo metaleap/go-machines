@@ -1,11 +1,15 @@
-main args env := ** concat args
+main args env := m15 args env
 
+m15 _ _       := concat "?!" [\n]
+\n            := 10
+
+m14 args _    := ** concat args
 
 m10 args _    := args 777 (arg _ -> 555)
 
 m8 args _     := args ? [] => "arg missing" | .. => arg1 _ -> (arg1.EQ "foo") "got foo" "not foo"
 
-m7 args _   := pow 10 args.len
+m7 args _     := pow 10 args.len
 
 m4 args env   := concat (+> \t s1) "!!"
   \t          := 9
