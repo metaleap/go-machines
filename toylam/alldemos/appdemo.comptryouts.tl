@@ -1,7 +1,7 @@
-main args env := m15 args env
+main args env := m1 args env
 
 m15 _ _       := concat "?!" [\n]
-\n            := 10
+  \n          := 10
 
 m14 args _    := ** concat args
 
@@ -15,7 +15,7 @@ m4 args env   := concat (+> \t s1) "!!"
   \t          := 9
   s1          := s0 l
   s0          := num.toString
-  l           := args.len
+  l           := env.len
 
 m0 args _     := num.factorial args.len
 
