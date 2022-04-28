@@ -61,6 +61,8 @@ func interp(code []instr) (int, time.Duration) {
 		tmpl int
 	)
 
+	// var jd json.
+
 	timestarted := time.Now()
 	for running := true; running; running = (p != 0) {
 		i = p
